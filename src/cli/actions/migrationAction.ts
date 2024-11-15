@@ -40,24 +40,24 @@ const fileExists = async (filePath: string): Promise<boolean> => {
 };
 
 /**
- * Replace all occurrences of 'repopack' with 'repofm' in a string
+ * Replace all occurrences of 'repofm' with 'repofm' in a string
  */
-const replaceRepopackString = (content: string): string => {
-  return content.replace(/repopack/g, 'repofm').replace(/Repopack/g, 'repofm');
+const replaceRepofmString = (content: string): string => {
+  return content.replace(/repofm/g, 'repofm').replace(/Repofm/g, 'repofm');
 };
 
 /**
- * Update file content by replacing 'repopack' with 'repofm'
+ * Update file content by replacing 'repofm' with 'repofm'
  */
 const updateFileContent = async (filePath: string): Promise<boolean> => {
   const content = await fs.readFile(filePath, 'utf8');
-  const updatedContent = replaceRepopackString(content);
+  const updatedContent = replaceRepofmString(content);
 
   // Check if content needs to be updated
   if (content !== updatedContent) {
     await fs.writeFile(filePath, updatedContent, 'utf8');
     const relativePath = path.relative(process.cwd(), filePath);
-    logger.log(`Updated repopack references in ${pc.cyan(relativePath)}`);
+    logger.log(`Updated repofm references in ${pc.cyan(relativePath)}`);
     return true;
   }
 
@@ -71,11 +71,11 @@ const updateInstructionPath = (content: string): string => {
   try {
     const config = JSON.parse(content);
     if (config.output?.instructionFilePath) {
-      config.output.instructionFilePath = config.output.instructionFilePath.replace('repopack', 'repofm');
+      config.output.instructionFilePath = config.output.instructionFilePath.replace('repofm', 'repofm');
     }
     // Also update output.filePath if it exists
     if (config.output?.filePath) {
-      config.output.filePath = config.output.filePath.replace('repopack', 'repofm');
+      config.output.filePath = config.output.filePath.replace('repofm', 'repofm');
     }
     return JSON.stringify(config, null, 2);
   } catch {
@@ -88,7 +88,7 @@ const updateInstructionPath = (content: string): string => {
  */
 const getOutputFilePaths = (rootDir: string): { oldPaths: string[]; newPaths: string[] } => {
   const extensions = ['.txt', '.xml', '.md'];
-  const oldPaths = extensions.map((ext) => path.join(rootDir, `repopack-output${ext}`));
+  const oldPaths = extensions.map((ext) => path.join(rootDir, `repofm-output${ext}`));
   const newPaths = extensions.map((ext) => path.join(rootDir, `repofm-output${ext}`));
   return { oldPaths, newPaths };
 };
@@ -121,7 +121,7 @@ const migrateFile = async (
   try {
     // Read and update content
     let content = await fs.readFile(oldPath, 'utf8');
-    content = replaceRepopackString(content);
+    content = replaceRepofmString(content);
 
     // For config files, also update instructionFilePath and output.filePath
     if (isConfig) {
@@ -175,19 +175,19 @@ const updateIgnoreFiles = async (rootDir: string): Promise<void> => {
  */
 const getMigrationPaths = (rootDir: string): MigrationPaths => {
   const { oldPaths: oldOutputPaths, newPaths: newOutputPaths } = getOutputFilePaths(rootDir);
-  const oldGlobalDirectory = path.join(process.env.HOME || '', '.config', 'repopack');
+  const oldGlobalDirectory = path.join(process.env.HOME || '', '.config', 'repofm');
   const newGlobalDirectory = getGlobalDirectory();
 
   return {
-    oldConfigPath: path.join(rootDir, 'repopack.config.json'),
+    oldConfigPath: path.join(rootDir, 'repofm.config.json'),
     newConfigPath: path.join(rootDir, 'repofm.config.json'),
-    oldIgnorePath: path.join(rootDir, '.repopackignore'),
+    oldIgnorePath: path.join(rootDir, '.repofmignore'),
     newIgnorePath: path.join(rootDir, '.repofmignore'),
-    oldInstructionPath: path.join(rootDir, 'repopack-instruction.md'),
+    oldInstructionPath: path.join(rootDir, 'repofm-instruction.md'),
     newInstructionPath: path.join(rootDir, 'repofm-instruction.md'),
     oldOutputPaths,
     newOutputPaths,
-    oldGlobalConfigPath: path.join(oldGlobalDirectory, 'repopack.config.json'),
+    oldGlobalConfigPath: path.join(oldGlobalDirectory, 'repofm.config.json'),
     newGlobalConfigPath: path.join(newGlobalDirectory, 'repofm.config.json'),
   };
 };
@@ -233,12 +233,12 @@ export const runMigrationAction = async (rootDir: string): Promise<MigrationResu
     );
 
     if (!hasOldConfig && !hasOldIgnore && !hasOldInstruction && !hasOldOutput && !hasOldGlobalConfig) {
-      logger.debug('No Repopack files found to migrate.');
+      logger.debug('No Repofm files found to migrate.');
       return result;
     }
 
     // Show migration notice based on what needs to be migrated
-    let migrationMessage = `Found ${pc.green('Repopack')} `;
+    let migrationMessage = `Found ${pc.green('Repofm')} `;
     const items = [];
     if (hasOldConfig || hasOldIgnore || hasOldInstruction || hasOldOutput) items.push('local configuration');
     if (hasOldGlobalConfig) items.push('global configuration');
@@ -255,7 +255,7 @@ export const runMigrationAction = async (rootDir: string): Promise<MigrationResu
     }
 
     // Show migration notice
-    logger.info(pc.cyan('\nMigrating from Repopack to repofm...'));
+    logger.info(pc.cyan('\nMigrating from Repofm to repofm...'));
     logger.log('');
 
     // Migrate config file
@@ -307,7 +307,7 @@ export const runMigrationAction = async (rootDir: string): Promise<MigrationResu
       logger.success('✔ Migration completed successfully!');
       logger.log('');
       logger.info(
-        'You can now use repofm commands as usual. The old Repopack files have been migrated to the new format.',
+        'You can now use repofm commands as usual. The old Repofm files have been migrated to the new format.',
       );
       logger.log('');
     }

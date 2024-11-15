@@ -1,4 +1,4 @@
-# 📦 repofm (formerly Repopack)
+# 📦 repofm
 
 [![Actions Status](https://github.com/chenxingqiang/repo.freeme/actions/workflows/ci.yml/badge.svg)](https://github.com/chenxingqiang/repo.freeme/actions?query=workflow%3A"ci")
 [![npm](https://img.shields.io/npm/v/repofm.svg?maxAge=1000)](https://www.npmjs.com/package/repofm)
@@ -12,7 +12,7 @@ It is perfect for when you need to feed your codebase to Large Language Models (
 ## 📢 Important Notice: Project Renamed to repofm
 
 > [!NOTE]
-> Due to legal considerations, this project has been renamed from "Repopack" to "repofm". Only the name is changing; repofm all functionality and maintainer ([@chenxingqiang](https://github.com/chenxingqiang)) remain the same.
+> Due to legal considerations, this project has been renamed from "Repofm" to "repofm". Only the name is changing; repofm all functionality and maintainer ([@chenxingqiang](https://github.com/chenxingqiang)) remain the same.
 > We are committed to ensuring a smooth transition for all users.
 
 ### Migration Guide
@@ -30,18 +30,18 @@ npx repofm
 Optionally, you can also uninstall the old package:
 
 ```bash
-npm uninstall -g repopack
+npm uninstall -g repofm
 ```
 
 #### Configuration Files
 
-Your existing configuration files (`repopack.config.json` and `.repopackignore`) will continue to work during the transition period.
+Your existing configuration files (`repofm.config.json` and `.repofmignore`) will continue to work during the transition period.
 `repofm` will automatically detect these files and offer to migrate them to the new format (`repofm.config.json` and `.repofmignore`).
 
 #### Timeline
 
 - Current: Transition period begins
-- December 1st, 2024: Ownership of the [repopack npm package](https://npmjs.com/repopack) will be transferred to another party. The repofm package will continue to be maintained as usual
+- December 1st, 2024: Ownership of the [repofm npm package](https://npmjs.com/repofm) will be transferred to another party. The repofm package will continue to be maintained as usual
 
 We appreciate your understanding and cooperation during this transition.
 

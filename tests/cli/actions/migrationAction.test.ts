@@ -11,20 +11,20 @@ vi.mock('../../../src/shared/logger');
 
 describe('migrationAction', () => {
   const mockRootDir = '/test/dir';
-  const oldConfigPath = path.join(mockRootDir, 'repopack.config.json');
+  const oldConfigPath = path.join(mockRootDir, 'repofm.config.json');
   const newConfigPath = path.join(mockRootDir, 'repofm.config.json');
-  const oldIgnorePath = path.join(mockRootDir, '.repopackignore');
+  const oldIgnorePath = path.join(mockRootDir, '.repofmignore');
   const newIgnorePath = path.join(mockRootDir, '.repofmignore');
-  const oldInstructionPath = path.join(mockRootDir, 'repopack-instruction.md');
+  const oldInstructionPath = path.join(mockRootDir, 'repofm-instruction.md');
   const newInstructionPath = path.join(mockRootDir, 'repofm-instruction.md');
   const gitignorePath = path.join(mockRootDir, '.gitignore');
 
   const mockOutputPaths = {
-    oldTxt: path.join(mockRootDir, 'repopack-output.txt'),
+    oldTxt: path.join(mockRootDir, 'repofm-output.txt'),
     newTxt: path.join(mockRootDir, 'repofm-output.txt'),
-    oldXml: path.join(mockRootDir, 'repopack-output.xml'),
+    oldXml: path.join(mockRootDir, 'repofm-output.xml'),
     newXml: path.join(mockRootDir, 'repofm-output.xml'),
-    oldMd: path.join(mockRootDir, 'repopack-output.md'),
+    oldMd: path.join(mockRootDir, 'repofm-output.md'),
     newMd: path.join(mockRootDir, 'repofm-output.md'),
   };
 
@@ -54,13 +54,13 @@ describe('migrationAction', () => {
     // Mock file content
     const mockConfigContent = JSON.stringify({
       output: {
-        filePath: 'repopack-output.txt',
-        instructionFilePath: 'repopack-instruction.md',
+        filePath: 'repofm-output.txt',
+        instructionFilePath: 'repofm-instruction.md',
       },
     });
-    const mockIgnoreContent = 'repopack-output.txt\n*.log';
-    const mockInstructionContent = '# Repopack Instructions';
-    const mockOutputContent = 'Repopack output content';
+    const mockIgnoreContent = 'repofm-output.txt\n*.log';
+    const mockInstructionContent = '# Repofm Instructions';
+    const mockOutputContent = 'Repofm output content';
 
     vi.mocked(fs.readFile).mockImplementation(async (path) => {
       if (path === oldConfigPath) return mockConfigContent;
@@ -114,7 +114,7 @@ describe('migrationAction', () => {
     expect(fs.unlink).toHaveBeenCalledWith(mockOutputPaths.oldXml);
   });
 
-  test('should update gitignore content when it exists and contains repopack references', async () => {
+  test('should update gitignore content when it exists and contains repofm references', async () => {
     // Mock file existence only for gitignore and oldConfig
     vi.mocked(fs.access).mockImplementation(async (path) => {
       if (path === gitignorePath || path === oldConfigPath) {
@@ -124,7 +124,7 @@ describe('migrationAction', () => {
     });
 
     // Mock file content only for gitignore
-    const mockGitignoreContent = 'node_modules/\nrepopack-output.txt';
+    const mockGitignoreContent = 'node_modules/\nrepofm-output.txt';
     vi.mocked(fs.readFile).mockImplementation(async (path) => {
       if (path === gitignorePath) return mockGitignoreContent;
       if (path === oldConfigPath) return '{}';
@@ -139,7 +139,7 @@ describe('migrationAction', () => {
 
     // Verify gitignore was updated
     expect(fs.writeFile).toHaveBeenCalledWith(gitignorePath, 'node_modules/\nrepofm-output.txt', 'utf8');
-    expect(logger.log).toHaveBeenCalledWith(expect.stringContaining('Updated repopack references in'));
+    expect(logger.log).toHaveBeenCalledWith(expect.stringContaining('Updated repofm references in'));
   });
 
   test('should handle non-updated files correctly', async () => {
@@ -151,7 +151,7 @@ describe('migrationAction', () => {
       return Promise.reject(new Error('File not found'));
     });
 
-    // Mock file content with no repopack references
+    // Mock file content with no repofm references
     vi.mocked(fs.readFile).mockImplementation(async (path) => {
       if (path === gitignorePath) return 'node_modules/\n*.log';
       if (path === oldConfigPath) return '{}';
@@ -183,7 +183,7 @@ describe('migrationAction', () => {
     expect(result.instructionMigrated).toBe(false);
     expect(result.outputFilesMigrated).toHaveLength(0);
     expect(prompts.confirm).not.toHaveBeenCalled();
-    expect(logger.debug).toHaveBeenCalledWith('No Repopack files found to migrate.');
+    expect(logger.debug).toHaveBeenCalledWith('No Repofm files found to migrate.');
   });
 
   test('should skip files when they already exist and user declines overwrite', async () => {

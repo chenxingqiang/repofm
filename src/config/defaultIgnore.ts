@@ -120,7 +120,7 @@ export const defaultIgnoreList = [
 
   // repofm output
   'repofm-output.*',
-  'repopack-output.*', // Legacy
+  'repofm-output.*', // Legacy
 
   // Essential Python-related entries
   '**/__pycache__/**',

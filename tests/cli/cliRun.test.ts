@@ -286,7 +286,7 @@ describe('CLI', () => {
 
             await run();
             expect(logger.debug).toHaveBeenCalledWith(
-                expect.stringContaining('No Repopack files found to migrate')
+                expect.stringContaining('No Repofm files found to migrate')
             );
         });
     });
