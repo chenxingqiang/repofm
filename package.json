@@ -1,0 +1,90 @@
+{
+  "name": "repofm",
+  "version": "0.2.2",
+  "description": "A tool to pack repository contents to single file for AI consumption",
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts"
+    }
+  },
+  "bin": "./bin/repofm.cjs",
+  "scripts": {
+    "clean": "rimraf lib",
+    "build": "npm run clean && tsc -p tsconfig.build.json --sourceMap --declaration",
+    "lint": "npm run lint-biome && npm run lint-ts && npm run lint-secretlint",
+    "lint-biome": "biome check --write",
+    "lint-ts": "tsc --noEmit",
+    "lint-secretlint": "secretlint \"**/*\" --secretlintignore .gitignore",
+    "test": "vitest",
+    "test-coverage": "vitest run --coverage",
+    "cli-run": "npm run build && node --trace-warnings bin/repofm",
+    "npm-publish": "npm run lint && npm run test-coverage && npm run build && npm publish",
+    "npm-release-patch": "npm version patch && npm run npm-publish",
+    "npm-release-minor": "npm version minor && npm run npm-publish",
+    "npm-release-prerelease": "npm version prerelease && npm run npm-publish"
+  },
+  "keywords": [
+    "repository",
+    "generative-ai",
+    "ai",
+    "llm",
+    "source-code",
+    "code-analysis",
+    "codebase-packer",
+    "development-tool",
+    "ai-assistant",
+    "code-review"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/chenxingqiang/repo.freeme.git"
+  },
+  "bugs": {
+    "url": "https://github.com/chenxingqiang/repo.freeme/issues"
+  },
+  "author": "Chen Xingqiang chen.xingqinag@iechor.com",
+  "homepage": "https://github.com/chenxingqiang/repo.freeme",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "type": "module",
+  "dependencies": {
+    "@clack/prompts": "^0.7.0",
+    "@secretlint/core": "^9.0.0",
+    "@secretlint/secretlint-rule-preset-recommend": "^9.0.0",
+    "cli-spinners": "^2.9.2",
+    "clipboardy": "^4.0.0",
+    "commander": "^12.1.0",
+    "dotenv": "^16.4.5",
+    "globby": "^14.0.2",
+    "handlebars": "^4.7.8",
+    "iconv-lite": "^0.6.3",
+    "istextorbinary": "^9.5.0",
+    "jschardet": "^3.1.4",
+    "log-update": "^6.1.0",
+    "p-map": "^7.0.2",
+    "picocolors": "^1.1.1",
+    "strip-comments": "^2.0.1",
+    "tiktoken": "^1.0.17",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "@secretlint/types": "^9.0.0",
+    "@types/node": "^22.9.0",
+    "@types/strip-comments": "^2.0.4",
+    "@vitest/coverage-v8": "^2.1.4",
+    "minimatch": "^10.0.1",
+    "rimraf": "^6.0.1",
+    "secretlint": "^9.0.0",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.4"
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "yarn": ">=1.22.22"
+  }
+}

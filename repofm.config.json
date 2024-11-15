@@ -1,0 +1,78 @@
+{
+  "output": {
+    "filePath": "repofm-output.xml",
+    "style": "xml",
+    "headerText": "This repository contains the source code for the repofm tool.\nrepofm is designed to pack repository contents into a single file,\nmaking it easier for AI systems to analyze and process the codebase.\n\nKey Features:\n- Configurable ignore patterns\n- Custom header text support\n- Efficient file processing and packing\n\nPlease refer to the README.md file for more detailed information on usage and configuration.\n",
+    "instructionFilePath": "repofm-instruction.md",
+    "removeComments": false,
+    "removeEmptyLines": false,
+    "topFilesLength": 5,
+    "showLineNumbers": false
+  },
+  "include": [],
+  "ignore": {
+    "useGitignore": true,
+    "useDefaultPatterns": true,
+    "customPatterns": []
+  },
+  "security": {
+    "enableSecurityCheck": true
+  },
+  "github": {
+    "token": ""
+  },
+  "supabase": {
+    "url": "",
+    "key": ""
+  },
+  "context": {
+    "outputFormat": "markdown",
+    "maxDepth": 2,
+    "includeImports": true,
+    "includeExports": true,
+    "maxContextLines": 100,
+    "excludePatterns": ["node_modules", ".git"],
+    "cacheEnabled": true,
+    "cachePath": ".repofm/context-cache"
+  },
+  "autoCommit": {
+    "ui": {
+      "showTimeline": true,
+      "showDiff": true,
+      "colorOutput": true,
+      "icons": true,
+      "useEmoji": true
+    },
+    "commit": {
+      "separateByDefault": true,
+      "pushByDefault": true,
+      "requireConfirmation": true,
+      "breakingChangePrompt": true,
+      "conventionalCommits": true
+    },
+    "analysis": {
+      "checkBreakingChanges": true,
+      "suggestScope": true,
+      "detectFileTypes": true,
+      "scanForKeywords": true,
+      "maxDiffLines": 500
+    },
+    "templates": {
+      "feature": {
+        "add": "feat({}): add {} functionality",
+        "update": "feat({}): update {} implementation"
+      }
+    },
+    "fileTypes": {
+      "react": {
+        "pattern": "\\.jsx?$",
+        "folders": ["components", "pages"],
+        "keywords": ["React", "useState"]
+      }
+    },
+    "customPatterns": {
+      "jira": "([A-Z]+-\\d+)",
+      "version": "(v\\d+\\.\\d+\\.\\d+)"
+    }
+  }
+}

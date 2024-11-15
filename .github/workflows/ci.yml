@@ -1,0 +1,162 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      # ... add your build steps here
+
+  lint-biome:
+    name: Lint Biome
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version-file: .tool-versions
+    - run: npm ci
+    - run: npm run lint-biome && git diff --exit-code
+
+  lint-ts:
+    name: Lint TypeScript
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version-file: .tool-versions
+    - run: npm ci
+    - run: npm run lint-ts
+
+  lint-secretlint:
+    name: Lint Secretlint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version-file: .tool-versions
+    - run: npm ci
+    - run: npm run lint-secretlint
+
+  lint-renovate-config:
+    name: Lint Renovate config
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version-file: .tool-versions
+    - name: Validate Renovate config
+      run: npx --yes --package renovate -- renovate-config-validator --strict
+
+  lint-action:
+    name: Lint GitHub Actions
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker://rhysd/actionlint:latest
+        with:
+          args: "-color"
+
+  check-npm-audit:
+    name: Check npm audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .tool-versions
+      - run: npm audit
+
+  check-typos:
+    name: Check typos
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: crate-ci/typos@master
+
+  test:
+    name: Test
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        node-version: [16.x, 18.x, 20.x, 22.x, 23.x]
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v4
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+    - run: npm ci
+    - run: npm run test --reporter=verbose
+      env:
+        CI_OS: ${{ runner.os }}
+
+  test-coverage:
+    name: Test coverage
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version-file: .tool-versions
+        cache: npm
+    - run: npm ci
+    - run: npm run test-coverage -- --reporter=verbose
+      env:
+        CI_OS: ${{ runner.os }}
+    - uses: actions/upload-artifact@v4
+      with:
+        name: test-coverage
+        path: coverage/
+    - uses: codecov/codecov-action@v4
+      with:
+        fail_ci_if_error: true
+        directory: ./coverage
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+  build-and-run:
+    name: Build and run
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        node-version: [16.x, 18.x, 20.x, 22.x, 23.x]
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v4
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+    - run: npm ci
+    - run: npm run build
+    - run: node bin/repofm
+    - name: Upload build artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: repofm-output-${{ matrix.os }}-${{ matrix.node-version }}.txt
+        path: repofm-output.txt
+
+
+
+
