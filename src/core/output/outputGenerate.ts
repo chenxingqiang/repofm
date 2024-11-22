@@ -128,7 +128,6 @@ export const generateOutput = async (
 
     return processed;
   };
-
   if (config.output.style === 'markdown') {
     // Create a modified tree string with dashes
     const treeString = generateTreeString(files.map(f => f.path))
@@ -276,3 +275,4 @@ function escapeXml(unsafe: string): string {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&apos;');
 }
+
