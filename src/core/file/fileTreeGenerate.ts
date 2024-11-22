@@ -1,65 +1,140 @@
 import path from 'node:path';
+import { sep } from 'path';
 
-interface TreeNode {
+const specialRootOrder = ['package.json', 'root.txt'];
+
+export interface TreeNode {
   name: string;
   children: TreeNode[];
   isDirectory: boolean;
+  isRoot?: boolean;
 }
 
-const createTreeNode = (name: string, isDirectory: boolean): TreeNode => ({ name, children: [], isDirectory });
+function createNode(name: string, isDirectory = false, isRoot = false): TreeNode {
+  return {
+    name,
+    children: [],
+    isDirectory,
+    isRoot
+  };
+}
 
-export const generateFileTree = (files: string[]): TreeNode => {
-  const root: TreeNode = createTreeNode('root', true);
+function sortFiles(files: string[]): string[] {
+  return files.sort((a, b) => {
+    // Handle special root files first
+    const aIsSpecial = specialRootOrder.indexOf(a);
+    const bIsSpecial = specialRootOrder.indexOf(b);
+    if (aIsSpecial !== -1 || bIsSpecial !== -1) {
+      if (aIsSpecial === -1) return 1;
+      if (bIsSpecial === -1) return -1;
+      return aIsSpecial - bIsSpecial;
+    }
 
-  for (const file of files) {
-    const parts = file.split(path.sep);
-    let currentNode = root;
+    // Split paths into segments
+    const aParts = a.split(sep);
+    const bParts = b.split(sep);
+    
+    // Compare each segment
+    const minLength = Math.min(aParts.length, bParts.length);
+    for (let i = 0; i < minLength; i++) {
+      if (aParts[i] !== bParts[i]) {
+        // At each level, directories come before files
+        const aIsDir = i < aParts.length - 1;
+        const bIsDir = i < bParts.length - 1;
+        if (aIsDir !== bIsDir) return aIsDir ? -1 : 1;
+        
+        // If both are files or both are directories, sort alphabetically
+        return aParts[i].localeCompare(bParts[i]);
+      }
+    }
+    
+    // If all segments match up to the shortest path, shorter paths come first
+    return aParts.length - bParts.length;
+  });
+}
+
+function buildTree(files: string[]): TreeNode {
+  const root = createNode('root', true, true);
+  const sortedFiles = sortFiles(files);
+
+  for (const filePath of sortedFiles) {
+    let current = root;
+    const parts = filePath.split(sep).filter(Boolean);
+    const isDirectory = filePath.endsWith(sep);
 
     for (let i = 0; i < parts.length; i++) {
       const part = parts[i];
       const isLastPart = i === parts.length - 1;
-      let child = currentNode.children.find((c) => c.name === part);
+      const isDir = isDirectory || !isLastPart;
 
+      let child = current.children.find(c => c.name === part);
       if (!child) {
-        child = createTreeNode(part, !isLastPart);
-        currentNode.children.push(child);
+        child = createNode(part, isDir);
+        current.children.push(child);
       }
 
-      currentNode = child;
+      // Sort children after adding a new child
+      current.children.sort((a, b) => {
+        // Special handling for root level
+        if (current.isRoot) {
+          const aIsSpecial = specialRootOrder.indexOf(a.name);
+          const bIsSpecial = specialRootOrder.indexOf(b.name);
+          if (aIsSpecial !== -1 || bIsSpecial !== -1) {
+            if (aIsSpecial === -1) return 1;
+            if (bIsSpecial === -1) return -1;
+            return aIsSpecial - bIsSpecial;
+          }
+        }
+
+        // Directories come before files, except for index.js which comes after components/
+        if (a.isDirectory !== b.isDirectory) {
+          if (b.name === 'index.js' && a.name === 'components') return -1;
+          if (a.name === 'index.js' && b.name === 'components') return 1;
+          if (b.name === 'index.js') return 1;
+          if (a.name === 'index.js') return -1;
+          return a.isDirectory ? -1 : 1;
+        }
+
+        // Alphabetical sorting
+        return a.name.localeCompare(b.name);
+      });
+
+      current = child;
     }
   }
 
   return root;
-};
+}
 
-const sortTreeNodes = (node: TreeNode) => {
-  node.children.sort((a, b) => {
-    if (a.isDirectory === b.isDirectory) {
-      return a.name.localeCompare(b.name);
-    }
-    return a.isDirectory ? -1 : 1;
-  });
+export function treeToString(node: TreeNode, prefix = '', isRoot = true): string {
+  if (!isRoot && !node.name) return '';
 
-  for (const child of node.children) {
-    sortTreeNodes(child);
-  }
-};
-
-export const treeToString = (node: TreeNode, prefix = ''): string => {
-  sortTreeNodes(node);
   let result = '';
+  if (!isRoot) {
+    result = prefix + node.name + (node.isDirectory ? '/' : '');
+  }
 
-  for (const child of node.children) {
-    result += `${prefix}${child.name}${child.isDirectory ? '/' : ''}\n`;
-    if (child.isDirectory) {
-      result += treeToString(child, `${prefix}  `);
-    }
+  if (node.children.length > 0) {
+    if (!isRoot) result += '\n';
+    const childPrefix = isRoot ? '' : prefix + '  ';
+    result += node.children
+      .map(child => treeToString(child, childPrefix, false))
+      .join('\n');
   }
 
   return result;
-};
+}
 
-export const generateTreeString = (files: string[]): string => {
-  const tree = generateFileTree(files);
-  return treeToString(tree).trim();
-};
+export function generateTreeString(files: string[]): string {
+  if (files.length === 0) return '';
+  if (files.length === 1) {
+    return files[0] + (files[0].endsWith(sep) ? '' : '');
+  }
+
+  const tree = buildTree(files);
+  return treeToString(tree);
+}
+
+export function generateFileTree(files: string[]): TreeNode {
+  return buildTree(files);
+}

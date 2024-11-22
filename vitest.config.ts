@@ -6,8 +6,15 @@ export default defineConfig({
     environment: 'node',
     include: ['tests/**/*.test.ts'],
     coverage: {
-      include: ['src/**/*'],
+      provider: 'v8',
       reporter: ['text', 'json', 'html'],
-    },
-  },
+      exclude: [
+        'node_modules/**',
+        'tests/**',
+        '**/*.d.ts',
+        '**/*.test.ts',
+        'vitest.config.ts'
+      ]
+    }
+  }
 });

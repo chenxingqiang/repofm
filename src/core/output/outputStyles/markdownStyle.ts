@@ -36,10 +36,22 @@ export const getMarkdownTemplate = () => {
 
 # Repository Files
 
+Files processed: {{processedFiles.length}}
+
 {{#each processedFiles}}
 ## File: {{{this.path}}}
 \`\`\`{{{getFileExtension this.path}}}
-{{{this.content}}}
+{{#if config.output.showLineNumbers}}
+  {{#each this.content.split('\n') as |line i|}}
+  {{i + 1}}. {{line}}
+  {{/each}}
+{{else}}
+  {{#if config.output.removeComments}}
+    {{this.content.replace(/\/\*[\s\S]*?\*\/|\/\/.*/g, '')}}
+  {{else}}
+    {{this.content}}
+  {{/if}}
+{{/if}}
 \`\`\`
 
 {{/each}}

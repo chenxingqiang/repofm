@@ -95,6 +95,9 @@ class PythonManipulator extends BaseManipulator {
       return pairs.some(([start, end]) => hashIndex > start && hashIndex < end);
     };
 
+    // Normalize line endings
+    content = content.replace(/\r\n|\r/g, '\n');
+
     let result = '';
     const pairs: [number, number][] = [];
     let prevQuote = 0;
@@ -128,10 +131,10 @@ class PythonManipulator extends BaseManipulator {
 
       if (!isInsideString) {
         if (nextNewLine === -1) {
-          result += content.slice(prevHash);
+          result += content.slice(prevHash, hashIndex).trimEnd();
           break;
         }
-        result += `${content.slice(prevHash, hashIndex)}\n`;
+        result += `${content.slice(prevHash, hashIndex).trimEnd()}\n`;
       } else {
         if (nextNewLine === -1) {
           result += content.slice(prevHash);

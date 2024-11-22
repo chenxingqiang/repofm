@@ -25,7 +25,7 @@ export const handleError = (error: unknown): void => {
     logger.error('An unknown error occurred');
   }
 
-  logger.info('For more help, please visit: https://github.com/chenxingqiang/repo.freeme/issues');
+  logger.info('For more help, please visit: https://github.com/chenxingqiang/repofm/issues');
 };
 
 export const rethrowValidationErrorIfZodError = (error: unknown, message: string): void => {

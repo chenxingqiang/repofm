@@ -13,6 +13,9 @@ export const defaultFilePathMap: Record<repofmOutputStyle, string> = {
 
 // Base config schema
 export const repofmConfigBaseSchema = z.object({
+  patterns: z.array(z.string()).optional(),
+  dot: z.boolean().optional(),
+  followSymlinks: z.boolean().optional(),
   output: z
     .object({
       filePath: z.string().optional(),

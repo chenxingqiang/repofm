@@ -1,239 +1,175 @@
+import { describe, expect, test, vi, beforeEach, afterEach } from 'vitest';
 import * as fs from 'node:fs/promises';
 import path from 'node:path';
-import iconv from 'iconv-lite';
 import { isBinary } from 'istextorbinary';
 import jschardet from 'jschardet';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import iconv from 'iconv-lite';
 import { collectFiles } from '../../../src/core/file/fileCollect.js';
+import { createTempDir, removeTempDir } from '../../testing/testUtils.js';
 import { logger } from '../../../src/shared/logger.js';
 
-vi.mock('node:fs/promises');
 vi.mock('istextorbinary');
 vi.mock('jschardet');
 vi.mock('iconv-lite');
-vi.mock('../../../src/shared/logger');
+vi.mock('../../../src/shared/logger.js');
 
 describe('fileCollect', () => {
-  beforeEach(() => {
+  let tempDir: string;
+
+  beforeEach(async () => {
     vi.resetAllMocks();
-  });
+    tempDir = await createTempDir();
 
-  afterEach(() => {
-    vi.resetAllMocks();
-  });
-
-  it('should collect non-binary files', async () => {
-    const mockFilePaths = ['file1.txt', 'file2.txt'];
-    const mockRootDir = '/root';
-
-    vi.mocked(isBinary).mockReturnValue(false);
-    vi.mocked(fs.readFile).mockResolvedValue(Buffer.from('file content'));
-    vi.mocked(jschardet.detect).mockReturnValue({ encoding: 'utf-8', confidence: 0.99 });
-    vi.mocked(iconv.decode).mockReturnValue('decoded content');
-
-    const result = await collectFiles(mockFilePaths, mockRootDir);
-
-    expect(result).toEqual([
-      { path: 'file1.txt', content: 'decoded content' },
-      { path: 'file2.txt', content: 'decoded content' },
-    ]);
-  });
-
-  it('should skip binary files', async () => {
-    const mockFilePaths = ['binary.bin', 'text.txt'];
-    const mockRootDir = '/root';
-
-    vi.mocked(isBinary).mockReturnValueOnce(true).mockReturnValueOnce(false);
-    vi.mocked(fs.readFile).mockResolvedValue(Buffer.from('file content'));
-    vi.mocked(jschardet.detect).mockReturnValue({ encoding: 'utf-8', confidence: 0.99 });
-    vi.mocked(iconv.decode).mockReturnValue('decoded content');
-
-    const result = await collectFiles(mockFilePaths, mockRootDir);
-
-    expect(result).toEqual([{ path: 'text.txt', content: 'decoded content' }]);
-    expect(logger.debug).toHaveBeenCalledWith(`Skipping binary file: ${path.resolve('/root/binary.bin')}`);
-  });
-
-  it('should handle file read errors', async () => {
-    const mockFilePaths = ['error.txt'];
-    const mockRootDir = '/root';
-
-    vi.mocked(isBinary).mockReturnValue(false);
-    vi.mocked(fs.readFile).mockRejectedValue(new Error('Read error'));
-
-    const result = await collectFiles(mockFilePaths, mockRootDir);
-
-    expect(result).toEqual([]);
-    expect(logger.warn).toHaveBeenCalledWith(
-      `Failed to read file: ${path.resolve('/root/error.txt')}`,
-      expect.any(Error),
-    );
-  });
-});
-
-
-// tests/core/file/fileCollect.test.ts
-
-vi.mock('node:fs/promises');
-vi.mock('istextorbinary');
-vi.mock('jschardet');
-vi.mock('iconv-lite');
-vi.mock('../../../src/shared/logger');
-
-describe('fileCollect', () => {
-  const mockRootDir = '/test/dir';
-  const mockFiles = {
-    'test.txt': 'UTF-8 content',
-    'test-gb2312.txt': Buffer.from('GB2312 content'),
-    'test.bin': Buffer.from([0x00, 0x01, 0x02, 0x03]),
-    'test-empty.txt': '',
-    'test-large.txt': 'x'.repeat(1024 * 1024), // 1MB file
-    'test-permission.txt': 'Permission denied content',
-    'test-corrupted.txt': Buffer.from([0xFF, 0xFE, 0x00]),
-  };
-
-  beforeEach(() => {
-    vi.resetAllMocks();
-    setupMocks();
-  });
-
-  function setupMocks() {
-    // Mock file reading
-    vi.mocked(fs.readFile).mockImplementation(async (filePath) => {
-      const fileName = path.basename(filePath as string);
-      const content = mockFiles[fileName as keyof typeof mockFiles];
-      if (fileName === 'test-permission.txt') {
-        throw new Error('EACCES: permission denied');
-      }
-      if (content === undefined) {
-        throw new Error('ENOENT: file not found');
-      }
-      return Buffer.from(content);
+    // Default mocks
+    vi.mocked(isBinary).mockImplementation((filename, buffer) => {
+        return false;
     });
+    vi.mocked(jschardet.detect).mockReturnValue({
+        encoding: 'utf-8',
+        confidence: 1.0
+    });
+    vi.mocked(iconv.decode).mockImplementation((buffer) => buffer.toString());
+    vi.mocked(logger.debug).mockImplementation(() => undefined);
+    vi.mocked(logger.error).mockImplementation(() => undefined);
+    vi.mocked(logger.warn).mockImplementation(() => undefined);
+    vi.mocked(logger.trace).mockImplementation(() => undefined);
+  });
 
-    // Mock binary detection
-    vi.mocked(isBinary).mockImplementation((filePath, buffer) => {
-      if (typeof filePath === 'string' && filePath.endsWith('.bin')) {
+  afterEach(async () => {
+    await removeTempDir(tempDir);
+  });
+
+  test('collects multiple files successfully', async () => {
+    const files = {
+      'test1.txt': 'Content 1',
+      'test2.txt': 'Content 2'
+    };
+
+    for (const [name, content] of Object.entries(files)) {
+      const filePath = path.join(tempDir, name);
+      await fs.writeFile(filePath, content);
+    }
+
+    const filePaths = Object.keys(files).map(name => path.join(tempDir, name));
+    const results = await collectFiles(filePaths);
+
+    expect(results).toHaveLength(2);
+    for (let i = 0; i < results.length; i++) {
+      const name = path.basename(results[i].path);
+      expect(results[i].content).toBe(files[name]);
+      expect(results[i].size).toBe(files[name].length);
+    }
+  });
+
+  test('skips binary files', async () => {
+    const filePath = path.join(tempDir, 'test.bin');
+    await fs.writeFile(filePath, Buffer.from([0x00, 0x01, 0x02, 0x03]));
+
+    vi.mocked(isBinary).mockImplementation((filename, buffer) => {
         return true;
-      }
-      return buffer instanceof Buffer && buffer[0] === 0x00;
     });
 
-    // Mock character detection
-    vi.mocked(jschardet.detect).mockImplementation((buffer) => {
-      if (buffer instanceof Buffer && buffer[0] === 0xFF) {
-        return { encoding: null, confidence: 0 };
-      }
-      const fileName = Array.from(Object.entries(mockFiles)).find(
-        ([, content]) => content === buffer || (buffer instanceof Buffer && content instanceof Buffer && buffer.equals(content))
-      )?.[0];
-      return {
-        encoding: fileName?.includes('gb2312') ? 'gb2312' : 'utf-8',
-        confidence: 0.99,
-      };
-    });
-
-    // Mock character decoding
-    vi.mocked(iconv.decode).mockImplementation((buffer, encoding) => {
-      if (encoding === 'gb2312') {
-        return 'Decoded GB2312 content';
-      }
-      return buffer.toString();
-    });
-  }
-
-  it('should collect non-binary files with correct encoding detection', async () => {
-    const filePaths = ['test.txt', 'test-gb2312.txt'];
-    const result = await collectFiles(filePaths, mockRootDir);
-
-    expect(result).toEqual([
-      { path: 'test.txt', content: 'UTF-8 content' },
-      { path: 'test-gb2312.txt', content: 'Decoded GB2312 content' },
-    ]);
-  });
-
-  it('should skip binary files', async () => {
-    const filePaths = ['test.txt', 'test.bin'];
-    const result = await collectFiles(filePaths, mockRootDir);
-
-    expect(result).toHaveLength(1);
-    expect(result[0].path).toBe('test.txt');
+    const results = await collectFiles([filePath]);
+    expect(results).toHaveLength(0);
     expect(logger.debug).toHaveBeenCalledWith(expect.stringContaining('Skipping binary file'));
   });
 
-  it('should handle empty files', async () => {
-    const filePaths = ['test-empty.txt'];
-    const result = await collectFiles(filePaths, mockRootDir);
+  test('handles empty files', async () => {
+    const filePath = path.join(tempDir, 'empty.txt');
+    await fs.writeFile(filePath, '');
 
-    expect(result).toHaveLength(1);
-    expect(result[0].content).toBe('');
+    const results = await collectFiles([filePath]);
+
+    expect(results).toHaveLength(1);
+    expect(results[0]).toEqual({
+      path: filePath,
+      content: '',
+      size: 0
+    });
   });
 
-  it('should handle large files', async () => {
-    const filePaths = ['test-large.txt'];
-    const result = await collectFiles(filePaths, mockRootDir);
+  test('handles different encodings', async () => {
+    const filePath = path.join(tempDir, 'encoded.txt');
+    const content = 'Hello, ';
+    await fs.writeFile(filePath, content);
 
-    expect(result).toHaveLength(1);
-    expect(result[0].content.length).toBe(1024 * 1024);
+    vi.mocked(jschardet.detect).mockReturnValue({
+        encoding: 'utf-8',
+        confidence: 1.0
+    });
+    vi.mocked(iconv.decode).mockReturnValue(content);
+
+    const results = await collectFiles([filePath]);
+
+    expect(results).toHaveLength(1);
+    expect(results[0].content).toBe(content);
   });
 
-  it('should handle permission errors', async () => {
-    const filePaths = ['test-permission.txt'];
-    const result = await collectFiles(filePaths, mockRootDir);
+  test('ignores errors when configured', async () => {
+    const validPath = path.join(tempDir, 'valid.txt');
+    await fs.writeFile(validPath, 'valid content');
 
-    expect(result).toHaveLength(0);
-    expect(logger.warn).toHaveBeenCalledWith(
-      expect.stringContaining('Failed to read file'),
-      expect.any(Error)
+    const invalidPath = path.join(tempDir, 'invalid.txt');
+
+    const results = await collectFiles(
+      [invalidPath, validPath],
+      { ignoreErrors: true }
+    );
+
+    expect(results).toHaveLength(1);
+    expect(results[0].path).toBe(validPath);
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.stringContaining('Error reading file'),
+      expect.any(String)
     );
   });
 
-  it('should handle corrupted files', async () => {
-    const filePaths = ['test-corrupted.txt'];
-    const result = await collectFiles(filePaths, mockRootDir);
+  test('throws error when not ignoring errors', async () => {
+    const invalidPath = path.join(tempDir, 'nonexistent.txt');
 
-    expect(result).toHaveLength(1);
-    // Should still try to decode with UTF-8 as fallback
-    expect(result[0].content).toBeTruthy();
+    await expect(collectFiles([invalidPath])).rejects.toThrow();
   });
 
-  it('should process files concurrently', async () => {
-    const filePaths = Array(100).fill('test.txt');
-    const startTime = Date.now();
-    await collectFiles(filePaths, mockRootDir);
-    const endTime = Date.now();
+  test('preserves file order', async () => {
+    const files = {
+      'c.txt': 'c',
+      'a.txt': 'a',
+      'b.txt': 'b'
+    };
 
-    // Processing time should be reasonable for concurrent operations
-    expect(endTime - startTime).toBeLessThan(1000);
+    for (const [name, content] of Object.entries(files)) {
+      await fs.writeFile(path.join(tempDir, name), content);
+    }
+
+    const filePaths = ['c.txt', 'a.txt', 'b.txt'].map(name => path.join(tempDir, name));
+    const results = await collectFiles(filePaths);
+
+    expect(results).toHaveLength(3);
+    expect(results.map(r => path.basename(r.path))).toEqual(['c.txt', 'a.txt', 'b.txt']);
   });
 
-  it('should handle files with different line endings', async () => {
-    vi.mocked(fs.readFile).mockResolvedValueOnce(Buffer.from('line1\r\nline2\nline3\rline4'));
-    const filePaths = ['test-endings.txt'];
-    const result = await collectFiles(filePaths, mockRootDir);
+  test('handles files with special characters in path', async () => {
+    const fileName = 'special!@#$%^&()_+.txt';
+    const filePath = path.join(tempDir, fileName);
+    const content = 'special content';
+    
+    await fs.writeFile(filePath, content);
 
-    expect(result).toHaveLength(1);
-    expect(result[0].content).toContain('\r\n');
-    expect(result[0].content).toContain('\n');
-    expect(result[0].content).toContain('\r');
+    const results = await collectFiles([filePath]);
+
+    expect(results).toHaveLength(1);
+    expect(results[0].path).toBe(filePath);
+    expect(results[0].content).toBe(content);
   });
 
-  it('should handle network paths', async () => {
-    const networkPath = isWindows ? '\\\\server\\share\\file.txt' : '/mnt/server/file.txt';
-    vi.mocked(fs.readFile).mockResolvedValueOnce(Buffer.from('network content'));
-    const filePaths = [networkPath];
-    const result = await collectFiles([networkPath], mockRootDir);
+  test('handles files with zero permissions', async () => {
+    const filePath = path.join(tempDir, 'noperm.txt');
+    await fs.writeFile(filePath, 'content');
+    await fs.chmod(filePath, 0o000);
 
-    expect(result).toHaveLength(1);
-    expect(result[0].path).toBe(networkPath);
-  });
+    await expect(collectFiles([filePath])).rejects.toThrow();
 
-  it('should handle symbolic links', async () => {
-    vi.mocked(fs.readFile).mockResolvedValueOnce(Buffer.from('symlink content'));
-    const filePaths = ['test-link.txt'];
-    const result = await collectFiles(filePaths, mockRootDir);
-
-    expect(result).toHaveLength(1);
-    expect(result[0].content).toBe('symlink content');
+    // Restore permissions for cleanup
+    await fs.chmod(filePath, 0o666);
   });
 });

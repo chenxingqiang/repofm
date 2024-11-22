@@ -1,14 +1,24 @@
 #!/usr/bin/env node
 
-/*
-Add this file so we can use `node bin/repofm` or `node bin/repofm.js`
-instead of `node bin/repofm.cjs`.
+import { fileURLToPath } from "url";
+import { dirname, join } from "path";
+import { createRequire } from "module";
 
-This file should only used for development.
-*/
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const require = createRequire(import.meta.url);
 
-'use strict';
+async function main() {
+  try {
+    const cli = await import(join(__dirname, "../lib/cli.js"));
+    await cli.default();
+  } catch (error) {
+    console.error("Error loading CLI:", error);
+    process.exit(1);
+  }
+}
 
-import { run } from '../lib/cli/cliRun.js';
-
-run();
+main().catch((error) => {
+  console.error("Error:", error);
+  process.exit(1);
+});

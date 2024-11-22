@@ -1,383 +1,203 @@
-
-
-
-
-// tests/core/file/fileSearch.edge.test.ts
-
+import { describe, expect, test, beforeEach, afterEach } from 'vitest';
+import * as fs from 'node:fs/promises';
 import path from 'node:path';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { searchFiles } from '../../../src/core/file/fileSearch';
-import { logger } from '../../../src/shared/logger';
-import { createMockConfig } from '../../testing/testUtils';
+import { searchFiles } from '../../../src/core/file/fileSearch.js';
+import { createTempDir, removeTempDir } from '../../testing/testUtils.js';
 
-vi.mock('fs/promises');
-vi.mock('globby');
-vi.mock('../../../src/shared/logger');
+describe('fileSearch edge cases', () => {
+  let tempDir: string;
 
-describe('fileSearch - Edge Cases', () => {
-  beforeEach(() => {
-    vi.resetAllMocks();
+  beforeEach(async () => {
+    tempDir = await createTempDir();
   });
 
-  describe('Special Characters and Encodings', () => {
-    it('should handle paths with special characters', async () => {
-      const mockConfig = createMockConfig();
-      const specialChars = [
-        'file with spaces.js',
-        'file#with#hash.js',
-        'file@with@at.js',
-        'file(with)parentheses.js',
-        'file[with]brackets.js',
-        'file{with}braces.js',
-        'file+with+plus.js',
-        'file=with=equals.js',
-        'file^with^caret.js',
-        'file$with$dollar.js',
-      ];
-
-      vi.mocked(globby).mockResolvedValue(specialChars);
-
-      const result = await searchFiles('/test/dir', mockConfig);
-      expect(result).toEqual(specialChars.sort());
-    });
-
-    it('should handle paths with unicode characters', async () => {
-      const mockConfig = createMockConfig();
-      const unicodePaths = [
-        '文件.js',
-        'ファイル.js',
-        'файл.js',
-        '파일.js',
-        'ملف.js',
-        'αρχείο.js',
-      ];
-
-      vi.mocked(globby).mockResolvedValue(unicodePaths);
-
-      const result = await searchFiles('/test/dir', mockConfig);
-      expect(result).toEqual(unicodePaths.sort());
-    });
-
-    it('should handle paths with emoji characters', async () => {
-      const mockConfig = createMockConfig();
-      const emojiPaths = [
-        '📁folder/file.js',
-        '⭐star.js',
-        '🎉party.js',
-        '💻code.js',
-      ];
-
-      vi.mocked(globby).mockResolvedValue(emojiPaths);
-
-      const result = await searchFiles('/test/dir', mockConfig);
-      expect(result).toEqual(emojiPaths.sort());
-    });
+  afterEach(async () => {
+    await removeTempDir(tempDir);
   });
 
-  describe('Path Length Edge Cases', () => {
-    it('should handle very long file paths', async () => {
-      const mockConfig = createMockConfig();
-      const longPath = 'a'.repeat(255) + '.js'; // Maximum filename length in many filesystems
+  test('handles deep directory structures', async () => {
+    // Create a deep directory structure
+    const depth = 20;
+    let currentPath = tempDir;
+    for (let i = 0; i < depth; i++) {
+      currentPath = path.join(currentPath, `level${i}`);
+      await fs.mkdir(currentPath);
+      await fs.writeFile(path.join(currentPath, 'file.txt'), 'content');
+    }
 
-      vi.mocked(globby).mockResolvedValue([longPath]);
-
-      const result = await searchFiles('/test/dir', mockConfig);
-      expect(result).toContain(longPath);
-    });
-
-    it('should handle deeply nested paths', async () => {
-      const mockConfig = createMockConfig();
-      const parts = Array(50).fill('subdir'); // Very deep nesting
-      const deepPath = path.join(...parts, 'file.js');
-
-      vi.mocked(globby).mockResolvedValue([deepPath]);
-
-      const result = await searchFiles('/test/dir', mockConfig);
-      expect(result).toContain(deepPath);
-    });
+    const files = await searchFiles(tempDir);
+    expect(files).toHaveLength(depth);
+    expect(files[depth - 1]).toContain(`level${depth - 1}/file.txt`);
   });
 
-  describe('Pattern Matching Edge Cases', () => {
-    it('should handle complex glob patterns', async () => {
-      const mockConfig = createMockConfig({
-        include: [
-          '**/*.{js,jsx,ts,tsx}',
-          '!**/__tests__/**',
-          '!**/*.test.*',
-          '!**/*.spec.*',
-          '**/index.*',
-        ],
-      });
-
-      const files = [
-        'src/index.js',
-        'src/file.js',
-        'src/file.test.js',
-        'src/__tests__/file.js',
-        'src/file.spec.js',
-        'src/components/index.tsx',
-      ];
-
-      vi.mocked(globby).mockResolvedValue(['src/index.js', 'src/components/index.tsx']);
-
-      const result = await searchFiles('/test/dir', mockConfig);
-      expect(result).toEqual(['src/components/index.tsx', 'src/index.js']);
-    });
-
-    it('should handle overlapping include/ignore patterns', async () => {
-      const mockConfig = createMockConfig({
-        include: ['**/*.js', '!**/*.min.js', '**/*.min.js'],
-        ignore: {
-          customPatterns: ['vendor/*.min.js', '!vendor/important.min.js'],
-        },
-      });
-
-      const files = [
-        'file.js',
-        'file.min.js',
-        'vendor/lib.min.js',
-        'vendor/important.min.js',
-      ];
-
-      vi.mocked(globby).mockResolvedValue([
-        'file.js',
-        'file.min.js',
-        'vendor/important.min.js',
-      ]);
-
-      const result = await searchFiles('/test/dir', mockConfig);
-      expect(result).toContain('vendor/important.min.js');
-      expect(result).not.toContain('vendor/lib.min.js');
-    });
-  });
-
-  describe('System and Hidden Files', () => {
-    it('should handle system and hidden files correctly', async () => {
-      const mockConfig = createMockConfig({
-        include: ['**/*'],
-      });
-
-      const files = [
-        '.git/config',
-        '.gitignore',
-        '.DS_Store',
-        '$RECYCLE.BIN',
-        'Thumbs.db',
-        '~temp.txt',
-      ];
-
-      vi.mocked(globby).mockResolvedValue(['.gitignore']); // Only .gitignore should be included
-
-      const result = await searchFiles('/test/dir', mockConfig);
-      expect(result).toEqual(['.gitignore']);
-    });
-  });
-
-  describe('Error Handling Edge Cases', () => {
-    it('should handle cyclic symbolic links', async () => {
-      const mockConfig = createMockConfig();
-
-      vi.mocked(globby).mockImplementation(() => {
-                throw new Error('ELOOP: too many symbolic links');
-              });
-
-await expect(searchFiles('/test/dir', mockConfig)).rejects.toThrow();
-expect(logger.error).toHaveBeenCalledWith(
-  expect.stringContaining('too many symbolic links'),
-  expect.any(Error)
-);
-    });
-
-it('should handle temporary unavailable resources', async () => {
-  const mockConfig = createMockConfig();
-
-  vi.mocked(globby).mockImplementation(() => {
-    throw new Error('EAGAIN: resource temporarily unavailable');
-  });
-
-  await expect(searchFiles('/test/dir', mockConfig)).rejects.toThrow();
-  expect(logger.error).toHaveBeenCalled();
-});
-
-it('should handle out of memory errors', async () => {
-  const mockConfig = createMockConfig();
-
-  vi.mocked(globby).mockImplementation(() => {
-    const error = new Error('ENOMEM: out of memory');
-    error.name = 'ResourceError';
-    throw error;
-  });
-
-  await expect(searchFiles('/test/dir', mockConfig)).rejects.toThrow();
-  expect(logger.error).toHaveBeenCalled();
-});
-  });
-
-describe('File System Limits', () => {
-  it('should handle maximum number of open files', async () => {
-    const mockConfig = createMockConfig();
-    const manyFiles = Array.from({ length: 10000 }, (_, i) => `file${i}.js`);
-
-    vi.mocked(globby).mockResolvedValue(manyFiles);
-
-    const result = await searchFiles('/test/dir', mockConfig);
-    expect(result).toHaveLength(10000);
-    expect(result[0]).toBe('file0.js');
-    expect(result[9999]).toBe('file9999.js');
-  });
-
-  it('should handle maximum path length limits', async () => {
-    const mockConfig = createMockConfig();
-    // Create a path that exceeds typical OS limits
-    const longPath = 'a'.repeat(4096) + '.js';
-
-    vi.mocked(globby).mockImplementation(() => {
-      throw new Error('ENAMETOOLONG: file name too long');
-    });
-
-    await expect(searchFiles('/test/dir', mockConfig)).rejects.toThrow();
-    expect(logger.error).toHaveBeenCalled();
-  });
-});
-
-describe('Race Conditions', () => {
-  it('should handle files that disappear during processing', async () => {
-    const mockConfig = createMockConfig();
-
-    let firstCall = true;
-    vi.mocked(globby).mockImplementation(async () => {
-      if (firstCall) {
-        firstCall = false;
-        return ['file1.js', 'file2.js'];
-      }
-      throw new Error('ENOENT: no such file or directory');
-    });
-
-    await expect(searchFiles('/test/dir', mockConfig)).rejects.toThrow();
-    expect(logger.error).toHaveBeenCalled();
-  });
-
-  it('should handle files that change permissions during processing', async () => {
-    const mockConfig = createMockConfig();
-
-    let firstCall = true;
-    vi.mocked(globby).mockImplementation(async () => {
-      if (firstCall) {
-        firstCall = false;
-        return ['file1.js'];
-      }
-      throw new Error('EACCES: permission denied');
-    });
-
-    await expect(searchFiles('/test/dir', mockConfig)).rejects.toThrow();
-    expect(logger.error).toHaveBeenCalled();
-  });
-});
-
-describe('Pattern Validation', () => {
-  it('should handle invalid glob patterns', async () => {
-    const mockConfig = createMockConfig({
-      include: ['[invalid-pattern'],
-    });
-
-    vi.mocked(globby).mockImplementation(() => {
-      throw new Error('Invalid pattern: [invalid-pattern');
-    });
-
-    await expect(searchFiles('/test/dir', mockConfig)).rejects.toThrow();
-    expect(logger.error).toHaveBeenCalled();
-  });
-
-  it('should handle empty glob patterns', async () => {
-    const mockConfig = createMockConfig({
-      include: [''],
-    });
-
-    const result = await searchFiles('/test/dir', mockConfig);
-    expect(result).toEqual([]);
-  });
-
-  it('should handle patterns with only wildcards', async () => {
-    const mockConfig = createMockConfig({
-      include: ['**'],
-    });
-
-    vi.mocked(globby).mockResolvedValue([
-      'file1.js',
-      'dir/file2.js',
-    ]);
-
-    const result = await searchFiles('/test/dir', mockConfig);
-    expect(result).toEqual(['dir/file2.js', 'file1.js']);
-  });
-});
-
-describe('Filesystem Type Edge Cases', () => {
-  it('should handle case-sensitive vs case-insensitive filesystems', async () => {
-    const mockConfig = createMockConfig();
-
-    vi.mocked(globby).mockResolvedValue([
-      'File.js',
-      'file.js',
-      'FILE.js',
-    ]);
-
-    const result = await searchFiles('/test/dir', mockConfig);
-    expect(result).toHaveLength(3);
-    expect(new Set(result)).toHaveLength(3); // All entries should be unique
-  });
-
-  it('should handle non-standard filesystems', async () => {
-    const mockConfig = createMockConfig();
-    const nonStandardPaths = [
-      'extended-attributes.js',
-      'alternate-data-streams.js:stream',
-      'resource-fork/file.js',
+  test('handles files with special characters in names', async () => {
+    const specialFiles = [
+      'file with spaces.txt',
+      'file_with_!@#$%^&*()_+.txt',
+      '文件名.txt',
+      'file.with.multiple.dots.txt',
+      'file-with-dashes.txt',
+      'file_with_underscores.txt',
+      '.hidden-file.txt',
+      'UPPERCASE.txt',
+      'lowercase.txt',
+      'MixedCase.txt'
     ];
 
-    vi.mocked(globby).mockResolvedValue(nonStandardPaths);
+    for (const file of specialFiles) {
+      await fs.writeFile(path.join(tempDir, file), 'content');
+    }
 
-    const result = await searchFiles('/test/dir', mockConfig);
-    expect(result).toEqual(nonStandardPaths);
+    const files = await searchFiles(tempDir, { dot: true });
+    expect(files).toHaveLength(specialFiles.length);
+    expect(files.sort()).toEqual(specialFiles.sort());
   });
 
-  it('should handle network filesystem timeouts', async () => {
-    const mockConfig = createMockConfig();
+  test('handles empty directories', async () => {
+    const files = await searchFiles(tempDir);
+    expect(files).toHaveLength(0);
+  });
 
-    vi.mocked(globby).mockImplementation(() => {
-      throw new Error('ETIMEDOUT: operation timed out');
+  test('handles directories with only empty subdirectories', async () => {
+    await fs.mkdir(path.join(tempDir, 'empty1'));
+    await fs.mkdir(path.join(tempDir, 'empty2'));
+    await fs.mkdir(path.join(tempDir, 'empty1', 'empty1.1'));
+
+    const files = await searchFiles(tempDir);
+    expect(files).toHaveLength(0);
+  });
+
+  test('handles large number of files in single directory', async () => {
+    const fileCount = 1000;
+    const promises: Promise<void>[] = [];
+    for (let i = 0; i < fileCount; i++) {
+      promises.push(fs.writeFile(path.join(tempDir, `file${i}.txt`), 'content'));
+    }
+    await Promise.all(promises);
+
+    const files = await searchFiles(tempDir);
+    expect(files).toHaveLength(fileCount);
+    expect(files[0]).toBe('file0.txt');
+    expect(files[fileCount - 1]).toBe(`file${fileCount - 1}.txt`);
+  });
+
+  test('handles cyclic symbolic links when followSymlinks is false', async () => {
+    const subDir = path.join(tempDir, 'subdir');
+    await fs.mkdir(subDir);
+    await fs.writeFile(path.join(subDir, 'file.txt'), 'content');
+    await fs.symlink(subDir, path.join(subDir, 'cycle'));
+
+    const files = await searchFiles(tempDir, { followSymlinks: false });
+    expect(files).toHaveLength(1);
+    expect(files[0]).toBe('subdir/file.txt');
+  });
+
+  test('handles files with same name in different directories', async () => {
+    const dirs = ['dir1', 'dir2', 'dir1/sub1', 'dir2/sub2'];
+    for (const dir of dirs) {
+      await fs.mkdir(path.join(tempDir, dir), { recursive: true });
+      await fs.writeFile(path.join(tempDir, dir, 'file.txt'), 'content');
+    }
+
+    const files = await searchFiles(tempDir);
+    expect(files).toHaveLength(4);
+    expect(files).toContain('dir1/file.txt');
+    expect(files).toContain('dir2/file.txt');
+    expect(files).toContain('dir1/sub1/file.txt');
+    expect(files).toContain('dir2/sub2/file.txt');
+  });
+
+  test('handles files with zero size', async () => {
+    await fs.writeFile(path.join(tempDir, 'empty.txt'), '');
+    await fs.writeFile(path.join(tempDir, 'notempty.txt'), 'content');
+
+    const files = await searchFiles(tempDir);
+    expect(files).toHaveLength(2);
+    expect(files).toContain('empty.txt');
+    expect(files).toContain('notempty.txt');
+  });
+
+  test('handles complex glob patterns', async () => {
+    const files = [
+      'file1.txt',
+      'file2.js',
+      'dir1/file3.txt',
+      'dir1/file4.js',
+      'dir2/file5.txt',
+      'dir2/file6.js',
+      'dir1/sub/file7.txt',
+      'dir2/sub/file8.js'
+    ];
+
+    for (const file of files) {
+      const filePath = path.join(tempDir, file);
+      await fs.mkdir(path.dirname(filePath), { recursive: true });
+      await fs.writeFile(filePath, 'content');
+    }
+
+    const testCases = [
+      {
+        patterns: ['**/*.txt'],
+        expected: files.filter(f => f.endsWith('.txt'))
+      },
+      {
+        patterns: ['dir1/**/*.js'],
+        expected: files.filter(f => f.startsWith('dir1/') && f.endsWith('.js'))
+      },
+      {
+        patterns: ['**/sub/*.{txt,js}'],
+        expected: files.filter(f => f.includes('/sub/'))
+      },
+      {
+        patterns: ['dir2/**/file[5-8].*'],
+        expected: files.filter(f => f.startsWith('dir2/') && /file[5-8]\./.test(f))
+      }
+    ];
+
+    for (const { patterns, expected } of testCases) {
+      const result = await searchFiles(tempDir, { patterns });
+      expect(result.sort()).toEqual(expected.sort());
+    }
+  });
+
+  test('handles custom ignore patterns', async () => {
+    const files = [
+      'file1.txt',
+      'file1.js',
+      'test/file2.txt',
+      'test/file2.js',
+      'build/file3.txt',
+      'build/file3.js',
+      'src/file4.txt',
+      'src/file4.js'
+    ];
+
+    for (const file of files) {
+      const filePath = path.join(tempDir, file);
+      await fs.mkdir(path.dirname(filePath), { recursive: true });
+      await fs.writeFile(filePath, 'content');
+    }
+
+    const result = await searchFiles(tempDir, {
+      ignore: {
+        patterns: ['**/test/**', '**/build/**', '**/*.js'],
+        useGitignore: false,
+        useDefaultPatterns: false
+      }
     });
 
-    await expect(searchFiles('/test/dir', mockConfig)).rejects.toThrow();
-    expect(logger.error).toHaveBeenCalled();
-  });
-});
-
-describe('Memory Usage', () => {
-  it('should handle large directory listings efficiently', async () => {
-    const mockConfig = createMockConfig();
-    const largeFileList = Array.from(
-      { length: 100000 },
-      (_, i) => `file${i}.js`
-    );
-
-    vi.mocked(globby).mockResolvedValue(largeFileList);
-
-    const result = await searchFiles('/test/dir', mockConfig);
-    expect(result).toHaveLength(100000);
+    expect(result).toHaveLength(2);
+    expect(result).toContain('file1.txt');
+    expect(result).toContain('src/file4.txt');
   });
 
-  it('should handle deep recursion efficiently', async () => {
-    const mockConfig = createMockConfig();
-    const deepPaths = Array.from(
-      { length: 1000 },
-      (_, i) => Array(i + 1).fill('dir').join(path.sep) + path.sep + 'file.js'
-    );
+  test('handles file names at max path length', async () => {
+    // Create a file with a name that approaches the max path length
+    const maxFileName = 'x'.repeat(255); // max file name length in most filesystems
+    await fs.writeFile(path.join(tempDir, maxFileName), 'content');
 
-    vi.mocked(globby).mockResolvedValue(deepPaths);
-
-    const result = await searchFiles('/test/dir', mockConfig);
-    expect(result).toHaveLength(1000);
+    const files = await searchFiles(tempDir);
+    expect(files).toHaveLength(1);
+    expect(files[0]).toBe(maxFileName);
   });
-});
 });

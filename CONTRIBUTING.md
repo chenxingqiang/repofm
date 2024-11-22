@@ -2,7 +2,6 @@
 
 Thanks for your interest in **repofm**! 🚀 We’d love your help to make it even better. Here’s how you can get involved:
 
-
 - **Create an Issue**: Spot a bug? Have an idea for a new feature? Let us know by creating an issue.
 - **Submit a Pull Request**: Found something to fix or improve? Jump in and submit a PR!
 - **Spread the Word**: Share your experience with repofm on social media, blogs, or with your tech community.
@@ -27,7 +26,7 @@ Before submitting a Pull Request, please ensure:
 To set up repofm for local development:
 
 ```bash
-git clone https://github.com/chenxingqiang/repo.freeme.git
+git clone https://github.com/chenxingqiang/repofm.git
 cd repofm
 npm install
 ```

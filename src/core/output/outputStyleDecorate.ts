@@ -51,6 +51,6 @@ ${config.output.showLineNumbers ? '- Line numbers have been added to the beginni
 
 export const generateSummaryAdditionalInfo = (): string => {
   return `
-For more information about repofm, visit: https://github.com/chenxingqiang/repo.freeme
+For more information about repofm, visit: https://github.com/chenxingqiang/repofm
 `.trim();
 };

@@ -17,26 +17,34 @@ const onCancelOperation = () => {
 };
 
 export const runInitAction = async (rootDir: string, isGlobal: boolean): Promise<void> => {
-  prompts.intro(pc.bold(`Welcome to repofm ${isGlobal ? 'Global ' : ''}Configuration!`));
-
   try {
-    // Step 1: Ask if user wants to create a config file
-    const isCreatedConfig = await createConfigFile(rootDir, isGlobal);
+    const targetDir = isGlobal ? await getGlobalDirectory() : rootDir;
 
-    // Step 2: Ask if user wants to create a .repofmignore file
-    const isCreatedIgnoreFile = await createIgnoreFile(rootDir, isGlobal);
+    prompts.intro(pc.bold(`Welcome to repofm ${isGlobal ? 'Global ' : ''}Configuration!`));
 
-    if (!isCreatedConfig && !isCreatedIgnoreFile) {
-      prompts.outro(
-        pc.yellow('No files were created. You can run this command again when you need to create configuration files.'),
-      );
-    } else {
-      prompts.outro(pc.green('Initialization complete! You can now use repofm with your specified settings.'));
+    // 确认是否继续
+    const shouldContinue = await prompts.confirm({
+      message: `Initialize repofm in ${pc.cyan(targetDir)}?`,
+      initialValue: true,
+    });
+
+    if (!shouldContinue) {
+      prompts.cancel('Initialization cancelled.');
+      return;
     }
+
+    // 创建配置文件
+    await createConfigFile(targetDir, isGlobal);
+
+    // 创建忽略文件
+    await createIgnoreFile(targetDir, isGlobal);
+
+    prompts.outro(pc.green('Initialization completed successfully!'));
   } catch (error) {
-    logger.error('An error occurred during initialization:', error);
+    logger.error('Error during initialization:', error instanceof Error ? error.message : String(error));
+    throw error;
   }
-};
+}
 
 export async function createConfigFile(rootDir: string, isGlobal: boolean): Promise<boolean> {
   const isCancelled = false;

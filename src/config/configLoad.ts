@@ -30,7 +30,7 @@ export const loadFileConfig = async (rootDir: string, argConfigPath: string | nu
 
   const fullPath = path.resolve(rootDir, configPath);
 
-  logger.trace('Loading local config from:', fullPath);
+  logger.trace(`Loading local config from: ${fullPath}`);
 
   // Check local file existence
   const isLocalFileExists = await fs
@@ -45,7 +45,7 @@ export const loadFileConfig = async (rootDir: string, argConfigPath: string | nu
   if (useDefaultConfig) {
     // Try to load global config
     const globalConfigPath = getGlobalConfigPath();
-    logger.trace('Loading global config from:', globalConfigPath);
+    logger.trace(`Loading global config from: ${globalConfigPath}`);
 
     const isGlobalFileExists = await fs
       .stat(globalConfigPath)
@@ -57,7 +57,7 @@ export const loadFileConfig = async (rootDir: string, argConfigPath: string | nu
     }
 
     logger.note(
-      `No custom config found at ${configPath} or global config at ${globalConfigPath}.\nYou can add a config file for additional settings. Please check https://github.com/chenxingqiang/repo.freeme for more information.`,
+      `No custom config found at ${configPath} or global config at ${globalConfigPath}.\nYou can add a config file for additional settings. Please check https://github.com/chenxingqiang/repofm for more information.`,
     );
     return {};
   }
@@ -86,7 +86,7 @@ export const mergeConfigs = (
   fileConfig: repofmConfigFile,
   cliConfig: repofmConfigCli,
 ): repofmConfigMerged => {
-  logger.trace('Default config:', defaultConfig);
+  logger.trace(`Default config: ${JSON.stringify(defaultConfig)}`);
 
   const baseConfig = defaultConfig;
 
@@ -130,3 +130,16 @@ export const mergeConfigs = (
     throw error;
   }
 };
+
+export interface LoadConfigOptions {
+  global?: boolean;
+  verbose?: boolean;
+}
+
+export async function loadConfig(configPath: string, options: LoadConfigOptions = {}) {
+  // Implementation here
+  const config = {
+    // Your config implementation
+  };
+  return config;
+}

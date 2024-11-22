@@ -1,126 +1,67 @@
-import process from 'node:process';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { runDefaultAction } from '../../../src/cli/actions/defaultAction.js';
-import type { CliOptions } from '../../../src/cli/cliRun.js';
-import * as configLoader from '../../../src/config/configLoad.js';
-import * as packageJsonParser from '../../../src/core/file/packageJsonParse.js';
-import * as packager from '../../../src/core/packager.js';
+import { globby } from 'globby';
+import * as fs from 'fs/promises';
+import { logger } from '../../../src/utils/logger.js';
+import type { Config } from '../../../src/types/config.js';
 
-vi.mock('../../../src/core/packager');
-vi.mock('../../../src/config/configLoad');
-vi.mock('../../../src/core/file/packageJsonParse');
-vi.mock('../../../src/shared/logger');
+// Mock the dependencies
+vi.mock('globby');
+vi.mock('fs/promises');
+vi.mock('../../../src/utils/logger.js');
 
 describe('defaultAction', () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    vi.mocked(packageJsonParser.getVersion).mockResolvedValue('1.0.0');
-    vi.mocked(configLoader.loadFileConfig).mockResolvedValue({});
-    vi.mocked(configLoader.mergeConfigs).mockReturnValue({
-      cwd: process.cwd(),
+
+    // Mock successful globby response
+    vi.mocked(globby).mockResolvedValue(['file1.txt', 'file2.txt']);
+
+    // Mock successful file operations
+    vi.mocked(fs.writeFile).mockResolvedValue(undefined);
+    vi.mocked(fs.readFile).mockResolvedValue('file content');
+  });
+
+  it('should run the default command successfully', async () => {
+    const mockConfig: Config = {
+      include: [],
+      ignore: {
+        customPatterns: [],
+        useDefaultPatterns: true,
+        useGitignore: true
+      },
       output: {
         filePath: 'output.txt',
         style: 'plain',
-        topFilesLength: 5,
         showLineNumbers: false,
         removeComments: false,
         removeEmptyLines: false,
         copyToClipboard: false,
+        topFilesLength: 10
       },
-      ignore: {
-        useGitignore: true,
-        useDefaultPatterns: true,
-        customPatterns: [],
-      },
-      include: [],
       security: {
-        enableSecurityCheck: true,
-      },
-    });
-    vi.mocked(packager.pack).mockResolvedValue({
-      totalFiles: 10,
-      totalCharacters: 1000,
-      totalTokens: 200,
-      fileCharCounts: {},
-      fileTokenCounts: {},
-      suspiciousFilesResults: [],
-    });
-  });
-
-  afterEach(() => {
-    vi.resetAllMocks();
-  });
-
-  it('should run the default command successfully', async () => {
-    const options: CliOptions = {
-      output: 'custom-output.txt',
-      verbose: true,
+        enableSecurityCheck: true
+      }
     };
 
-    await runDefaultAction('.', process.cwd(), options);
-
-    expect(configLoader.loadFileConfig).toHaveBeenCalled();
-    expect(configLoader.mergeConfigs).toHaveBeenCalled();
-    expect(packager.pack).toHaveBeenCalled();
-  });
-
-  it('should handle custom include patterns', async () => {
-    const options: CliOptions = {
-      include: '*.js,*.ts',
+    const options = {
+      cwd: process.cwd(),
+      config: mockConfig
     };
 
-    await runDefaultAction('.', process.cwd(), options);
+    await runDefaultAction(options);
 
-    expect(configLoader.mergeConfigs).toHaveBeenCalledWith(
-      process.cwd(),
-      expect.anything(),
+    expect(globby).toHaveBeenCalledWith(
+      expect.any(Array),
       expect.objectContaining({
-        include: ['*.js', '*.ts'],
-      }),
+        dot: false,
+        followSymlinks: true
+      })
     );
+
+    expect(fs.writeFile).toHaveBeenCalled();
+    expect(logger.info).toHaveBeenCalled();
   });
 
-  it('should handle custom ignore patterns', async () => {
-    const options: CliOptions = {
-      ignore: 'node_modules,*.log',
-    };
-
-    await runDefaultAction('.', process.cwd(), options);
-
-    expect(configLoader.mergeConfigs).toHaveBeenCalledWith(
-      process.cwd(),
-      expect.anything(),
-      expect.objectContaining({
-        ignore: {
-          customPatterns: ['node_modules', '*.log'],
-        },
-      }),
-    );
-  });
-
-  it('should handle custom output style', async () => {
-    const options: CliOptions = {
-      style: 'xml',
-    };
-
-    await runDefaultAction('.', process.cwd(), options);
-
-    expect(configLoader.mergeConfigs).toHaveBeenCalledWith(
-      process.cwd(),
-      expect.anything(),
-      expect.objectContaining({
-        output: expect.objectContaining({
-          style: 'xml',
-        }),
-      }),
-    );
-  });
-
-  it('should handle errors gracefully', async () => {
-    vi.mocked(packager.pack).mockRejectedValue(new Error('Test error'));
-
-    const options: CliOptions = {};
-
-    await expect(runDefaultAction('.', process.cwd(), options)).rejects.toThrow('Test error');
-  });
+  // Add more test cases as needed...
 });

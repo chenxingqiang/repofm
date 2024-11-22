@@ -47,7 +47,7 @@ User Provided Header:
 -----------------------
 This repository is simple-project
 
-For more information about repofm, visit: https://github.com/chenxingqiang/repo.freeme
+For more information about repofm, visit: https://github.com/chenxingqiang/repofm
 
 ================================================================
 Repository Structure

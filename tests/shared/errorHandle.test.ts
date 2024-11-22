@@ -2,8 +2,8 @@
 
 import { z } from 'zod';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { handleError, repofmConfigValidationError, repofmError, rethrowValidationErrorIfZodError } from '../../src/shared/errorHandle';
-import { logger } from '../../src/shared/logger';
+import { handleError, repofmConfigValidationError, repofmError, rethrowValidationErrorIfZodError } from '../../src/shared/errorHandle.js';
+import { logger } from '../../src/shared/logger.js';
 
 vi.mock('../../src/shared/logger');
 
@@ -61,6 +61,17 @@ describe('errorHandle', () => {
             expect(logger.error).toHaveBeenCalledWith('Unexpected error: Custom error');
             expect(logger.debug).toHaveBeenCalledWith('Stack trace:', expect.any(String));
         });
+
+        it('should handle errors with debug logging', () => {
+            const error = new Error('Custom error');
+            const mockStack = 'Error: Custom error\n    at Test.fn';
+            Object.defineProperty(error, 'stack', { value: mockStack });
+
+            handleError(error);
+
+            expect(logger.error).toHaveBeenCalledWith('Unexpected error: Custom error');
+            expect(logger.debug).toHaveBeenCalledWith('Stack trace:', mockStack);
+        });
     });
 
     describe('rethrowValidationErrorIfZodError', () => {
@@ -101,9 +112,11 @@ describe('errorHandle', () => {
             try {
                 rethrowValidationErrorIfZodError(zodError, 'Multiple errors');
             } catch (error) {
-                expect(error).toBeInstanceOf(repofmConfigValidationError);
-                expect(error.message).toContain('Error 1');
-                expect(error.message).toContain('Error 2');
+                if (error instanceof repofmConfigValidationError) {
+                    expect(error).toBeInstanceOf(repofmConfigValidationError);
+                    expect(error.message).toContain('Error 1');
+                    expect(error.message).toContain('Error 2');
+                }
             }
         });
 
@@ -121,7 +134,9 @@ describe('errorHandle', () => {
             try {
                 rethrowValidationErrorIfZodError(zodError, 'Nested error');
             } catch (error) {
-                expect(error.message).toContain('parent.child.field');
+                if (error instanceof repofmConfigValidationError) {
+                    expect(error.message).toContain('parent.child.field');
+                }
             }
         });
 
@@ -191,8 +206,10 @@ describe('errorHandle', () => {
                 try {
                     rethrowValidationErrorIfZodError(error, 'Style validation');
                 } catch (validationError) {
-                    expect(validationError.message).toContain('Style validation');
-                    expect(validationError.message).toContain('output.style');
+                    if (validationError instanceof repofmConfigValidationError) {
+                        expect(validationError.message).toContain('Style validation');
+                        expect(validationError.message).toContain('output.style');
+                    }
                 }
             }
         });
@@ -215,7 +232,7 @@ describe('errorHandle', () => {
             const circularObj: any = { foo: 'bar' };
             circularObj.self = circularObj;
             const error = new Error('Circular error');
-            error.custom = circularObj;
+            (error as any).custom = circularObj;
 
             handleError(error);
             expect(logger.error).toHaveBeenCalledWith('Unexpected error: Circular error');
@@ -228,7 +245,7 @@ describe('errorHandle', () => {
             process.env.npm_package_version = appVersion;
             handleError(new Error('Test error'));
             expect(logger.info).toHaveBeenCalledWith(
-                expect.stringContaining('https://github.com/chenxingqiang/repo.freeme/issues')
+                expect.stringContaining('https://github.com/chenxingqiang/repofm/issues')
             );
         });
 

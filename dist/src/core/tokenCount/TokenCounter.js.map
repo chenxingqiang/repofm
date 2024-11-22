@@ -1,0 +1,1 @@
+{"version":3,"file":"TokenCounter.js","sourceRoot":"","sources":["../../../../src/core/tokenCount/TokenCounter.ts"],"names":[],"mappings":"AAAA,MAAM,YAAY;IACd,WAAW,CAAC,IAAY;QACpB,MAAM,MAAM,GAAG,IAAI,CAAC,KAAK,CAAC,KAAK,CAAC,CAAC;QACjC,OAAO,MAAM,CAAC,MAAM,CAAC;IACzB,CAAC;CAEJ"}

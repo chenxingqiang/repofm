@@ -1,10 +1,9 @@
-import type { repofmConfigMerged } from '../../config/configSchema.js';
-import type { ProcessedFile } from '../file/fileTypes.js';
+import type { Config } from '../../types/config.js';
 
 export interface OutputGeneratorContext {
-  generationDate: string;
-  treeString: string;
-  processedFiles: ProcessedFile[];
-  config: repofmConfigMerged;
+  config: Config;
   instruction: string;
+  processedFiles: Array<{ path: string; content: string }>;
+  directories: string[];
+  rootDir: string;
 }

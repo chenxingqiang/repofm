@@ -43,7 +43,18 @@ const fileExists = async (filePath: string): Promise<boolean> => {
  * Replace all occurrences of 'repofm' with 'repofm' in a string
  */
 const replaceRepofmString = (content: string): string => {
-  return content.replace(/repofm/g, 'repofm').replace(/Repofm/g, 'repofm');
+  if (!content.includes('repofm') && !content.includes('Repofm')) {
+    return content;
+  }
+
+  let result = content;
+  if (content.includes('repofm')) {
+    result = result.replace(/repofm/g, 'repofm');
+  }
+  if (content.includes('Repofm')) {
+    result = result.replace(/Repofm/g, 'repofm');
+  }
+  return result;
 };
 
 /**

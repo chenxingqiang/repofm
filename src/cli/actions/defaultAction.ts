@@ -1,122 +1,75 @@
-import path from 'node:path';
-import { loadFileConfig, mergeConfigs } from '../../config/configLoad.js';
-import {
-  type repofmConfigCli,
-  type repofmConfigFile,
-  type repofmConfigMerged,
-  type repofmOutputStyle,
-  repofmConfigCliSchema,
-} from '../../config/configSchema.js';
-import { type PackResult, pack } from '../../core/packager.js';
-import { rethrowValidationErrorIfZodError } from '../../shared/errorHandle.js';
+import clipboardy from 'clipboardy';
+import { loadConfig } from '../../config/configLoad.js';
+import { processDirectory } from '../../core/index.js';
 import { logger } from '../../shared/logger.js';
-import { printCompletion, printSecurityCheck, printSummary, printTopFiles } from '../cliPrint.js';
-import type { CliOptions } from '../cliRun.js';
-import Spinner from '../cliSpinner.js';
-import { runMigrationAction } from './migrationAction.js';
+import * as fs from 'node:fs/promises';
+import { defaultConfig, type repofmConfigMerged } from '../../config/configSchema.js';
 
-export interface DefaultActionRunnerResult {
-  packResult: PackResult;
-  config: repofmConfigMerged;
+interface DefaultActionOptions {
+  copyToClipboard?: boolean;
+  outputPath?: string;
+  verbose?: boolean;
+  global?: boolean;
 }
 
-export const runDefaultAction = async (
-  directory: string,
-  cwd: string,
-  options: CliOptions,
-): Promise<DefaultActionRunnerResult> => {
-  logger.trace('Loaded CLI options:', options);
-
-  // Run migration before loading config
-  await runMigrationAction(cwd);
-
-  // Load the config file
-  const fileConfig: repofmConfigFile = await loadFileConfig(cwd, options.config ?? null);
-  logger.trace('Loaded file config:', fileConfig);
-
-  // Parse the CLI options into a config
-  const cliConfig: repofmConfigCli = buildCliConfig(options);
-  logger.trace('CLI config:', cliConfig);
-
-  // Merge default, file, and CLI configs
-  const config: repofmConfigMerged = mergeConfigs(cwd, fileConfig, cliConfig);
-
-  logger.trace('Merged config:', config);
-
-  const targetPath = path.resolve(directory);
-
-  const spinner = new Spinner('Packing files...');
-  spinner.start();
-
-  let packResult: PackResult;
-
+export async function runDefaultAction(
+  targetDir: string,
+  configPath: string,
+  options: DefaultActionOptions = {}
+): Promise<void> {
   try {
-    packResult = await pack(targetPath, config, (message) => {
-      spinner.update(message);
-    });
+    // Load config with defaults
+    const userConfig = (await loadConfig(configPath, {
+      global: options.global,
+      verbose: options.verbose
+    })) as repofmConfigMerged;
+
+    // Merge with default config
+    const config: repofmConfigMerged = {
+      ...defaultConfig,
+      ...userConfig,
+      output: {
+        ...defaultConfig.output,
+        ...(userConfig.output || {}),
+        copyToClipboard: options.copyToClipboard ?? userConfig.output?.copyToClipboard ?? defaultConfig.output.copyToClipboard,
+        filePath: options.outputPath ?? userConfig.output?.filePath ?? defaultConfig.output.filePath,
+      },
+      include: userConfig.include || defaultConfig.include,
+      ignore: {
+        ...defaultConfig.ignore,
+        ...(userConfig.ignore || {}),
+      },
+      security: {
+        ...defaultConfig.security,
+        ...(userConfig.security || {}),
+      },
+      cwd: userConfig.cwd || process.cwd()
+    };
+
+    const result = await processDirectory(targetDir, config);
+
+    if (options.outputPath) {
+      await writeOutput(options.outputPath, result);
+      logger.info(`Output written to: ${options.outputPath}`);
+    } else {
+      console.log(result);
+    }
+
+    if (options.copyToClipboard) {
+      await clipboardy.write(result);
+      logger.info('Output copied to clipboard');
+    }
   } catch (error) {
-    spinner.fail('Error during packing');
+    logger.error('Error in default action:', error instanceof Error ? error.message : String(error));
     throw error;
   }
+}
 
-  spinner.succeed('Packing completed successfully!');
-  logger.log('');
-
-  if (config.output.topFilesLength > 0) {
-    printTopFiles(packResult.fileCharCounts, packResult.fileTokenCounts, config.output.topFilesLength);
-    logger.log('');
-  }
-
-  printSecurityCheck(cwd, packResult.suspiciousFilesResults, config);
-  logger.log('');
-
-  printSummary(
-    packResult.totalFiles,
-    packResult.totalCharacters,
-    packResult.totalTokens,
-    config.output.filePath,
-    packResult.suspiciousFilesResults,
-    config,
-  );
-  logger.log('');
-
-  printCompletion();
-
-  return {
-    packResult,
-    config,
-  };
-};
-
-const buildCliConfig = (options: CliOptions): repofmConfigCli => {
-  const cliConfig: repofmConfigCli = {};
-
-  if (options.output) {
-    cliConfig.output = { filePath: options.output };
-  }
-  if (options.include) {
-    cliConfig.include = options.include.split(',');
-  }
-  if (options.ignore) {
-    cliConfig.ignore = { customPatterns: options.ignore.split(',') };
-  }
-  if (options.topFilesLen !== undefined) {
-    cliConfig.output = { ...cliConfig.output, topFilesLength: options.topFilesLen };
-  }
-  if (options.outputShowLineNumbers !== undefined) {
-    cliConfig.output = { ...cliConfig.output, showLineNumbers: options.outputShowLineNumbers };
-  }
-  if (options.copy) {
-    cliConfig.output = { ...cliConfig.output, copyToClipboard: options.copy };
-  }
-  if (options.style) {
-    cliConfig.output = { ...cliConfig.output, style: options.style.toLowerCase() as repofmOutputStyle };
-  }
-
+async function writeOutput(outputPath: string, content: string): Promise<void> {
   try {
-    return repofmConfigCliSchema.parse(cliConfig);
+    await fs.writeFile(outputPath, content, 'utf-8');
   } catch (error) {
-    rethrowValidationErrorIfZodError(error, 'Invalid cli arguments');
+    logger.error(`Error writing to ${outputPath}:`, error instanceof Error ? error.message : String(error));
     throw error;
   }
-};
+}

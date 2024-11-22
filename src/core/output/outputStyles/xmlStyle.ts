@@ -2,59 +2,71 @@ export const getXmlTemplate = () => {
   return /* xml */ `
 {{{generationHeader}}}
 
-<file_summary>
-This section contains a summary of this file.
+<repository>
+  <metadata>
+    <files_processed>{{{processedFiles.length}}}</files_processed>
+  </metadata>
 
-<purpose>
-{{{summaryPurpose}}}
-</purpose>
+  <file_summary>
+    This section contains a summary of this file.
 
-<file_format>
-{{{summaryFileFormat}}}
-4. Repository files, each consisting of:
-  - File path as an attribute
-  - Full contents of the file
-</file_format>
+    <purpose>
+      {{{summaryPurpose}}}
+    </purpose>
 
-<usage_guidelines>
-{{{summaryUsageGuidelines}}}
-</usage_guidelines>
+    <file_format>
+      {{{summaryFileFormat}}}
+      4. Repository files, each consisting of:
+        - File path as an attribute
+        - Full contents of the file
+    </file_format>
 
-<notes>
-{{{summaryNotes}}}
-</notes>
+    <usage_guidelines>
+      {{{summaryUsageGuidelines}}}
+    </usage_guidelines>
 
-<additional_info>
-{{#if headerText}}
-<user_provided_header>
-{{{headerText}}}
-</user_provided_header>
-{{/if}}
+    <notes>
+      {{{summaryNotes}}}
+    </notes>
 
-{{{summaryAdditionalInfo}}}
-</additional_info>
+    <additional_info>
+      {{#if headerText}}
+      <user_provided_header>
+        {{{headerText}}}
+      </user_provided_header>
+      {{/if}}
 
-</file_summary>
+      {{{summaryAdditionalInfo}}}
+    </additional_info>
 
-<repository_structure>
-{{{treeString}}}
-</repository_structure>
+  </file_summary>
 
-<repository_files>
-This section contains the contents of the repository's files.
+  <repository_structure>
+    {{{treeString}}}
+  </repository_structure>
 
-{{#each processedFiles}}
-<file path="{{{this.path}}}">
-{{{this.content}}}
-</file>
+  <repository_files>
+    This section contains the contents of the repository's files.
 
-{{/each}}
-</repository_files>
+    {{#each processedFiles}}
+    <file path="{{{this.path}}}">
+      {{#if config.output.showLineNumbers}}
+      {{#each this.content.split('\n') as |line i|}}
+      <line number="{{{i + 1}}}">{{{escapeXml(line)}}}</line>
+      {{/each}}
+      {{else}}
+      {{{escapeXml(this.content.replace(/\/\*[\s\S]*?\*\/|\/\/.*/g, '').split('\n').filter(line => line.trim()).join('\n'))}}}
+      {{/if}}
+    </file>
 
-{{#if instruction}}
-<instruction>
-{{{instruction}}}
-</instruction>
-{{/if}}
+    {{/each}}
+  </repository_files>
+
+  {{#if instruction}}
+  <instruction>
+    {{{instruction}}}
+  </instruction>
+  {{/if}}
+</repository>
 `;
 };

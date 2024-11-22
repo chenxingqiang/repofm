@@ -49,13 +49,19 @@ ${PLAIN_LONG_SEPARATOR}
 ${PLAIN_LONG_SEPARATOR}
 Repository Files
 ${PLAIN_LONG_SEPARATOR}
+Files processed: {{{processedFiles.length}}}
 
 {{#each processedFiles}}
 ${PLAIN_SEPARATOR}
 File: {{{this.path}}}
 ${PLAIN_SEPARATOR}
-{{{this.content}}}
-
+  {{#if config.output.showLineNumbers}}
+    {{#each this.content.split('\n') as |line i|}}
+      {{i + 1}}. {{line}}
+    {{/each}}
+  {{else}}
+    {{{this.content}}}
+  {{/if}}
 {{/each}}
 
 {{#if instruction}}

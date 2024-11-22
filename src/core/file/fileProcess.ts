@@ -2,7 +2,12 @@ import pMap from 'p-map';
 import type { repofmConfigMerged } from '../../config/configSchema.js';
 import { getProcessConcurrency } from '../../shared/processConcurrency.js';
 import { getFileManipulator } from './fileManipulate.js';
-import type { ProcessedFile, RawFile } from './fileTypes.js';
+import type { ProcessedFile, RawFile, OutputConfig } from './fileTypes.js';
+
+// Define or import ProcessConfig
+interface ProcessConfig {
+    output?: OutputConfig;
+}
 
 export const processFiles = async (rawFiles: RawFile[], config: repofmConfigMerged): Promise<ProcessedFile[]> => {
   return pMap(
@@ -18,29 +23,36 @@ export const processFiles = async (rawFiles: RawFile[], config: repofmConfigMerg
 };
 
 export const processContent = async (
-  content: string,
-  filePath: string,
-  config: repofmConfigMerged,
+    content: string | null,
+    filePath: string,
+    config: ProcessConfig = {}
 ): Promise<string> => {
-  let processedContent = content;
-  const manipulator = getFileManipulator(filePath);
+    if (!content) {
+        content = '';
+    }
 
-  if (config.output.removeComments && manipulator) {
-    processedContent = manipulator.removeComments(processedContent);
-  }
+    let processedContent = content;
+    const manipulator = getFileManipulator(filePath);
 
-  if (config.output.removeEmptyLines && manipulator) {
-    processedContent = manipulator.removeEmptyLines(processedContent);
-  }
+    if (manipulator && config.output?.removeComments) {
+        processedContent = manipulator.removeComments(processedContent);
+    }
 
-  processedContent = processedContent.trim();
+    if (manipulator && config.output?.removeEmptyLines) {
+        processedContent = manipulator.removeEmptyLines(processedContent);
+    }
 
-  if (config.output.showLineNumbers) {
-    const lines = processedContent.split('\n');
-    const padding = lines.length.toString().length;
-    const numberedLines = lines.map((line, index) => `${(index + 1).toString().padStart(padding)}: ${line}`);
-    processedContent = numberedLines.join('\n');
-  }
+    // Normalize line endings before any other processing
+    processedContent = processedContent.replace(/\r\n|\r|\n/g, '\n').trim();
 
-  return processedContent;
+    if (config.output?.showLineNumbers) {
+        const lines = processedContent.split('\n');
+        const maxWidth = String(lines.length || 1).length;
+        processedContent = lines.map((line, index) => {
+            const lineNum = String(index + 1).padStart(maxWidth);
+            return `${lineNum}: ${line}`;
+        }).join('\n');
+    }
+
+    return processedContent;
 };

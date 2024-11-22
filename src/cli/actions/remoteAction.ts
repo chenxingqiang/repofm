@@ -28,8 +28,16 @@ export const runRemoteAction = async (repoUrl: string, options: CliOptions): Pro
     spinner.succeed('Repository cloned successfully!');
     logger.log('');
 
-    const result = await runDefaultAction(tempDir, tempDir, options);
-    await copyOutputToCurrentDirectory(tempDir, process.cwd(), result.config.output.filePath);
+    await runDefaultAction(
+      tempDir,
+      'repofm.config.json',
+      {
+        copyToClipboard: options.copy,
+        outputPath: options.output,
+        verbose: options.verbose,
+        global: options.global
+      }
+    );
   } finally {
     // Clean up the temporary directory
     await cleanupTempDirectory(tempDir);

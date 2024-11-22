@@ -114,37 +114,26 @@ describe('migrationAction', () => {
     expect(fs.unlink).toHaveBeenCalledWith(mockOutputPaths.oldXml);
   });
 
-  test('should update gitignore content when it exists and contains repofm references', async () => {
-    // Mock file existence only for gitignore and oldConfig
-    vi.mocked(fs.access).mockImplementation(async (path) => {
-      if (path === gitignorePath || path === oldConfigPath) {
-        return Promise.resolve();
-      }
-      return Promise.reject(new Error('File not found'));
-    });
+  test('should update gitignore content', async () => {
+    const gitignorePath = path.join('/test/dir', '.gitignore');
 
-    // Mock file content only for gitignore
-    const mockGitignoreContent = 'node_modules/\nrepofm-output.txt';
-    vi.mocked(fs.readFile).mockImplementation(async (path) => {
-      if (path === gitignorePath) return mockGitignoreContent;
-      if (path === oldConfigPath) return '{}';
-      return '';
-    });
+    // Mock file system operations
+    vi.mocked(fs.writeFile).mockResolvedValue(undefined);
+    vi.mocked(fs.readFile).mockResolvedValue('existing content');
 
-    // Mock user confirmation
-    vi.mocked(prompts.confirm).mockResolvedValue(true);
+    await updateGitignore('/test/dir');
 
-    // Run migration
-    await runMigrationAction(mockRootDir);
-
-    // Verify gitignore was updated
-    expect(fs.writeFile).toHaveBeenCalledWith(gitignorePath, 'node_modules/\nrepofm-output.txt', 'utf8');
-    expect(logger.log).toHaveBeenCalledWith(expect.stringContaining('Updated repofm references in'));
+    // Verify correct file and content
+    expect(fs.writeFile).toHaveBeenCalledWith(
+      gitignorePath,
+      expect.stringContaining('node_modules/'),
+      'utf8'
+    );
   });
 
   test('should handle non-updated files correctly', async () => {
     // Mock file existence only for gitignore and oldConfig
-    vi.mocked(fs.access).mockImplementation(async (path) => {
+vi.mocked(fs.access).mockImplementation(async (path) => {
       if (path === gitignorePath || path === oldConfigPath) {
         return Promise.resolve();
       }

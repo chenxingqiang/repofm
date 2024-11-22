@@ -1,79 +1,87 @@
-import process from 'node:process';
-import { type OptionValues, program } from 'commander';
-import pc from 'picocolors';
-import type { repofmOutputStyle } from '../config/configSchema.js';
-import { getVersion } from '../core/file/packageJsonParse.js';
-import { handleError } from '../shared/errorHandle.js';
-import { logger } from '../shared/logger.js';
+import { Command } from 'commander';
 import { runDefaultAction } from './actions/defaultAction.js';
 import { runInitAction } from './actions/initAction.js';
+import { runMigrationAction } from './actions/migrationAction.js';
 import { runRemoteAction } from './actions/remoteAction.js';
 import { runVersionAction } from './actions/versionAction.js';
+import { logger } from '../shared/logger.js';
 
-export interface CliOptions extends OptionValues {
-  version?: boolean;
+export interface CliOptions {
   output?: string;
-  include?: string;
-  ignore?: string;
-  config?: string;
   copy?: boolean;
   verbose?: boolean;
-  topFilesLen?: number;
-  outputShowLineNumbers?: boolean;
-  style?: repofmOutputStyle;
-  init?: boolean;
   global?: boolean;
-  remote?: string;
+  // Add other CLI options as needed
 }
 
-export async function run() {
-  try {
-    const version = await getVersion();
+export async function run(): Promise<void> {
+  const program = new Command();
 
-    program
-      .description('repofm - Pack your repository into a single AI-friendly file')
-      .arguments('[directory]')
-      .option('-v, --version', 'show version information')
-      .option('-o, --output <file>', 'specify the output file name')
-      .option('--include <patterns>', 'list of include patterns (comma-separated)')
-      .option('-i, --ignore <patterns>', 'additional ignore patterns (comma-separated)')
-      .option('-c, --config <path>', 'path to a custom config file')
-      .option('--copy', 'copy generated output to system clipboard')
-      .option('--top-files-len <number>', 'specify the number of top files to display', Number.parseInt)
-      .option('--output-show-line-numbers', 'add line numbers to each line in the output')
-      .option('--style <type>', 'specify the output style (plain, xml, markdown)')
-      .option('--verbose', 'enable verbose logging for detailed output')
-      .option('--init', 'initialize a new repofm.config.json file')
-      .option('--global', 'use global configuration (only applicable with --init)')
-      .option('--remote <url>', 'process a remote Git repository')
-      .action((directory = '.', options: CliOptions = {}) => executeAction(directory, process.cwd(), options));
+  program
+    .name('repofm')
+    .description('A CLI tool for managing repository file structures')
+    .version('1.0.0', '-v, --version', 'Output the current version')
+    .option('-g, --global', 'Use global configuration')
+    .option('-c, --copy', 'Copy output to clipboard')
+    .option('-o, --output <path>', 'Output file path')
+    .option('-i, --init', 'Initialize configuration files')
+    .option('-m, --migrate', 'Migrate configuration files')
+    .option('-r, --remote <url>', 'Remote repository URL')
+    .option('--verbose', 'Enable verbose logging')
+    .option('--config <path>', 'Custom config file path');
 
-    await program.parseAsync(process.argv);
-  } catch (error) {
-    handleError(error);
-  }
+  program.on('--help', () => {
+    console.log('');
+    console.log('Examples:');
+    console.log('  $ repofm');
+    console.log('  $ repofm --init');
+    console.log('  $ repofm --global');
+    console.log('  $ repofm --output tree.txt');
+  });
+
+  program.action(async (options, command) => {
+    try {
+      const targetDir = command.args[0] || '.';
+
+      if (options.verbose) {
+        logger.setLevel('debug');
+      }
+
+      if (options.version) {
+        await runVersionAction();
+        return;
+      }
+
+      if (options.init) {
+        await runInitAction(targetDir, options.global || false);
+        return;
+      }
+
+      if (options.migrate) {
+        await runMigrationAction(targetDir);
+        return;
+      }
+
+      if (options.remote) {
+        await runRemoteAction(options.remote, targetDir);
+        return;
+      }
+
+      await runDefaultAction(
+        targetDir,
+        options.config || '',
+        {
+          copyToClipboard: options.copy || false,
+          outputPath: options.output,
+          verbose: options.verbose || false,
+          global: options.global || false
+        }
+      );
+    } catch (error) {
+      logger.error('Error:', error instanceof Error ? error.message : String(error));
+      process.exit(1);
+    }
+  });
+
+  await program.parseAsync(process.argv);
 }
-
-const executeAction = async (directory: string, cwd: string, options: CliOptions) => {
-  logger.setVerbose(options.verbose || false);
-
-  if (options.version) {
-    await runVersionAction();
-    return;
-  }
-
-  const version = await getVersion();
-  logger.log(pc.dim(`\n📦 repofm v${version}\n`));
-
-  if (options.init) {
-    await runInitAction(cwd, options.global || false);
-    return;
-  }
-
-  if (options.remote) {
-    await runRemoteAction(options.remote, options);
-    return;
-  }
-
-  await runDefaultAction(directory, cwd, options);
-};

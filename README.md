@@ -1,9 +1,9 @@
 # 📦 repofm
 
-[![Actions Status](https://github.com/chenxingqiang/repo.freeme/actions/workflows/ci.yml/badge.svg)](https://github.com/chenxingqiang/repo.freeme/actions?query=workflow%3A"ci")
+[![Actions Status](https://github.com/chenxingqiang/repofm/actions/workflows/ci.yml/badge.svg)](https://github.com/chenxingqiang/repofm/actions?query=workflow%3A"ci")
 [![npm](https://img.shields.io/npm/v/repofm.svg?maxAge=1000)](https://www.npmjs.com/package/repofm)
 [![npm](https://img.shields.io/npm/d18m/repofm)](https://www.npmjs.com/package/repofm)
-[![npm](https://img.shields.io/npm/l/repofm.svg?maxAge=1000)](https://github.com/chenxingqiang/repo.freeme/blob/main/LICENSE)
+[![npm](https://img.shields.io/npm/l/repofm.svg?maxAge=1000)](https://github.com/chenxingqiang/repofm/blob/main/LICENSE)
 [![node](https://img.shields.io/node/v/repofm.svg?maxAge=1000)](https://www.npmjs.com/package/repofm)
 
 repofm is a powerful tool that packs your entire repository into a single, AI-friendly file.
@@ -109,10 +109,10 @@ repofm --ignore "**/*.log,tmp/"
 To pack a remote repository:
 
 ```bash
-repofm --remote https://github.com/chenxingqiang/repo.freeme
+repofm --remote https://github.com/chenxingqiang/repofm
 
 # You can also use GitHub shorthand:
-repofm --remote chenxingqiang/repo.freeme
+repofm --remote chenxingqiang/repofm
 ```
 
 To initialize a new configuration file (`repofm.config.json`):
@@ -171,7 +171,7 @@ Feel free to modify these prompts based on your specific needs and the capabilit
 
 ### Community Discussion
 
-Check out our [community discussion](https://github.com/chenxingqiang/repo.freeme/discussions/154) where users share:
+Check out our [community discussion](https://github.com/chenxingqiang/repofm/discussions/154) where users share:
 
 - Which AI tools they're using with repofm
 - Effective prompts they've discovered
@@ -550,8 +550,8 @@ We welcome contributions from the community! To get started, please refer to our
 
 ### Contributors
 
-<a href="https://github.com/chenxingqiang/repo.freeme/graphs/contributors">
-  <img alt="contributors" src="https://contrib.rocks/image?repo=chenxingqiang/repo.freeme"/>
+<a href="https://github.com/chenxingqiang/repofm/graphs/contributors">
+  <img alt="contributors" src="https://contrib.rocks/image?repo=chenxingqiang/repofm"/>
 </a>
 
 ## 📜 License
