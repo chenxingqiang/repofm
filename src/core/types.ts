@@ -8,3 +8,11 @@ export interface FileInfo {
   content: string;
   size: number;
 }
+
+export type SecuritySeverity = 'high' | 'medium' | 'low' | 'warning';
+
+export interface SuspiciousFileResult {
+  filePath: string;
+  messages: string[];
+  severity: SecuritySeverity;
+}

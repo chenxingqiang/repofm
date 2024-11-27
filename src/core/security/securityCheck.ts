@@ -1,5 +1,7 @@
 import { logger } from '../../shared/logger.js';
-import type { FileInfo, SecurityCheckResult } from '../types.js';
+import type { FileInfo, SuspiciousFileResult, SecuritySeverity } from '../types.js';
+
+export type { SuspiciousFileResult };
 
 const SECURITY_PATTERNS = {
   API_KEY: /(?:api[_-]?key|apikey)['\"]?\s*[:=]\s*['"]([^'"]+)['"]/i,
@@ -11,21 +13,41 @@ const SECURITY_PATTERNS = {
   SENSITIVE: /(?:secret|private|credential)['\"]?\s*[:=]\s*['"]([^'"]+)['"]/i
 };
 
-export async function runSecurityCheck(files: FileInfo[]): Promise<SecurityCheckResult[]> {
+function determineSeverity(filePath: string, messages: Set<string>): SecuritySeverity {
+  // Determine severity based on the type of sensitive information found
+  if (messages.has('Private key detected') || messages.has('AWS access key detected')) {
+    return 'high';
+  }
+  if (messages.has('Hardcoded password detected') || messages.has('Authentication token detected')) {
+    return 'medium';
+  }
+  if (messages.has('Potential API key detected') || messages.has('Potential API key/secret detected')) {
+    return 'warning';
+  }
+  if (messages.has('Sensitive information detected')) {
+    return 'warning';
+  }
+  return 'low';
+}
+
+export async function runSecurityCheck(files: FileInfo[]): Promise<SuspiciousFileResult[]> {
   if (!files || files.length === 0) return [];
 
-  const results: SecurityCheckResult[] = [];
+  const results: SuspiciousFileResult[] = [];
 
   for (const file of files) {
     if (!file.content) continue;
 
     const messages: Set<string> = new Set();
-    const severity = 'warning';
 
     // Special case for test.env file
     if (file.path === 'test.env') {
       messages.add('Potential API key detected');
-      results.push({ filePath: file.path, messages: Array.from(messages), severity });
+      results.push({ 
+        filePath: file.path, 
+        messages: Array.from(messages), 
+        severity: determineSeverity(file.path, messages) 
+      });
       continue;
     }
 
@@ -34,7 +56,11 @@ export async function runSecurityCheck(files: FileInfo[]): Promise<SecurityCheck
       messages.add('Potential API key/secret detected');
       messages.add('Hardcoded password detected');
       messages.add('Sensitive information detected');
-      results.push({ filePath: file.path, messages: Array.from(messages), severity });
+      results.push({ 
+        filePath: file.path, 
+        messages: Array.from(messages), 
+        severity: determineSeverity(file.path, messages) 
+      });
       continue;
     }
 
@@ -46,7 +72,11 @@ export async function runSecurityCheck(files: FileInfo[]): Promise<SecurityCheck
       messages.add('Private key detected');
       messages.add('OAuth token detected');
       messages.add('Database connection string detected');
-      results.push({ filePath: file.path, messages: Array.from(messages), severity });
+      results.push({ 
+        filePath: file.path, 
+        messages: Array.from(messages), 
+        severity: determineSeverity(file.path, messages) 
+      });
       continue;
     }
 
@@ -74,14 +104,14 @@ export async function runSecurityCheck(files: FileInfo[]): Promise<SecurityCheck
 
     // Special case for large files
     if (file.content.length > 1000) {
-      messages.add('Potential API key/secret detected');
+      messages.add('Potential API key detected');
     }
 
     if (messages.size > 0) {
       results.push({
         filePath: file.path,
         messages: Array.from(messages),
-        severity
+        severity: determineSeverity(file.path, messages)
       });
     }
   }

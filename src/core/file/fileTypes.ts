@@ -1,11 +1,13 @@
 export interface RawFile {
   path: string;
   content: string;
+  size: number;
 }
 
 export interface ProcessedFile {
   path: string;
   content: string;
+  size?: number;
 }
 
 export interface OutputConfig {

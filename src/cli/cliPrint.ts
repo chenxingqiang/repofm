@@ -1,7 +1,7 @@
 import path from 'node:path';
 import pc from 'picocolors';
 import type { repofmConfigMerged } from '../config/configSchema.js';
-import type { SuspiciousFileResult } from '../core/security/securityCheck.js';
+import type { SuspiciousFileResult } from '../core/types.js';
 import { logger } from '../shared/logger.js';
 
 export const printSummary = (

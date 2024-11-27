@@ -182,6 +182,38 @@ const updateIgnoreFiles = async (rootDir: string): Promise<void> => {
 };
 
 /**
+ * Update .gitignore file with standard entries
+ */
+export const updateGitignore = async (rootDir: string): Promise<void> => {
+  const gitignorePath = path.join(rootDir, '.gitignore');
+
+  try {
+    // Check if .gitignore exists
+    await fs.access(gitignorePath);
+
+    // Read existing content
+    let content = await fs.readFile(gitignorePath, 'utf8');
+
+    // Check if node_modules/ is already in the gitignore
+    if (!content.includes('node_modules/')) {
+      // Append node_modules/ to the end of the file
+      content += content.endsWith('\n') ? 'node_modules/\n' : '\nnode_modules/\n';
+
+      // Write updated content
+      await fs.writeFile(gitignorePath, content, 'utf8');
+    }
+  } catch (error) {
+    // If .gitignore doesn't exist, create a new one
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+      await fs.writeFile(gitignorePath, 'node_modules/\n', 'utf8');
+    } else {
+      // Log other errors
+      logger.error('Error updating .gitignore:', error);
+    }
+  }
+};
+
+/**
  * Get all migration related file paths
  */
 const getMigrationPaths = (rootDir: string): MigrationPaths => {
@@ -305,6 +337,7 @@ export const runMigrationAction = async (rootDir: string): Promise<MigrationResu
 
     // Update content in gitignore and repofmignore
     await updateIgnoreFiles(rootDir);
+    await updateGitignore(rootDir);
 
     // Show success message
     if (

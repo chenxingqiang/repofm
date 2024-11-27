@@ -103,168 +103,148 @@ export const generateOutput = async (
   files: Array<{ path: string; content: string }>,
   specialFiles: string[] = []
 ): Promise<string> => {
-  // 处理文件内容的通用函数
-  const processContent = (content: string, config: Config): string => {
-    let processed = content;
-
-    // 移除注释
-    if (config.output.removeComments) {
-      processed = processed
-        .replace(/\/\/.*$/gm, '')  // 移除单行注释
-        .replace(/\/\*[\s\S]*?\*\//g, '')  // 移除多行注释
-        .split('\n')
-        .map(line => line.trim())  // 移除每行前后的空白
-        .filter(line => line !== '')  // 移除空行
-        .join('\n');
+  // First handle instruction file if specified
+  let instructionContent = '';
+  if (config.output?.instructionFilePath) {
+    try {
+      const instructionPath = path.resolve(rootDir, config.output.instructionFilePath);
+      await fs.access(instructionPath);
+      instructionContent = await fs.readFile(instructionPath, 'utf-8');
+    } catch (error) {
+      throw new repofmError(`Failed to read instruction file: ${config.output.instructionFilePath}`);
     }
-
-    // 移除空行（如果配置要求）
-    if (config.output.removeEmptyLines) {
-      processed = processed
-        .split('\n')
-        .filter(line => line.trim() !== '')
-        .join('\n');
-    }
-
-    return processed;
-  };
-  if (config.output.style === 'markdown') {
-    // Create a modified tree string with dashes
-    const treeString = generateTreeString(files.map(f => f.path))
-      .split('\n')
-      .map(line => {
-        if (line.trim()) {
-          // Count leading spaces to maintain indentation
-          const spaces = line.match(/^\s*/)[0];
-          // Replace the spaces at the start with the same number of spaces + a dash
-          return spaces + '- ' + line.trim();
-        }
-        return line;
-      })
-      .join('\n');
-
-    // 1. Prepare header sections
-    const headerParts = [
-      `# ${config.output.headerText}`,
-      '# File Summary',
-      `Files processed: ${files.length}`,
-      '# Repository Structure',
-      treeString
-    ];
-
-    let output = headerParts.join('\n\n');
-
-    // 2. Add repository files section
-    output += '\n\n# Repository Files\n';
-
-    // Process files
-    const filesToProcess = config.output.topFilesLength > 0
-      ? files.slice(0, config.output.topFilesLength)
-      : files;
-
-    for (const file of filesToProcess) {
-      // Add file header
-      output += `\n## File: ${file.path}\n\n`;
-
-      let content = processContent(file.content, config);
-
-      // Get file extension for language highlighting
-      const fileExt = file.path.split('.').pop() || '';
-      const language = LANGUAGE_MAP[fileExt] || fileExt;
-
-      // Add line numbers if configured
-      if (config.output.showLineNumbers) {
-        content = content
-          .split('\n')
-          .map((line, index) => `${index + 1}. ${line}`)
-          .join('\n');
-      }
-
-      // Add content in code block with language
-      output += '```' + language + '\n' + content + '\n```\n';
-    }
-
-    return output;
-  } else if (config.output.style === 'plain') {
-    // 1. 准备头部信息
-    const headerParts = [
-      config.output.headerText,
-      'File Summary',
-      `Files processed: ${files.length}`,
-      'Repository Structure',
-      'Repository Files'
-    ];
-
-    let output = headerParts.join('\n');
-
-    // 2. 处理文件
-    const filesToProcess = config.output.topFilesLength > 0
-      ? files.slice(0, config.output.topFilesLength)
-      : files;
-
-    for (const file of filesToProcess) {
-      let content = processContent(file.content, config);
-
-      // 添加行号
-      if (config.output.showLineNumbers) {
-        content = content
-          .split('\n')
-          .map((line, index) => `${index + 1}. ${line}`)
-          .join('\n');
-      }
-
-      output += `\n${file.path}\n${content}`;
-    }
-
-    return output;
-  } else if (config.output.style === 'xml') {
-    let output = '<?xml version="1.0" encoding="UTF-8"?>\n<repository>\n';
-
-    // 添加头部
-    if (config.output.headerText) {
-      output += `  <header>${escapeXml(config.output.headerText)}</header>\n`;
-    }
-
-    // 添加文件摘要
-    output += '  <file_summary>\n';
-    output += `    <files_processed>${files.length}</files_processed>\n`;
-    output += '  </file_summary>\n';
-
-    // 添加仓库结构
-    output += '  <repository_structure>\n';
-    output += '  </repository_structure>\n';
-
-    // 添加仓库文件
-    output += '  <repository_files>\n';
-
-    // 处理文件
-    const filesToProcess = config.output.topFilesLength > 0
-      ? files.slice(0, config.output.topFilesLength)
-      : files;
-
-    for (const file of filesToProcess) {
-      let content = processContent(file.content, config);
-
-      // 添加行号或直接添加内容
-      if (config.output.showLineNumbers) {
-        content = content
-          .split('\n')
-          .map((line, index) => `    <line number="${index + 1}">${escapeXml(line)}</line>`)
-          .join('\n');
-        output += `    <file path="${escapeXml(file.path)}">\n${content}\n    </file>\n`;
-      } else {
-        output += `    <file path="${escapeXml(file.path)}">\n      <content>${escapeXml(content)}</content>\n    </file>\n`;
-      }
-    }
-
-    output += '  </repository_files>\n';
-    output += '</repository>';
-
-    return output;
   }
 
-  return '';
-}
+  const generateFileContent = (file: { path: string; content: string }, showLineNumbers = false): { relativePath: string; extension: string; content: string } => {
+    const relativePath = path.isAbsolute(file.path) ? path.relative(rootDir, file.path) : file.path;
+    const extension = getFileExtension(file.path);
+    let content = processContent(file.content, config);
+
+    if (showLineNumbers) {
+      content = content
+        .split('\n')
+        .map((line, index) => `${index + 1}. ${line}`)
+        .join('\n');
+    }
+
+    return { relativePath, extension, content };
+  };
+
+  // Apply file limit before any processing
+  const filesToProcess = config.output?.topFilesLength && config.output.topFilesLength > 0
+    ? files.slice(0, config.output.topFilesLength)
+    : files;
+
+  // Generate output based on style
+  switch (config.output?.style || 'markdown') {
+    case 'markdown': {
+      let output = '';
+      
+      if (instructionContent) {
+        output += instructionContent + '\n\n';
+      }
+
+      if (config.output?.headerText) {
+        output += `# ${config.output.headerText}\n\n`;
+      }
+
+      output += '# File Summary\n\n';
+      output += `Files processed: ${filesToProcess.length}\n\n`;
+      output += '# Repository Structure\n\n';
+      
+      // Only add tree structure if there are files
+      if (filesToProcess.length > 0) {
+        output += generateTreeString(filesToProcess.map(f => path.isAbsolute(f.path) ? path.relative(rootDir, f.path) : f.path)) + '\n\n';
+      }
+      
+      output += '# Repository Files\n\n';
+
+      // Only add code blocks if there are files
+      if (filesToProcess.length > 0) {
+        for (const file of filesToProcess) {
+          const { relativePath, extension, content } = generateFileContent(file, config.output?.showLineNumbers);
+          output += `## File: ${relativePath}\n\n`;
+          output += '```' + extension + '\n' + content + '\n```\n\n';
+        }
+      }
+
+      return output.trim();
+    }
+
+    case 'xml': {
+      let output = '<?xml version="1.0" encoding="UTF-8"?>\n<repository>\n';
+
+      if (instructionContent) {
+        output += `  <instructions>${escapeXml(instructionContent)}</instructions>\n\n`;
+      }
+
+      if (config.output?.headerText) {
+        output += `  <header>${escapeXml(config.output.headerText)}</header>\n`;
+      }
+
+      output += '  <file_summary>\n';
+      output += `    <files_processed>${filesToProcess.length}</files_processed>\n`;
+      output += '  </file_summary>\n\n';
+      output += '  <repository_structure>\n';
+      output += `    ${escapeXml(generateTreeString(filesToProcess.map(f => path.isAbsolute(f.path) ? path.relative(rootDir, f.path) : f.path)))}\n`;
+      output += '  </repository_structure>\n\n';
+      output += '  <repository_files>\n';
+
+      for (const file of filesToProcess) {
+        const { relativePath, content } = generateFileContent(file, false);
+        output += `    <file path="${escapeXml(relativePath)}">\n`;
+        if (config.output?.showLineNumbers) {
+          const lines = content.split('\n');
+          lines.forEach((line, index) => {
+            output += `      <line number="${index + 1}">${escapeXml(line)}</line>\n`;
+          });
+        } else {
+          output += `      <content>${escapeXml(content)}</content>\n`;
+        }
+        output += '    </file>\n\n';
+      }
+
+      output += '  </repository_files>\n';
+      output += '</repository>';
+
+      return output;
+    }
+
+    default: { // plain text
+      let output = '';
+      
+      if (instructionContent) {
+        output += instructionContent + '\n\n';
+      }
+
+      if (config.output?.headerText) {
+        output += config.output.headerText + '\n';
+      }
+
+      output += 'File Summary\n';
+      output += `Files processed: ${filesToProcess.length}\n`;
+      output += 'Repository Structure\n';
+      output += generateTreeString(filesToProcess.map(f => path.isAbsolute(f.path) ? path.relative(rootDir, f.path) : f.path)) + '\n';
+      output += 'Repository Files\n';
+
+      for (const file of filesToProcess) {
+        const { relativePath, content } = generateFileContent(file, config.output?.showLineNumbers);
+        output += `File: ${relativePath}\n`;
+        output += content + '\n';
+      }
+
+      // Remove empty lines if configured
+      if (config.output?.removeEmptyLines) {
+        output = output
+          .split('\n')
+          .filter(line => line.trim() !== '')
+          .join('\n');
+      }
+
+      return output;
+    }
+  }
+};
 
 // Helper function to escape XML special characters
 function escapeXml(unsafe: string): string {
@@ -276,3 +256,7 @@ function escapeXml(unsafe: string): string {
     .replace(/'/g, '&apos;');
 }
 
+function getFileExtension(filePath: string): string {
+  const fileExtension = filePath.split('.').pop() || '';
+  return LANGUAGE_MAP[fileExtension] || fileExtension;
+}

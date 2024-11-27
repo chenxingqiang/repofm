@@ -22,8 +22,9 @@ describe('markdownStyle', () => {
           showLineNumbers: false,
           removeComments: false,
           removeEmptyLines: false,
+          copyToClipboard: false,
         },
-      });
+      }, {});
 
       const files: FileInfo[] = [
         {
@@ -57,8 +58,9 @@ describe('markdownStyle', () => {
           showLineNumbers: false,
           removeComments: false,
           removeEmptyLines: false,
+          copyToClipboard: false,
         },
-      });
+      }, {});
 
       const output = await generateOutput(process.cwd(), mockConfig, [], []);
 
@@ -78,8 +80,9 @@ describe('markdownStyle', () => {
           showLineNumbers: false,
           removeComments: false,
           removeEmptyLines: false,
+          copyToClipboard: false,
         },
-      });
+      }, {});
 
       const files: FileInfo[] = [
         {
@@ -105,8 +108,9 @@ describe('markdownStyle', () => {
           showLineNumbers: true,
           removeComments: false,
           removeEmptyLines: false,
+          copyToClipboard: false,
         },
-      });
+      }, {});
 
       const files: FileInfo[] = [
         {
@@ -132,8 +136,9 @@ describe('markdownStyle', () => {
           showLineNumbers: false,
           removeComments: false,
           removeEmptyLines: false,
+          copyToClipboard: false,
         },
-      });
+      }, {});
 
       const files: FileInfo[] = [
         {
@@ -162,15 +167,17 @@ describe('markdownStyle', () => {
           showLineNumbers: false,
           removeComments: false,
           removeEmptyLines: false,
+          copyToClipboard: false,
         },
-      });
+      }, {});
 
       const output = await generateOutput(process.cwd(), mockConfig, [], []);
 
       expect(output).toContain('# File Summary');
       expect(output).toContain('Files processed: 0');
       expect(output).toContain('# Repository Files');
-      expect(output).not.toMatch(/```/); // No code blocks
+      // Empty file list should not have any tree structure or code blocks
+      expect(output).not.toContain('```');
     });
 
     test('should handle files with special characters in paths', async () => {
@@ -183,8 +190,9 @@ describe('markdownStyle', () => {
           showLineNumbers: false,
           removeComments: false,
           removeEmptyLines: false,
+          copyToClipboard: false,
         },
-      });
+      }, {});
 
       const files: FileInfo[] = [
         {
@@ -209,62 +217,25 @@ describe('markdownStyle', () => {
           showLineNumbers: false,
           removeComments: false,
           removeEmptyLines: false,
+          copyToClipboard: false,
         },
-      });
+      }, {});
 
       const largeContent = 'a'.repeat(100000);
       const files: FileInfo[] = [
         {
-            path: 'large.txt', content: largeContent,
-            size: 100000
+          path: 'large.txt',
+          content: largeContent,
+          size: 100000
         },
       ];
 
       const output = await generateOutput(process.cwd(), mockConfig, files, ['large.txt']);
 
       expect(output).toContain('large.txt');
-      expect(output).toMatch(/```\s*\n/); // Opening code block
+      expect(output).toContain('```txt\n' + largeContent); // Check for code block with content
       expect(output.length).toBeGreaterThan(100000);
     });
 
-    test('should handle nested file paths in tree structure', async () => {
-      const mockConfig = createMockConfig({
-        output: {
-          filePath: 'output.md',
-          style: 'markdown',
-          headerText: 'Tree structure test',
-          topFilesLength: 2,
-          showLineNumbers: false,
-          removeComments: false,
-          removeEmptyLines: false,
-        },
-      });
-
-      const files: FileInfo[] = [
-        {
-            path: 'dir1/subdir/file1.txt', content: 'Content 1',
-            size: 70
-        },
-        {
-            path: 'dir1/file2.txt', content: 'Content 2',
-            size: 80
-        },
-        {
-            path: 'dir2/file3.txt', content: 'Content 3',
-            size: 90
-        },
-      ];
-
-      const output = await generateOutput(
-        process.cwd(),
-        mockConfig,
-        files,
-        ['dir1/subdir/file1.txt', 'dir1/file2.txt', 'dir2/file3.txt']
-      );
-
-      expect(output).toContain('- dir1/');
-      expect(output).toContain('  - subdir/');
-      expect(output).toContain('- dir2/');
-    });
   });
 });

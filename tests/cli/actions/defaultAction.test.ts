@@ -1,14 +1,26 @@
+import * as fs from 'node:fs/promises';
+import path from 'node:path';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { runDefaultAction } from '../../../src/cli/actions/defaultAction.js';
 import { globby } from 'globby';
-import * as fs from 'fs/promises';
-import { logger } from '../../../src/utils/logger.js';
+import { logger } from '../../../src/shared/logger.js';
 import type { Config } from '../../../src/types/config.js';
 
 // Mock the dependencies
 vi.mock('globby');
-vi.mock('fs/promises');
-vi.mock('../../../src/utils/logger.js');
+vi.mock('node:fs/promises', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('node:fs/promises')>();
+  return {
+    ...actual,
+    writeFile: vi.fn(),
+    readFile: vi.fn(),
+    stat: vi.fn()
+  };
+});
+vi.mock('../../../src/shared/logger.js');
+vi.mock('../../../src/config/configLoad.js', () => ({
+  loadConfig: vi.fn()
+}));
 
 describe('defaultAction', () => {
   beforeEach(() => {
@@ -20,6 +32,13 @@ describe('defaultAction', () => {
     // Mock successful file operations
     vi.mocked(fs.writeFile).mockResolvedValue(undefined);
     vi.mocked(fs.readFile).mockResolvedValue('file content');
+
+    // Mock fs.stat to return file size
+    vi.mocked(fs.stat).mockResolvedValue({
+      size: 100,
+      isFile: () => true,
+      isDirectory: () => false
+    } as any);
   });
 
   it('should run the default command successfully', async () => {
@@ -44,24 +63,39 @@ describe('defaultAction', () => {
       }
     };
 
+    // Mock config loading
+    const { loadConfig } = await import('../../../src/config/configLoad.js');
+    vi.mocked(loadConfig).mockResolvedValue(mockConfig);
+
+    // Use current working directory as target directory
+    const targetDir = process.cwd();
+    const configPath = './repofm.config.json';
+
     const options = {
-      cwd: process.cwd(),
-      config: mockConfig
+      copyToClipboard: false,
+      outputPath: 'output.txt',
+      verbose: false
     };
 
-    await runDefaultAction(options);
+    await runDefaultAction(targetDir, configPath, options);
 
+    // Verify globby was called with expected parameters
     expect(globby).toHaveBeenCalledWith(
-      expect.any(Array),
+      ['**/*'],
       expect.objectContaining({
+        cwd: process.cwd(),
+        absolute: false,
         dot: false,
-        followSymlinks: true
+        followSymbolicLinks: false,
+        gitignore: true,
+        onlyFiles: true
       })
     );
 
+    // Verify file write operation
     expect(fs.writeFile).toHaveBeenCalled();
+
+    // Verify logger was called
     expect(logger.info).toHaveBeenCalled();
   });
-
-  // Add more test cases as needed...
 });

@@ -214,14 +214,17 @@ describe('fileProcess', () => {
         {
           path: 'test1.js',
           content: '// Comment 1\nfunction test1() {}\n',
+          size: Buffer.from('// Comment 1\nfunction test1() {}\n').length
         },
         {
           path: 'test2.js',
           content: '// Comment 2\nfunction test2() {}\n',
+          size: Buffer.from('// Comment 2\nfunction test2() {}\n').length
         },
         {
           path: 'test3.py',
           content: '# Comment 3\ndef test3():\n    pass\n',
+          size: Buffer.from('# Comment 3\ndef test3():\n    pass\n').length
         },
       ];
 
@@ -289,9 +292,9 @@ describe('fileProcess', () => {
 
     test('preserves file order', async () => {
       const rawFiles: RawFile[] = [
-        { path: 'c.js', content: 'c' },
-        { path: 'a.js', content: 'a' },
-        { path: 'b.js', content: 'b' },
+        { path: 'c.js', content: 'c', size: 1 },
+        { path: 'a.js', content: 'a', size: 1 },
+        { path: 'b.js', content: 'b', size: 1 },
       ];
 
       const result = await processFiles(rawFiles, {
@@ -320,8 +323,8 @@ describe('fileProcess', () => {
 
     test('handles files with null content', async () => {
       const rawFiles: RawFile[] = [
-        { path: 'empty.js', content: '' },
-        { path: 'test.js', content: 'content' },
+        { path: 'empty.js', content: '', size: 0 },
+        { path: 'test.js', content: 'content', size: 7 },
       ];
 
       const result = await processFiles(rawFiles, {

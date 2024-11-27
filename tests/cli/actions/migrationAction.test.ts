@@ -2,7 +2,7 @@ import * as fs from 'node:fs/promises';
 import path from 'node:path';
 import * as prompts from '@clack/prompts';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { runMigrationAction } from '../../../src/cli/actions/migrationAction.js';
+import { runMigrationAction, updateGitignore } from '../../../src/cli/actions/migrationAction.js';
 import { logger } from '../../../src/shared/logger.js';
 
 vi.mock('node:fs/promises');

@@ -185,9 +185,20 @@ describe('errorHandle', () => {
             });
 
             try {
-                const result = schema.parse({ field: 123 });
+                schema.parse({ field: 123 });
+                // This line should never be reached due to the validation error
+                expect(true).toBe(false);
             } catch (error) {
-                rethrowValidationErrorIfZodError(error, 'Config validation');
+                try {
+                    rethrowValidationErrorIfZodError(error, 'Config validation');
+                    // This line should never be reached due to the rethrow
+                    expect(true).toBe(false);
+                } catch (validationError) {
+                    expect(validationError).toBeInstanceOf(repofmConfigValidationError);
+                    expect(validationError.message).toContain('Config validation');
+                    expect(validationError.message).toContain('[field]');
+                    expect(validationError.message).toContain('Expected string, received number');
+                }
             }
 
             expect(logger.error).not.toHaveBeenCalled();

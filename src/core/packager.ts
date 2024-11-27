@@ -12,9 +12,10 @@ import { collectFiles as defaultCollectFiles } from './file/fileCollect.js';
 import { processFiles as defaultProcessFiles } from './file/fileProcess.js';
 import { searchFiles as defaultSearchFiles, type SearchConfig, type IgnoreConfig } from './file/fileSearch.js';
 import { generateOutput as defaultGenerateOutput } from './output/outputGenerate.js';
-import { type SuspiciousFileResult, runSecurityCheck as defaultRunSecurityCheck } from './security/securityCheck.js';
-import { TokenCounter } from './tokenCount/tokenCount.js';
+import { runSecurityCheck as defaultRunSecurityCheck } from './security/securityCheck.js';
+import { TokenCounter } from './tokenCount/TokenCounter.js';
 import { Config, normalizeIgnoreConfig } from '../types/config.js';
+import type { SuspiciousFileResult } from './types.js';
 
 export interface PackDependencies {
   searchFiles: typeof defaultSearchFiles;
@@ -48,7 +49,10 @@ export async function pack(
     generateOutput: defaultGenerateOutput,
     readFile: async (path: string) => (await fs.readFile(path)).toString('utf-8'),
     writeFile: fs.writeFile,
-    countTokens: async (content: string) => TokenCounter.count(content),
+    countTokens: async (content: string) => {
+      const counter = new TokenCounter();
+      return await counter.count(content);
+    },
   },
 ): Promise<PackResult> {
   progressCallback?.('Starting file search...');
@@ -100,52 +104,45 @@ export async function pack(
   progressCallback?.('Processing files...');
   const processedFiles = await deps.processFiles(safeRawFiles, config);
 
+  // Count tokens
+  progressCallback?.('Counting tokens...');
+  const fileTokenCounts: Record<string, number> = {};
+  const fileCharCounts: Record<string, number> = {};
+  let totalTokens = 0;
+  let totalCharacters = 0;
+
+  for (const file of processedFiles) {
+    const tokenCount = await deps.countTokens(file.content);
+    const charCount = file.content.length;
+
+    fileTokenCounts[file.path] = tokenCount;
+    fileCharCounts[file.path] = charCount;
+    totalTokens += tokenCount;
+    totalCharacters += charCount;
+  }
+
   // Generate output
   progressCallback?.('Generating output...');
-  const outputConfig: Config = {
-    ...config,
-    ignore: normalizeIgnoreConfig(config.ignore),
-    cwd: config.cwd || process.cwd(),
-  };
-  const output = await deps.generateOutput(
-    normalizedRootDir,
-    outputConfig,
-    processedFiles,
-    safeFilePaths
-  );
+  const output = await deps.generateOutput(rootDir, config, processedFiles);
 
-  // Write output
-  progressCallback?.('Writing output file...');
-  const outputPath = path.resolve(config.cwd || process.cwd(), config.output.filePath);
-  logger.trace(`Writing output to: ${outputPath}`);
-  await fs.writeFile(outputPath, output);
+  // Write output to file
+  if (config.output.filePath) {
+    progressCallback?.('Writing output to file...');
+    await deps.writeFile(config.output.filePath, output);
+  }
 
+  // Copy to clipboard
   if (config.output.copyToClipboard) {
-    // Additionally copy to clipboard if flag is raised
-    progressCallback?.('Copying to clipboard...');
-    logger.trace('Copying output to clipboard');
+    progressCallback?.('Copying output to clipboard...');
     await clipboard.write(output);
   }
 
-  // Calculate statistics
-  const fileCharCounts: Record<string, number> = {};
-  const fileTokenCounts: Record<string, number> = {};
-  let totalCharacters = 0;
-  let totalTokens = 0;
-
-  for (const file of processedFiles) {
-    fileCharCounts[file.path] = file.content.length;
-    fileTokenCounts[file.path] = await deps.countTokens(file.content);
-    totalCharacters += fileCharCounts[file.path];
-    totalTokens += fileTokenCounts[file.path];
-  }
-
   return {
-    totalFiles: processedFiles.length,
+    totalFiles: safeFilePaths.length,
     totalCharacters,
     totalTokens,
     fileCharCounts,
     fileTokenCounts,
-    suspiciousFilesResults
+    suspiciousFilesResults,
   };
 }

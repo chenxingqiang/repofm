@@ -15,8 +15,9 @@ interface CollectConfig {
     rootDir?: string;
 }
 
-const readRawFile = async (filePath: string): Promise<string | null> => {
-    if (isBinary(filePath)) {
+const readRawFile = async (filePath: string, rootDir?: string): Promise<string | null> => {
+    const absolutePath = rootDir ? path.resolve(rootDir, filePath) : filePath;
+    if (isBinary(absolutePath)) {
         logger.debug(`Skipping binary file: ${filePath}`);
         return null;
     }
@@ -24,7 +25,7 @@ const readRawFile = async (filePath: string): Promise<string | null> => {
     logger.trace(`Processing file: ${filePath}`);
 
     try {
-        const buffer = await fs.readFile(filePath);
+        const buffer = await fs.readFile(absolutePath);
 
         if (isBinary(null, buffer)) {
             logger.debug(`Skipping binary file (content check): ${filePath}`);
@@ -49,11 +50,12 @@ export const collectFiles = async (
 
     for (const filePath of filePaths) {
         try {
-            const content = await readRawFile(filePath);
+            const content = await readRawFile(filePath, config.rootDir);
             if (content !== null) {
-                const stat = await fs.stat(filePath);
+                const absolutePath = config.rootDir ? path.resolve(config.rootDir, filePath) : filePath;
+                const stat = await fs.stat(absolutePath);
                 results.push({
-                    path: filePath,
+                    path: absolutePath,
                     content,
                     size: stat.size
                 });

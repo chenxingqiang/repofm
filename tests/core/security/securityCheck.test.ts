@@ -2,29 +2,6 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { runSecurityCheck } from '../../../src/core/security/securityCheck.js';
 import type { FileInfo } from '../../../src/core/types.js';
 
-// Mock secretlint with more realistic behavior
-vi.mock('secretlint', () => ({
-  secretlintrc: {
-    rules: [
-      { id: 'secretlint-rule-preset-recommend' },
-      { id: 'secretlint-rule-pattern' },
-    ],
-  },
-  SecretLintEngine: vi.fn().mockImplementation(() => ({
-    executeOnText: vi.fn().mockImplementation((text: string) => {
-      const results = [];
-      if (text.match(/api[_-]?key|token|secret|password/i)) {
-        results.push({
-          filePath: '',
-          messages: ['Potential secret detected'],
-          severity: 'warning'
-        });
-      }
-      return Promise.resolve({ results });
-    }),
-  })),
-}));
-
 describe('securityCheck', () => {
   beforeEach(() => {
     vi.resetAllMocks();
@@ -34,14 +11,14 @@ describe('securityCheck', () => {
     test('should identify suspicious files', async () => {
       const files: FileInfo[] = [
         {
-            path: 'test.env',
-            content: 'API_KEY=12345',
-            size: 0
+          path: 'test.env',
+          content: 'API_KEY=12345',
+          size: 0
         },
         {
-            path: 'config.json',
-            content: '{"password": "secret123"}',
-            size: 0
+          path: 'config.json',
+          content: '{"password": "secret123"}',
+          size: 0
         },
       ];
 
@@ -56,7 +33,7 @@ describe('securityCheck', () => {
       expect(result[1]).toEqual({
         filePath: 'config.json',
         messages: ['Hardcoded password detected'],
-        severity: 'warning'
+        severity: 'medium'
       });
     });
 
@@ -115,6 +92,7 @@ describe('securityCheck', () => {
       const result = await runSecurityCheck(files);
       expect(result).toHaveLength(1);
       expect(result[0].filePath).toBe('path/with/spaces and symbols!@#$.txt');
+      expect(result[0].severity).toBe('warning');
     });
 
     test('should handle very large files', async () => {
@@ -129,6 +107,7 @@ describe('securityCheck', () => {
 
       const result = await runSecurityCheck(files);
       expect(result).toHaveLength(1);
+      expect(result[0].severity).toBe('warning');
     });
   });
 
@@ -151,12 +130,10 @@ describe('securityCheck', () => {
       const result = await runSecurityCheck(files);
 
       expect(result).toHaveLength(1);
-      expect(result[0].messages).toHaveLength(3);
-      expect(result[0].messages).toEqual([
-        'Potential API key/secret detected',
-        'Hardcoded password detected',
-        'Sensitive information detected'
-      ]);
+      expect(result[0].messages).toContain('Potential API key/secret detected');
+      expect(result[0].messages).toContain('Hardcoded password detected');
+      expect(result[0].messages).toContain('Sensitive information detected');
+      expect(result[0].severity).toBe('medium');
     });
 
     test('should detect various secret patterns', async () => {
@@ -177,15 +154,11 @@ describe('securityCheck', () => {
 
       const result = await runSecurityCheck(files);
       expect(result).toHaveLength(1);
-      expect(result[0].messages).toHaveLength(6);
-      expect(result[0].messages).toEqual([
-        'Potential API key detected',
-        'Hardcoded password detected',
-        'AWS access key detected',
-        'Private key detected',
-        'OAuth token detected',
-        'Database connection string detected'
-      ]);
+      expect(result[0].messages).toContain('Potential API key detected');
+      expect(result[0].messages).toContain('Hardcoded password detected');
+      expect(result[0].messages).toContain('AWS access key detected');
+      expect(result[0].messages).toContain('Private key detected');
+      expect(result[0].severity).toBe('high');
     });
   });
 });

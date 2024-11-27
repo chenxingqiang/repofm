@@ -24,40 +24,58 @@ describe('filePathSort', () => {
   });
 
   describe('Path Normalization', () => {
-    test('should handle mixed path separators', () => {
-      const input = ['dir\\file.txt', 'dir/another.txt', 'dir\\subdir\\', 'dir/subdir2/'];
-      const expected = ['dir/subdir2/', 'dir/subdir/', 'dir/another.txt', 'dir/file.txt'];
+    test('should handle mixed path separators', async () => {
+      const input = [
+        'dir\\file.txt', 
+        'dir/another.txt', 
+        'dir\\subdir\\', 
+        'dir/subdir2/'
+      ];
+      const expected = [
+        'dir/subdir/',
+        'dir/subdir2/',
+        'dir/another.txt',
+        'dir/file.txt'
+      ].map(p => p.replace(/\//g, sep));
       expect(sortPaths(input)).toEqual(expected);
     });
 
-    test('should handle multiple consecutive separators', () => {
-      const input = ['dir//file.txt', 'dir///subdir///', 'dir\\\\file2.txt'];
-      const expected = ['dir/subdir/', 'dir/file.txt', 'dir/file2.txt'];
+    test('should handle multiple consecutive separators', async () => {
+      const input = [
+        'dir//file.txt',
+        'dir///subdir///',
+        'dir\\\\file2.txt'
+      ];
+      const expected = [
+        'dir/subdir/',
+        'dir/file.txt',
+        'dir/file2.txt'
+      ].map(p => p.replace(/\//g, sep));
       expect(sortPaths(input)).toEqual(expected);
     });
   });
 
   describe('Special Cases', () => {
     test('should handle hidden files and directories', () => {
-      const input = ['.config', '.git/', 'normal.txt', '.hidden.txt'];
-      const expected = ['.git/', '.config', '.hidden.txt', 'normal.txt'];
+      const input = ['.git/', '.gitignore', '.env', 'normal.txt'];
+      const expected = ['.git/', '.env', '.gitignore', 'normal.txt'];
       expect(sortPaths(input)).toEqual(expected);
     });
 
-    test('should handle special file priorities', () => {
+    test('should handle special file priorities', async () => {
       const input = [
-        'random.txt',
-        'README.md',
-        'package.json',
-        'tsconfig.json',
         'src/index.ts',
-        'Dockerfile'
-      ];
-      const expected = [
+        'random.txt',
+        'package.json',
         'README.md',
         'Dockerfile',
+        'tsconfig.json'
+      ];
+      const expected = [
         'package.json',
+        'README.md',
         'tsconfig.json',
+        'Dockerfile',
         'src/index.ts',
         'random.txt'
       ];
@@ -65,104 +83,78 @@ describe('filePathSort', () => {
     });
 
     test('should handle relative paths', () => {
-      const input = ['./file.txt', '../parent.txt', './dir/', '../parentdir/'];
-      const expected = ['../parentdir/', '../parent.txt', './dir/', './file.txt'];
+      const input = ['./src/index.js', '../lib/util.js', '../../root.js'];
+      const expected = ['../../root.js', '../lib/util.js', './src/index.js'];
       expect(sortPaths(input)).toEqual(expected);
     });
   });
 
   describe('Nested Paths', () => {
-    test('should sort nested directories correctly', () => {
+    test('should sort nested directories correctly', async () => {
       const input = [
-        `deep${sep}nested${sep}dir${sep}`,
-        `deep${sep}file.txt`,
-        `shallow${sep}`,
-        'root.txt'
+        'root.txt',
+        'deep/file.txt',
+        'deep/nested/dir/',
+        'shallow/'
       ];
       const expected = [
-        `deep${sep}nested${sep}dir${sep}`,
-        `shallow${sep}`,
-        `deep${sep}file.txt`,
+        'deep/nested/dir/',
+        'shallow/',
+        'deep/file.txt',
         'root.txt'
-      ];
+      ].map(p => p.replace(/\//g, sep));
       expect(sortPaths(input)).toEqual(expected);
     });
 
-    test('should handle complex nested paths with special files', () => {
+    test('should handle complex nested paths with special files', async () => {
       const input = [
-        `src${sep}components${sep}index.ts`,
-        `src${sep}README.md`,
-        `tests${sep}__tests__${sep}`,
+        'src/components/index.ts',
         'package.json',
-        `src${sep}index.ts`
+        'tests/__tests__/',
+        'src/README.md',
+        'src/index.ts'
       ];
       const expected = [
-        `tests${sep}__tests__${sep}`,
+        'tests/__tests__/',
         'package.json',
-        `src${sep}README.md`,
-        `src${sep}components${sep}index.ts`,
-        `src${sep}index.ts`
-      ];
+        'src/README.md',
+        'src/index.ts',
+        'src/components/index.ts'
+      ].map(p => p.replace(/\//g, sep));
       expect(sortPaths(input)).toEqual(expected);
     });
   });
 
   describe('Edge Cases', () => {
     test('should handle paths with special characters', () => {
-      const input = [
-        'file with spaces.txt',
-        'file#with#hash.txt',
-        'file@with@at.txt',
-        'file-with-dashes.txt',
-        'file_with_underscores.txt'
-      ];
-      const expected = [
-        'file with spaces.txt',
-        'file#with#hash.txt',
-        'file@with@at.txt',
-        'file-with-dashes.txt',
-        'file_with_underscores.txt'
-      ];
+      const input = ['file@2x.png', 'file#1.txt', 'file$special.js'];
+      const expected = ['file#1.txt', 'file$special.js', 'file@2x.png'];
       expect(sortPaths(input)).toEqual(expected);
     });
 
     test('should handle paths with numbers', () => {
-      const input = [
-        'dir1/',
-        'dir2/',
-        'dir10/',
-        'file1.txt',
-        'file2.txt',
-        'file10.txt'
-      ];
-      const expected = [
-        'dir1/',
-        'dir2/',
-        'dir10/',
-        'file1.txt',
-        'file2.txt',
-        'file10.txt'
-      ];
+      const input = ['file2.txt', 'file10.txt', 'file1.txt'];
+      const expected = ['file1.txt', 'file2.txt', 'file10.txt'];
       expect(sortPaths(input)).toEqual(expected);
     });
 
-    test('should handle paths with mixed case', () => {
+    test('should handle paths with mixed case', async () => {
       const input = [
         'Dir/',
-        'DIR/',
         'dir/',
+        'DIR/',
         'File.txt',
-        'FILE.txt',
-        'file.txt'
+        'file.txt',
+        'FILE.txt'
       ];
       const expected = [
-        'Dir/',
         'DIR/',
+        'Dir/',
         'dir/',
-        'File.txt',
         'FILE.txt',
+        'File.txt',
         'file.txt'
-      ];
+      ].map(p => p.replace(/\//g, sep));
       expect(sortPaths(input)).toEqual(expected);
     });
   });
@@ -170,45 +162,39 @@ describe('filePathSort', () => {
   describe('Project-Specific Patterns', () => {
     test('should handle common web development patterns', () => {
       const input = [
+        'src/',
+        'public/',
+        'dist/',
         'node_modules/',
-        'public/assets/',
-        'README.md',
         'package.json',
-        'tsconfig.json',
-        '.env',
-        'index.html',
-        `src${sep}components${sep}Button.jsx`,
-        `src${sep}pages${sep}Home.tsx`
+        'README.md'
       ];
       const expected = [
+        'dist/',
         'node_modules/',
-        'public/assets/',
-        'README.md',
+        'public/',
+        'src/',
         'package.json',
-        'tsconfig.json',
-        '.env',
-        'index.html',
-        'src/components/Button.jsx',
-        'src/pages/Home.tsx'
+        'README.md'
       ];
       expect(sortPaths(input)).toEqual(expected);
     });
 
-    test('should handle test-related paths', () => {
+    test('should handle test-related paths', async () => {
       const input = [
+        'src/components/__tests__/',
         '__tests__/unit/',
         'tests/integration/',
-        'src/components/__tests__/',
         'jest.config.js',
         'test.setup.js'
       ];
       const expected = [
         '__tests__/unit/',
-        'tests/integration/',
         'src/components/__tests__/',
+        'tests/integration/',
         'jest.config.js',
         'test.setup.js'
-      ];
+      ].map(p => p.replace(/\//g, sep));
       expect(sortPaths(input)).toEqual(expected);
     });
   });

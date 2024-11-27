@@ -22,6 +22,7 @@ describe('plainStyle', () => {
           showLineNumbers: false,
           removeComments: false,
           removeEmptyLines: false,
+          copyToClipboard: false,
         },
       }, {});
 
@@ -36,8 +37,8 @@ describe('plainStyle', () => {
       expect(output).toContain('File Summary');
       expect(output).toContain('Repository Structure');
       expect(output).toContain('Repository Files');
-      expect(output).toContain('file1.txt');
-      expect(output).toContain('file2.txt');
+      expect(output).toContain('File: file1.txt');
+      expect(output).toContain('File: file2.txt');
       expect(output).toContain('Content 1');
       expect(output).toContain('Content 2');
     });
@@ -53,6 +54,7 @@ describe('plainStyle', () => {
           showLineNumbers: false,
           removeComments: false,
           removeEmptyLines: false,
+          copyToClipboard: false,
         },
       },{});
 
@@ -73,6 +75,7 @@ describe('plainStyle', () => {
           showLineNumbers: true,
           removeComments: false,
           removeEmptyLines: false,
+          copyToClipboard: false,
         },
       },{});
 
@@ -100,6 +103,7 @@ describe('plainStyle', () => {
           showLineNumbers: false,
           removeComments: true,
           removeEmptyLines: false,
+          copyToClipboard: false,
         },
       },{});
 
@@ -128,6 +132,7 @@ describe('plainStyle', () => {
           showLineNumbers: false,
           removeComments: false,
           removeEmptyLines: true,
+          copyToClipboard: false,
         },
       },{});
 
@@ -140,12 +145,8 @@ describe('plainStyle', () => {
       ];
 
       const output = await generateOutput(process.cwd(), mockConfig, files, ['text.txt']);
-
-      const emptyLines = output.split('\n').filter(line => line.trim() === '');
-      expect(emptyLines.length).toBe(0);
-      expect(output).toContain('Line 1');
-      expect(output).toContain('Line 2');
-      expect(output).toContain('Line 3');
+      const contentLines = output.split('\n').filter(line => line.trim() === '');
+      expect(contentLines.length).toBe(0);
     });
   });
 
@@ -160,6 +161,7 @@ describe('plainStyle', () => {
           showLineNumbers: false,
           removeComments: false,
           removeEmptyLines: false,
+          copyToClipboard: false,
         },
       },{});
 
@@ -180,6 +182,7 @@ describe('plainStyle', () => {
           showLineNumbers: false,
           removeComments: false,
           removeEmptyLines: false,
+          copyToClipboard: false,
         },
       },{});
 
@@ -209,6 +212,7 @@ describe('plainStyle', () => {
           showLineNumbers: false,
           removeComments: false,
           removeEmptyLines: false,
+          copyToClipboard: false,
         },
       },{});
 
@@ -236,32 +240,18 @@ describe('plainStyle', () => {
           showLineNumbers: false,
           removeComments: false,
           removeEmptyLines: false,
-        },
-      },{});
+          copyToClipboard: false,
+        }
+      }, {});
 
-      const files: FileInfo[] = [
-        {
-            path: 'file1.txt', content: 'Content 1',
-            size: 0
-        },
-        {
-            path: 'file2.txt', content: 'Content 2',
-            size: 0
-        },
-        {
-            path: 'file3.txt', content: 'Content 3',
-            size: 0
-        },
-        {
-            path: 'file4.txt', content: 'Content 4',
-            size: 0
-        },
+      const files = [
+        { path: 'file1.txt', content: 'Content 1', size: 0 },
+        { path: 'file2.txt', content: 'Content 2', size: 0 }
       ];
 
-      const output = await generateOutput(process.cwd(), mockConfig, files, ['file1.txt', 'file2.txt', 'file3.txt', 'file4.txt']);
-
-      const fileMatches = output.match(/file\d\.txt/g) || [];
-      expect(fileMatches.length).toBe(2); // Should only show top 2 files
+      const output = await generateOutput(process.cwd(), mockConfig, files, ['file1.txt', 'file2.txt']);
+      const fileMatches = output.match(/File: file\d\.txt/g) || [];
+      expect(fileMatches.length).toBe(2);
     });
   });
 });

@@ -1,46 +1,59 @@
-import os from 'node:os';
-import process from 'node:process';
 import fs from 'node:fs/promises';
+import os from 'node:os';
 import path from 'node:path';
-import crypto from 'node:crypto';
-import { type repofmConfigMerged, defaultConfig } from '../../src/config/configSchema.js';
+import { type Config } from '../../src/types/config.js';
 
-type DeepPartial<T> = {
-  [P in keyof T]?: T[P] extends (infer U)[]
-    ? DeepPartial<U>[]
-    : T[P] extends readonly (infer U)[]
-      ? readonly DeepPartial<U>[]
-      : T[P] extends object
-        ? DeepPartial<T[P]>
-        : T[P];
-};
+export const isWindows = os.platform() === 'win32';
 
-export const createMockConfig = (config: DeepPartial<repofmConfigMerged> = {}, p0: {}): repofmConfigMerged => {
-  return {
+export const createMockConfig = (config: Partial<Config>, overrides: Partial<Config> = {}): Config => {
+  const defaultConfig: Config = {
+    output: {
+      filePath: 'output.txt',
+      style: 'plain',
+      headerText: '',
+      topFilesLength: 5,
+      showLineNumbers: false,
+      removeComments: false,
+      removeEmptyLines: false,
+      copyToClipboard: false,
+    },
+    ignore: {
+      useGitignore: true,
+      useDefaultPatterns: true,
+      customPatterns: [],
+    },
+    security: {
+      enableSecurityCheck: true,
+    },
+    include: [],
     cwd: process.cwd(),
+  };
+
+  return {
+    ...defaultConfig,
+    ...config,
     output: {
       ...defaultConfig.output,
-      ...config.output,
+      ...(config.output || {}),
+      ...(overrides.output || {}),
     },
     ignore: {
       ...defaultConfig.ignore,
-      ...config.ignore,
-      customPatterns: [...(defaultConfig.ignore.customPatterns || []), ...(config.ignore?.customPatterns || [])],
+      ...(config.ignore || {}),
+      ...(overrides.ignore || {}),
     },
-    include: [...(defaultConfig.include || []), ...(config.include || [])],
     security: {
       ...defaultConfig.security,
-      ...config.security,
+      ...(config.security || {}),
+      ...(overrides.security || {}),
     },
+    include: [...(defaultConfig.include || []), ...(config.include || []), ...(overrides.include || [])],
+    cwd: config.cwd || defaultConfig.cwd,
   };
 };
 
-export const isWindows = os.platform() === 'win32';
-export const isMac = os.platform() === 'darwin';
-export const isLinux = os.platform() === 'linux';
-
 export const createTempDir = async (): Promise<string> => {
-  const tempDir = path.join(os.tmpdir(), `repofm-test-${crypto.randomBytes(8).toString('hex')}`);
+  const tempDir = path.join(os.tmpdir(), `repofm-test-${Date.now()}`);
   await fs.mkdir(tempDir, { recursive: true });
   return tempDir;
 };

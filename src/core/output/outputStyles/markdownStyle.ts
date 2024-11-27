@@ -1,69 +1,15 @@
 import Handlebars from 'handlebars';
+import type { FileInfo } from '../../types.js';
 
-export const getMarkdownTemplate = () => {
-  return /* md */ `
-{{{generationHeader}}}
+interface TreeNode {
+  [key: string]: TreeNode;
+}
 
-# File Summary
+interface HandlebarsContext {
+  processedFiles: FileInfo[];
+}
 
-## Purpose
-{{{summaryPurpose}}}
-
-## File Format
-{{{summaryFileFormat}}}
-4. Multiple file entries, each consisting of:
-  a. A header with the file path (## File: path/to/file)
-  b. The full contents of the file in a code block
-
-## Usage Guidelines
-{{{summaryUsageGuidelines}}}
-
-## Notes
-{{{summaryNotes}}}
-
-## Additional Info
-{{#if headerText}}
-### User Provided Header
-{{{headerText}}}
-{{/if}}
-
-{{{summaryAdditionalInfo}}}
-
-# Repository Structure
-\`\`\`
-{{{treeString}}}
-\`\`\`
-
-# Repository Files
-
-Files processed: {{processedFiles.length}}
-
-{{#each processedFiles}}
-## File: {{{this.path}}}
-\`\`\`{{{getFileExtension this.path}}}
-{{#if config.output.showLineNumbers}}
-  {{#each this.content.split('\n') as |line i|}}
-  {{i + 1}}. {{line}}
-  {{/each}}
-{{else}}
-  {{#if config.output.removeComments}}
-    {{this.content.replace(/\/\*[\s\S]*?\*\/|\/\/.*/g, '')}}
-  {{else}}
-    {{this.content}}
-  {{/if}}
-{{/if}}
-\`\`\`
-
-{{/each}}
-
-{{#if instruction}}
-# Instruction
-{{{instruction}}}
-{{/if}}
-`;
-};
-
-Handlebars.registerHelper('getFileExtension', (filePath) => {
+Handlebars.registerHelper('getFileExtension', (filePath: string): string => {
   const extension = filePath.split('.').pop()?.toLowerCase();
   switch (extension) {
     case 'js':
@@ -168,3 +114,96 @@ Handlebars.registerHelper('getFileExtension', (filePath) => {
       return '';
   }
 });
+
+Handlebars.registerHelper('formatTreeStructure', function(this: HandlebarsContext) {
+  const files = this.processedFiles;
+  const tree = formatTreeStructure(files.map((file: FileInfo) => file.path));
+  return new Handlebars.SafeString(tree);
+});
+
+export const getMarkdownTemplate = () => {
+  return /* md */ `
+{{{generationHeader}}}
+
+# File Summary
+
+## Purpose
+{{{summaryPurpose}}}
+
+## File Format
+{{{summaryFileFormat}}}
+
+## Usage Guidelines
+{{{summaryUsageGuidelines}}}
+
+## Notes
+{{{summaryNotes}}}
+
+## Additional Info
+{{#if headerText}}
+### User Provided Header
+{{{headerText}}}
+{{/if}}
+
+{{{summaryAdditionalInfo}}}
+
+# Repository Structure
+{{{formatTreeStructure}}}
+
+# Repository Files
+
+Files processed: {{processedFiles.length}}
+
+{{#each processedFiles}}
+## File: {{{this.path}}}
+\`\`\`{{{getFileExtension this.path}}}
+{{#if config.output.showLineNumbers}}
+{{#each this.content.split '\\n' as |line i|}}
+{{i + 1}}. {{{line}}}
+{{/each}}
+{{else}}
+{{#if config.output.removeComments}}
+{{{this.content.replace /\/\*[\s\S]*?\*\/|\/\/.*/g ''}}}
+{{else}}
+{{{this.content}}}
+{{/if}}
+{{/if}}
+\`\`\`
+
+{{/each}}
+
+{{#if instruction}}
+# Instruction
+{{{instruction}}}
+{{/if}}
+`;
+};
+
+function formatTreeStructure(files: string[]): string {
+  const tree: TreeNode = {};
+  
+  files.forEach(file => {
+    const parts = file.split('/');
+    let current: TreeNode = tree;
+    parts.forEach(part => {
+      if (!current[part]) {
+        current[part] = {};
+      }
+      current = current[part];
+    });
+  });
+
+  function renderTree(node: TreeNode, indent = ''): string {
+    let output = '';
+    Object.keys(node).sort().forEach(key => {
+      const isFile = Object.keys(node[key]).length === 0;
+      output += `${indent}- ${key}${isFile ? '' : '/' }\n`;
+      if (!isFile) {
+        output += renderTree(node[key], indent + '  ');
+      }
+    });
+    return output;
+  }
+
+  return renderTree(tree);
+}
