@@ -1,1 +1,1 @@
-export { default as cli } from './cli.js';
+export { run } from './cli/cliRun.js';

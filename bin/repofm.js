@@ -10,8 +10,8 @@ const require = createRequire(import.meta.url);
 
 async function main() {
   try {
-    const cli = await import(join(__dirname, "../lib/cli.js"));
-    await cli.default();
+    const { run } = await import(join(__dirname, "../lib/cli/cliRun.js"));
+    await run();
   } catch (error) {
     console.error("Error loading CLI:", error);
     process.exit(1);

@@ -42,7 +42,7 @@ repofm.config.js
 
 # repofm output
 repofm-output.txt
-
+repomix-output.txt
 # Development scripts
 scripts/
 

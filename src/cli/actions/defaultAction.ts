@@ -10,6 +10,11 @@ interface DefaultActionOptions {
   outputPath?: string;
   verbose?: boolean;
   global?: boolean;
+  target?: string;
+  type?: string;
+  depth?: number;
+  format?: string;
+  range?: string;
 }
 
 export async function runDefaultAction(
