@@ -1,0 +1,10 @@
+File Summary
+Files processed: 2
+Repository Structure
+file1.txt
+file2.txt
+Repository Files
+File: file1.txt
+file content
+File: file2.txt
+file content
