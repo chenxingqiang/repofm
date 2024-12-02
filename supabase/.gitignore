@@ -2,3 +2,8 @@
 .branches
 .temp
 .env.local
+
+# Supabase
+.branches
+.temp
+.env
