@@ -5,15 +5,23 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { handleError, repofmConfigValidationError, repofmError, rethrowValidationErrorIfZodError } from '../../src/shared/errorHandle.js';
 import { logger } from '../../src/shared/logger.js';
 
-vi.mock('../../src/shared/logger');
+vi.mock('../../src/shared/logger.js', () => {
+  return {
+    logger: {
+      error: vi.fn(),
+      debug: vi.fn(),
+      info: vi.fn()
+    }
+  };
+});
 
 describe('errorHandle', () => {
     beforeEach(() => {
-        vi.resetAllMocks();
+        vi.clearAllMocks();
     });
 
     afterEach(() => {
-        vi.clearAllMocks();
+        vi.resetAllMocks();
     });
 
     describe('handleError', () => {
