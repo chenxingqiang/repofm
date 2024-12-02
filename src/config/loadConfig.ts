@@ -1,15 +1,25 @@
-import dotenv from 'dotenv';
+import * as dotenv from 'dotenv';
 import { z } from 'zod';
 
 // Load environment variables
 dotenv.config();
+
+const configSchema = z.object({
+  github: z.object({
+    token: z.string().optional()
+  }),
+  supabase: z.object({
+    url: z.string().optional(),
+    key: z.string().optional()
+  })
+});
 
 export function loadConfig() {
   // Load base config
   const config = require('../repofm.config.json');
 
   // Inject environment variables
-  return {
+  const fullConfig = {
     ...config,
     github: {
       token: process.env.GITHUB_TOKEN || '',
@@ -19,4 +29,7 @@ export function loadConfig() {
       key: process.env.SUPABASE_KEY || '',
     }
   };
+
+  // Validate config
+  return configSchema.parse(fullConfig);
 }

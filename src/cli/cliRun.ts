@@ -30,6 +30,23 @@ export interface CliOptions {
   range?: string;
 }
 
+interface FindOptions {
+  pattern?: string;
+  type?: 'both' | 'file' | 'directory';
+  maxDepth?: string;
+  format?: 'json' | 'plain';
+  ignoreCase?: boolean;
+  excludePatterns?: string[];
+}
+
+interface RemoteOptions {
+  remote: string;
+  copy?: boolean;
+  output?: string;
+  verbose?: boolean;
+  global?: boolean;
+}
+
 export async function run(): Promise<void> {
   const program = new Command();
 
@@ -54,7 +71,7 @@ export async function run(): Promise<void> {
     .option('-y, --type <type>', 'Context type (function, file, character)')
     .option('-d, --depth <depth>', 'Context depth', '1')
     .option('-f, --format <format>', 'Output format (plain, markdown, xml)', 'markdown')
-    .action(async (options) => {
+    .action(async (options: { target: string; type: string; depth: string; format: string; }) => {
       try {
         // Validate required parameters
         throwIfError(validateRequired(options.target, 'Target'));
@@ -88,7 +105,7 @@ export async function run(): Promise<void> {
     .command('git-dashboard')
     .description('Show Git activity dashboard')
     .option('-r, --range <range>', 'Time range (e.g., 7d, 30d)', '7d')
-    .action(async (options) => {
+    .action(async (options: { range: string; }) => {
       try {
         // Validate time range
         throwIfError(validateTimeRange(options.range));
@@ -111,7 +128,7 @@ export async function run(): Promise<void> {
     .requiredOption('-n, --name <name>', 'New repository name')
     .requiredOption('-o, --owner <owner>', 'Target owner/organization')
     .option('-c, --clone', 'Clone repository locally')
-    .action(async (options) => {
+    .action(async (options: { user: any; name: any; owner: any; }) => {
       try {
         // Validate GitHub username format
         throwIfError(validateRequired(options.user, 'GitHub username'));
@@ -136,31 +153,25 @@ export async function run(): Promise<void> {
     .option('-f, --format <format>', 'Output format (plain, json)', 'plain')
     .option('-i, --ignore-case', 'Case insensitive search', false)
     .option('-e, --exclude <patterns...>', 'Patterns to exclude')
-    .action(async (options) => {
+    .action(async (options: FindOptions) => {
       try {
         // Validate type
-        if (!['file', 'directory', 'both'].includes(options.type)) {
+        if (!['file', 'directory', 'both'].includes(options.type || 'both')) {
           throw new Error('Type must be one of: file, directory, both');
         }
 
         // Validate format
-        if (!['plain', 'json'].includes(options.format)) {
+        if (!['plain', 'json'].includes(options.format || 'plain')) {
           throw new Error('Format must be one of: plain, json');
-        }
-
-        // Validate depth
-        const maxDepth = parseInt(options.maxDepth, 10);
-        if (isNaN(maxDepth)) {
-          throw new Error('Max depth must be a number');
         }
 
         await runFindAction('.', {
           pattern: options.pattern,
-          type: options.type,
-          maxDepth,
-          format: options.format,
+          type: options.type as 'both' | 'file' | 'directory',
+          maxDepth: parseInt(options.maxDepth || '-1', 10),
+          format: options.format as 'json' | 'plain',
           ignoreCase: options.ignoreCase,
-          excludePatterns: options.exclude || []
+          excludePatterns: options.excludePatterns || []
         });
       } catch (error) {
         logger.error('Error:', error instanceof Error ? error.message : String(error));
@@ -179,7 +190,7 @@ export async function run(): Promise<void> {
     .option('-r, --remote <remote>', 'Remote to push to (default: origin)')
     .option('-a, --all', 'Stage all changes')
     .option('-i, --interactive', 'Interactive mode - confirm before each action')
-    .action(async (options) => {
+    .action(async (options: { message: any; pattern: any; push: any; branch: any; remote: any; all: any; interactive: any; }) => {
       try {
         await runAutocommitAction('.', {
           message: options.message,
@@ -209,12 +220,11 @@ export async function run(): Promise<void> {
     console.log('  $ repofm autocommit --pattern "src/**/*.ts" --message "feat: update typescript files"');
   });
 
-  program.action(async (options, command) => {
+  program.action(async (options: { verbose: any; version: any; init: any; global: any; migrate: any; remote: string; output: string; config: any; copy: any; }, command: { args: string[]; }) => {
     try {
       const targetDir = command.args[0] || '.';
-
       if (options.verbose) {
-        logger.setLevel('debug');
+        logger.debug('Verbose mode enabled');
       }
 
       if (options.version) {
@@ -235,7 +245,12 @@ export async function run(): Promise<void> {
       if (options.remote) {
         // Validate remote URL
         throwIfError(validateGitUrl(options.remote));
-        await runRemoteAction(options.remote, targetDir);
+        await runRemoteAction(options.remote, {
+          copy: options.copy,
+          output: options.output,
+          verbose: options.verbose,
+          global: options.global
+        });
         return;
       }
 

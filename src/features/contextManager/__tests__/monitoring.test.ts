@@ -1,3 +1,4 @@
+import { describe, beforeEach, it, expect } from "vitest";
 import { MonitoringSystem } from "../monitoring";
 
 describe('Monitoring System', () => {

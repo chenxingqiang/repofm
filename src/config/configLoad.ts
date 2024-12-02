@@ -51,7 +51,7 @@ export async function loadFileConfig(rootDir: string, argConfigPath: string | nu
       if (error instanceof repofmConfigValidationError || (error instanceof Error && error.message === 'Invalid JSON')) {
         throw error;
       }
-      logger.note(
+      logger.info(
         `No custom config found at ${configPath} or global config at ${globalConfigPath}.\nYou can add a config file for additional settings.`
       );
       return {};
@@ -96,7 +96,7 @@ export const mergeConfigs = (
   if (cliConfig.output?.filePath == null && fileConfig.output?.filePath == null) {
     const style = cliConfig.output?.style || fileConfig.output?.style || baseConfig.output.style;
     baseConfig.output.filePath = defaultFilePathMap[style];
-    logger.trace('Default output file path is set to:', baseConfig.output.filePath);
+    logger.trace(`Default output file path is set to: ${baseConfig.output.filePath}`);
   }
 
   const mergedConfig = {

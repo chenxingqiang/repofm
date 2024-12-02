@@ -1,47 +1,43 @@
-import cliSpinners from 'cli-spinners';
-import logUpdate from 'log-update';
-import pc from 'picocolors';
+import ora, { type Ora } from 'ora';
 
-class Spinner {
-  private spinner = cliSpinners.dots;
-  private message: string;
-  private currentFrame = 0;
-  private interval: ReturnType<typeof setInterval> | null = null;
+export class CLISpinner {
+  private spinner: Ora;
+  private static instance: Ora;
 
-  constructor(message: string) {
-    this.message = message;
-  }
-
-  start(): void {
-    const frames = this.spinner.frames;
-    const framesLength = frames.length;
-    this.interval = setInterval(() => {
-      this.currentFrame++;
-      const frame = frames[this.currentFrame % framesLength];
-      logUpdate(`${pc.cyan(frame)} ${this.message}`);
-    }, this.spinner.interval);
-  }
-
-  update(message: string): void {
-    this.message = message;
-  }
-
-  stop(finalMessage: string): void {
-    if (this.interval) {
-      clearInterval(this.interval);
-      this.interval = null;
+  constructor() {
+    if (!CLISpinner.instance) {
+      CLISpinner.instance = ora({
+        spinner: 'dots',
+        isEnabled: !process.env.CI && !process.env.NODE_ENV?.includes('test')
+      });
     }
-    logUpdate(finalMessage);
-    logUpdate.done();
+    this.spinner = CLISpinner.instance;
   }
 
-  succeed(message: string): void {
-    this.stop(`${pc.green('✔')} ${message}`);
+  start(text: string = ''): void {
+    this.spinner.start(text);
   }
 
-  fail(message: string): void {
-    this.stop(`${pc.red('✖')} ${message}`);
+  stop(): void {
+    this.spinner.stop();
+  }
+
+  update(text: string): void {
+    this.spinner.text = text;
+  }
+
+  succeed(text?: string): void {
+    this.spinner.succeed(text);
+  }
+
+  fail(text?: string): void {
+    this.spinner.fail(text);
+  }
+
+  static cleanup(): void {
+    if (CLISpinner.instance) {
+      CLISpinner.instance.stop();
+      CLISpinner.instance = null as unknown as Ora;
+    }
   }
 }
-
-export default Spinner;

@@ -1,6 +1,6 @@
 import { MLPredictor } from '../ml/types';
-import { ClusterManager } from '../cluster/types';
-import { EncryptionManager } from '../security/types';
+import { ClusterManager } from '../cluster';
+import { EncryptionManager } from '../security';
 import { vi, describe, beforeEach, it, expect } from 'vitest';
 
 describe('ML Features', () => {
@@ -43,7 +43,7 @@ describe('Distributed Features', () => {
 
   it('should broadcast updates to cluster', async () => {
     const updatePromise = new Promise(resolve => {
-      cluster.once('context-update', (contextId, changes) => {
+      cluster.once('context-update', (contextId: any, changes: any) => {
         expect(contextId).toBe('test-context');
         resolve(undefined);
       });

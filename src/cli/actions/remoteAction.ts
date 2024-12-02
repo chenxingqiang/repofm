@@ -7,7 +7,7 @@ import pc from 'picocolors';
 import { repofmError } from '../../shared/errorHandle.js';
 import { logger } from '../../shared/logger.js';
 import type { CliOptions } from '../cliRun.js';
-import Spinner from '../cliSpinner.js';
+import { CLISpinner as Spinner } from '../cliSpinner.js';
 import { runDefaultAction } from './defaultAction.js';
 
 const execAsync = promisify(exec);
@@ -20,13 +20,13 @@ export const runRemoteAction = async (repoUrl: string, options: CliOptions): Pro
 
   const formattedUrl = formatGitUrl(repoUrl);
   const tempDir = await createTempDirectory();
-  const spinner = new Spinner('Cloning repository...');
+  const spinner = new Spinner();
+  spinner.start('Cloning repository...');
 
   try {
-    spinner.start();
     await cloneRepository(formattedUrl, tempDir);
     spinner.succeed('Repository cloned successfully!');
-    logger.log('');
+    logger.info('');
 
     await runDefaultAction(
       tempDir,
@@ -67,8 +67,8 @@ const createTempDirectory = async (): Promise<string> => {
 };
 
 const cloneRepository = async (url: string, directory: string): Promise<void> => {
-  logger.log(`Clone repository: ${url} to temporary directory. ${pc.dim(`path: ${directory}`)}`);
-  logger.log('');
+  logger.info(`Clone repository: ${url} to temporary directory. ${pc.dim(`path: ${directory}`)}`);
+  logger.info('');
 
   try {
     await execAsync(`git clone --depth 1 ${url} ${directory}`);
