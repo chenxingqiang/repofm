@@ -5,6 +5,7 @@ export class repofmError extends Error {
   constructor(message: string) {
     super(message);
     this.name = 'repofmError';
+    Object.setPrototypeOf(this, repofmError.prototype);
   }
 }
 
@@ -12,27 +13,45 @@ export class repofmConfigValidationError extends repofmError {
   constructor(message: string) {
     super(message);
     this.name = 'repofmConfigValidationError';
+    Object.setPrototypeOf(this, repofmConfigValidationError.prototype);
   }
 }
 
-export const handleError = (error: unknown): void => {
+interface ZodError {
+  errors: Array<{
+    path: string[];
+    message: string;
+  }>;
+}
+
+export function rethrowValidationErrorIfZodError(error: unknown, context: string): void {
+  if (error instanceof z.ZodError) {
+    const issues = error.issues.map(issue => 
+      `[${issue.path.join('.')}] ${issue.message}`
+    ).join('\n');
+    throw new repofmConfigValidationError(`${context}:\n${issues}`);
+  }
+  if (error instanceof Error) {
+    return;
+  }
+  throw new Error('Unknown error occurred during validation');
+}
+
+export function handleError(error: unknown): void {
   if (error instanceof repofmError) {
     logger.error(`Error: ${error.message}`);
+    logger.debug('Stack trace:', error.stack);
   } else if (error instanceof Error) {
     logger.error(`Unexpected error: ${error.message}`);
     logger.debug('Stack trace:', error.stack);
+  } else if (error === null || error === undefined) {
+    logger.error('An unknown error occurred');
   } else {
     logger.error('An unknown error occurred');
+    logger.debug('Error details:', error);
   }
 
-  logger.info('For more help, please visit: https://github.com/chenxingqiang/repofm/issues');
-};
-
-export const rethrowValidationErrorIfZodError = (error: unknown, message: string): void => {
-  if (error instanceof z.ZodError) {
-    const zodErrorText = error.errors.map((err) => `[${err.path.join('.')}] ${err.message}`).join('\n  ');
-    throw new repofmConfigValidationError(
-      `${message}\n\n  ${zodErrorText}\n\n  Please check the config file and try again.`,
-    );
+  if (process.env.npm_package_version) {
+    logger.info(`For more information, please visit: https://github.com/chenxingqiang/repofm/issues`);
   }
-};
+}
