@@ -1,7 +1,7 @@
 import * as fs from 'node:fs/promises';
 import path from 'node:path';
 import { z } from 'zod';
-import { repofmError, rethrowValidationErrorIfZodError } from '../shared/errorHandle.js';
+import { repofmError, repofmConfigValidationError } from '../shared/errorHandle.js';
 import { logger } from '../shared/logger.js';
 import {
   type repofmConfigCli,
@@ -16,11 +16,7 @@ import { getGlobalDirectory } from './globalDirectory.js';
 
 const defaultConfigPath = 'repofm.config.json';
 
-const getGlobalConfigPath = () => {
-  return path.join(getGlobalDirectory(), 'repofm.config.json');
-};
-
-export const loadFileConfig = async (rootDir: string, argConfigPath: string | null): Promise<repofmConfigFile> => {
+export async function loadFileConfig(rootDir: string, argConfigPath: string | null): Promise<repofmConfigFile> {
   let useDefaultConfig = false;
   let configPath = argConfigPath;
   if (!configPath) {
@@ -29,57 +25,64 @@ export const loadFileConfig = async (rootDir: string, argConfigPath: string | nu
   }
 
   const fullPath = path.resolve(rootDir, configPath);
-
   logger.trace(`Loading local config from: ${fullPath}`);
 
-  // Check local file existence
-  const isLocalFileExists = await fs
-    .stat(fullPath)
-    .then((stats) => stats.isFile())
-    .catch(() => false);
+  try {
+    await fs.stat(fullPath);
+    const content = await fs.readFile(fullPath, 'utf-8');
+    return await parseAndValidateConfig(content, fullPath);
+  } catch (error) {
+    if (error instanceof repofmConfigValidationError || (error instanceof Error && error.message === 'Invalid JSON')) {
+      throw error;
+    }
 
-  if (isLocalFileExists) {
-    return await loadAndValidateConfig(fullPath);
-  }
+    if (!useDefaultConfig) {
+      throw new repofmError(`Config file not found at ${configPath}`);
+    }
 
-  if (useDefaultConfig) {
-    // Try to load global config
-    const globalConfigPath = getGlobalConfigPath();
+    const globalConfigPath = path.join(getGlobalDirectory(), 'repofm.config.json');
     logger.trace(`Loading global config from: ${globalConfigPath}`);
 
-    const isGlobalFileExists = await fs
-      .stat(globalConfigPath)
-      .then((stats) => stats.isFile())
-      .catch(() => false);
-
-    if (isGlobalFileExists) {
-      return await loadAndValidateConfig(globalConfigPath);
+    try {
+      await fs.stat(globalConfigPath);
+      const content = await fs.readFile(globalConfigPath, 'utf-8');
+      return await parseAndValidateConfig(content, globalConfigPath);
+    } catch (error) {
+      if (error instanceof repofmConfigValidationError || (error instanceof Error && error.message === 'Invalid JSON')) {
+        throw error;
+      }
+      logger.note(
+        `No custom config found at ${configPath} or global config at ${globalConfigPath}.\nYou can add a config file for additional settings.`
+      );
+      return {};
     }
-
-    logger.note(
-      `No custom config found at ${configPath} or global config at ${globalConfigPath}.\nYou can add a config file for additional settings. Please check https://github.com/chenxingqiang/repofm for more information.`,
-    );
-    return {};
   }
-  throw new repofmError(`Config file not found at ${configPath}`);
-};
+}
 
-const loadAndValidateConfig = async (filePath: string): Promise<repofmConfigFile> => {
+async function parseAndValidateConfig(content: string, filePath: string): Promise<repofmConfigFile> {
+  let config;
   try {
-    const fileContent = await fs.readFile(filePath, 'utf-8');
-    const config = JSON.parse(fileContent);
+    config = JSON.parse(content);
+  } catch {
+    throw new Error('Invalid JSON');
+  }
+
+  try {
     return repofmConfigFileSchema.parse(config);
   } catch (error) {
-    rethrowValidationErrorIfZodError(error, 'Invalid config schema');
-    if (error instanceof SyntaxError) {
-      throw new repofmError(`Invalid JSON in config file ${filePath}: ${error.message}`);
+    if (error instanceof z.ZodError) {
+      const issues = error.issues.map(issue => 
+        `[${issue.path.join('.')}] ${issue.message}`
+      ).join('\n');
+      throw new repofmConfigValidationError(
+        `Invalid config file:\n${issues}`
+      );
     }
-    if (error instanceof Error) {
-      throw new repofmError(`Error loading config from ${filePath}: ${error.message}`);
-    }
-    throw new repofmError(`Error loading config from ${filePath}`);
+    throw new repofmConfigValidationError(
+      `Error validating config from ${filePath}: ${error instanceof Error ? error.message : 'Unknown error'}`
+    );
   }
-};
+}
 
 export const mergeConfigs = (
   cwd: string,
@@ -90,11 +93,9 @@ export const mergeConfigs = (
 
   const baseConfig = defaultConfig;
 
-  // If the output file path is not provided in the config file or CLI, use the default file path for the style
   if (cliConfig.output?.filePath == null && fileConfig.output?.filePath == null) {
     const style = cliConfig.output?.style || fileConfig.output?.style || baseConfig.output.style;
     baseConfig.output.filePath = defaultFilePathMap[style];
-
     logger.trace('Default output file path is set to:', baseConfig.output.filePath);
   }
 
@@ -126,7 +127,14 @@ export const mergeConfigs = (
   try {
     return repofmConfigMergedSchema.parse(mergedConfig);
   } catch (error) {
-    rethrowValidationErrorIfZodError(error, 'Invalid merged config');
+    if (error instanceof z.ZodError) {
+      const issues = error.issues.map(issue => 
+        `[${issue.path.join('.')}] ${issue.message}`
+      ).join('\n');
+      throw new repofmConfigValidationError(
+        `Invalid merged config:\n${issues}`
+      );
+    }
     throw error;
   }
 };
