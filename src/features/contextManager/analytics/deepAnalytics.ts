@@ -1,48 +1,81 @@
-import * as tf from '@tensorflow/tfjs-core';
-import '@tensorflow/tfjs-layers';
+import * as tf from '@tensorflow/tfjs';
 
 export class DeepAnalytics {
-  private model: tf.Sequential;
+  private model: tf.LayersModel | undefined;
+  private isInitialized: boolean = false;
 
   constructor() {
+    this.initModel().catch(error => {
+      console.error('Failed to initialize model:', error);
+    });
+  }
+
+  private async initModel() {
+    if (this.isInitialized) return;
+
     this.model = tf.sequential({
       layers: [
-        tf.layers.lstm({
-          units: 1,
-          inputShape: [24, 1],
-          returnSequences: true
+        tf.layers.dense({
+          units: 50,
+          inputShape: [10],
+          activation: 'relu'
         }),
-        tf.layers.dense({ units: 1 })
+        tf.layers.dense({
+          units: 1,
+          activation: 'linear'
+        })
       ]
     });
-    
+
     this.model.compile({
       optimizer: 'adam',
-      loss: 'meanSquaredError'
+      loss: 'meanSquaredError',
+      metrics: ['accuracy']
     });
+
+    this.isInitialized = true;
+  }
+
+  private async ensureModelInitialized() {
+    if (!this.model || !this.isInitialized) {
+      await this.initModel();
+    }
   }
 
   async trainModel(data: number[][]): Promise<void> {
-    const xs = tf.tensor3d(data, [data.length, data[0].length, 1]);
-    const ys = tf.tensor2d(data.map(d => d[d.length - 1]), [data.length, 1]);
+    await this.ensureModelInitialized();
     
-    await this.model.fit(xs, ys, {
-      epochs: 10,
-      batchSize: 32
-    });
-    
-    xs.dispose();
-    ys.dispose();
+    if (!this.model) {
+      throw new Error('Model initialization failed');
+    }
+
+    const xs = tf.tensor2d(data);
+    try {
+      await this.model.fit(xs, xs, {
+        epochs: 10,
+        batchSize: 32,
+        shuffle: true,
+        validationSplit: 0.1
+      });
+    } finally {
+      xs.dispose();
+    }
   }
 
   async predictFutureBehavior(data: number[][]): Promise<number[]> {
-    const input = tf.tensor3d(data, [data.length, data[0].length, 1]);
-    const prediction = this.model.predict(input) as tf.Tensor;
-    const result = await prediction.array() as number[][];
+    await this.ensureModelInitialized();
     
-    input.dispose();
-    prediction.dispose();
-    
-    return result.map(r => r[0]);
+    if (!this.model) {
+      throw new Error('Model initialization failed');
+    }
+
+    const input = tf.tensor2d(data);
+    try {
+      const prediction = await this.model.predict(input) as tf.Tensor;
+      const result = await prediction.array() as number[][];
+      return result.map(row => row[0]);
+    } finally {
+      input.dispose();
+    }
   }
 } 

@@ -1,43 +1,35 @@
 import { MergeStrategy } from "./types";
 
 export class ContextMerger {
-  static async mergeFields(local: any, remote: any, strategy: MergeStrategy): Promise<any> {
+  merge(source: any, target: any, strategy: MergeStrategy = MergeStrategy.MERGE): any {
     switch (strategy) {
-      case 'takeNewest':
-        return this.mergeByTimestamp(local, remote);
-      case 'takeLocal':
-        return { ...remote, ...local };
-      case 'takeRemote':
-        return { ...local, ...remote };
-      case 'smart':
-        return this.smartMerge(local, remote);
+      case MergeStrategy.OVERRIDE:
+        return { ...target, ...source };
+      case MergeStrategy.MERGE:
+        return this.deepMerge(source, target);
+      case MergeStrategy.APPEND:
+        return Array.isArray(target) ? [...target, ...source] : { ...target, ...source };
+      case MergeStrategy.SKIP:
+        return target;
       default:
-        return remote;
+        return this.deepMerge(source, target);
     }
   }
-  static mergeByTimestamp(local: any, remote: any): any {
-    throw new Error("Method not implemented.");
-  }
 
-  private static async smartMerge(local: any, remote: any): Promise<any> {
-    const result = { ...local };
+  private deepMerge(source: any, target: any): any {
+    if (typeof source !== 'object' || source === null) return source;
+    if (typeof target !== 'object' || target === null) return source;
     
-    for (const [key, value] of Object.entries(remote)) {
-      if (Array.isArray(value)) {
-        result[key] = this.mergeArrays(local[key], value);
-      } else if (typeof value === 'object') {
-        result[key] = await this.smartMerge(local[key] || {}, value);
+    const result = { ...target };
+    
+    for (const key in source) {
+      if (key in target) {
+        result[key] = this.deepMerge(source[key], target[key]);
       } else {
-        // 使用时间戳或版本号决定
-        result[key] = remote[key];
+        result[key] = source[key];
       }
     }
-
+    
     return result;
-  }
-
-  private static mergeArrays(local: any[], remote: any[]): any[] {
-    // 使用 Set 去重
-    return [...new Set([...local, ...remote])];
   }
 } 

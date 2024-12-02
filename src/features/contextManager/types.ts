@@ -22,4 +22,16 @@ export interface PersistentCache<T> {
   set(key: string, value: T): Promise<void>;
   delete(key: string): Promise<void>;
   clear(): Promise<void>;
+}
+
+export enum MergeStrategy {
+  OVERRIDE = 'override',
+  MERGE = 'merge',
+  APPEND = 'append',
+  SKIP = 'skip'
+}
+
+export interface MergeOptions {
+  strategy: MergeStrategy;
+  conflictResolution?: 'manual' | 'auto';
 } 
