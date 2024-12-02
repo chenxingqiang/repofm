@@ -3,7 +3,9 @@
   "compilerOptions": {
     "outDir": "lib",
     "sourceMap": true,
-    "declaration": true
+    "declaration": true,
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext"
   },
   "exclude": ["node_modules", "tests", "lib", "**/*.test.ts"]
 }
