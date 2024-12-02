@@ -69,3 +69,7 @@ export const searchFiles = async (
     throw error;
   }
 };
+
+export function sortFiles(files: string[]): string[] {
+  return files.sort((a: string, b: string) => a.localeCompare(b));
+}
