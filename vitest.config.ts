@@ -1,32 +1,26 @@
 import { defineConfig } from 'vitest/config';
-import { resolve } from 'path';
 
 export default defineConfig({
   test: {
-    globals: true,
-    environment: 'node',
-    setupFiles: ['./tests/setup.ts'],
-    include: ['src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
-    exclude: ['**/node_modules/**', '**/dist/**', '**/lib/**'],
+    include: [
+      'tests/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
+      'src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'
+    ],
+    exclude: [
+      '**/node_modules/**',
+      '**/dist/**',
+      '**/lib/**'
+    ],
+    coverage: {
+      reporter: ['text', 'json', 'html'],
+    },
     deps: {
-      interopDefault: true,
-      optimizer: {
-        web: {
-          include: [/inquirer/]
-        },
-        ssr: {
-          include: [/inquirer/]
-        }
-      }
+      inline: [
+        'istextorbinary',
+        '@babel/parser'
+      ],
+      interopDefault: true
     },
-    alias: {
-      '@': resolve(__dirname, './src')
-    }
+    setupFiles: ['./tests/setup.ts']
   },
-  resolve: {
-    alias: {
-      '@': resolve(__dirname, './src')
-    },
-    extensions: ['.ts', '.js', '.json']
-  }
 });
