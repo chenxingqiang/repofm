@@ -1,5 +1,5 @@
 import { LRUCache } from 'lru-cache';
-import { PersistentCache } from '../types';
+import { PersistentCache } from '../types.js';
 import { FilePersistentCache } from './persistentCache';
 
 export class MultilevelCache {

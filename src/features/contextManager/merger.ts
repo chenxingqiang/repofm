@@ -1,4 +1,4 @@
-import { MergeStrategy } from "./types";
+import { MergeStrategy } from "./types.js";
 
 export class ContextMerger {
   merge(source: any, target: any, strategy: MergeStrategy = MergeStrategy.MERGE): any {

@@ -9,6 +9,22 @@ export interface PerformanceMetrics {
   operationLatency: number;
 }
 
+export enum MergeStrategy {
+  MERGE = 'MERGE',
+  REPLACE = 'REPLACE',
+  CUSTOM = 'CUSTOM',
+  OVERRIDE = 'OVERRIDE',
+  APPEND = 'APPEND',
+  SKIP = 'SKIP'
+}
+
+export interface PersistentCache<T> {
+  get(key: string): T | undefined;
+  set(key: string, value: T): void;
+  delete(key: string): void;
+  clear(): void;
+}
+
 export interface ICodeContextManager {
   setCacheValue(arg0: string, arg1: string): unknown;
   getCacheValue(arg0: string): any;
@@ -27,4 +43,4 @@ export interface ICodeContextManagerConstructor {
   resetInstance(): void;
 }
 
-export type ContextManagerStatics = ICodeContextManagerConstructor; 
+export type ContextManagerStatics = ICodeContextManagerConstructor;

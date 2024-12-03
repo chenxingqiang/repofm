@@ -1,4 +1,4 @@
-import { logger } from '../../shared/logger';
+import { logger } from '../../shared/logger.js';
 import * as fs from 'fs/promises';
 
 export async function collectFiles(

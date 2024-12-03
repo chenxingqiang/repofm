@@ -61,6 +61,12 @@ export class Logger {
   note(...args: any[]): void {
     console.log(pc.gray(this.formatArgs(args)));
   }
+
+  trace(...args: any[]): void {
+    if (this.isVerbose) {
+      console.trace(pc.gray(this.formatArgs(args)));
+    }
+  }
 }
 
 export const logger = new Logger();
