@@ -544,6 +544,67 @@ By default, repofm's security check feature is enabled. You can disable it by se
 }
 ```
 
+## 🏗 Project Architecture
+
+### Architecture Overview
+
+Repofm is designed with a modular, extensible architecture that prioritizes flexibility and performance. 
+
+```mermaid
+C4Context
+    title Repofm Architecture Diagram
+
+    Enterprise_Boundary(b0, "Repofm Core Architecture") {
+        System(cli, "CLI Interface", "Command-line entry point for repository management")
+        
+        System_Boundary(features, "Core Features") {
+            Component(autocommit, "AutoCommit", "Automated git commit management")
+            Component(contextmanager, "Context Manager", "Intelligent code context tracking")
+            Component(fileops, "File Operations", "Advanced file manipulation utilities")
+        }
+
+        System_Boundary(core, "Core Modules") {
+            Component(config, "Configuration", "Project configuration management")
+            Component(security, "Security", "Security checks and audits")
+            Component(logging, "Logging", "Centralized logging system")
+            Component(output, "Output Generation", "Standardized output formatting")
+        }
+
+        System_Boundary(services, "External Services") {
+            Component(git, "Git Integration", "Low-level git operations")
+            Component(supabase, "Supabase", "Backend and database services")
+        }
+    }
+
+    Rel(cli, autocommit, "Triggers")
+    Rel(cli, contextmanager, "Manages")
+    Rel(autocommit, git, "Performs git operations")
+    Rel(contextmanager, logging, "Logs activities")
+    Rel(core, services, "Interacts with")
+    Rel(features, core, "Depends on")
+}
+```
+
+### Key Architectural Components
+
+- **CLI Interface**: Entry point for all repository management operations
+- **Core Features**:
+  - `AutoCommit`: Intelligent git commit automation
+  - `Context Manager`: Advanced code context tracking
+  - `File Operations`: Sophisticated file manipulation utilities
+- **Core Modules**:
+  - Configuration Management
+  - Security Checks
+  - Centralized Logging
+  - Output Generation
+- **External Services**:
+  - Git Integration
+  - Supabase Backend Services
+
+### Detailed Architecture Documentation
+
+For a comprehensive breakdown of the project architecture, design principles, and technology stack, please refer to our [ARCHITECTURE.md](ARCHITECTURE.md) file.
+
 ## 🤝 Contribution
 
 We welcome contributions from the community! To get started, please refer to our [Contributing Guide](CONTRIBUTING.md).
