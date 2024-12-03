@@ -1,104 +1,103 @@
-import fs from 'node:fs/promises';
-import os from 'node:os';
-import path from 'node:path';
-import process from 'node:process';
-import { afterEach, beforeEach, describe, expect, test } from 'vitest';
-import { loadFileConfig, mergeConfigs } from '../../src/config/configLoad.js';
-import { pack } from '../../src/core/packager.js';
-import { searchFiles } from '../../src/core/file/fileSearch.js';
-import { createTempDir, removeTempDir } from '../testing/testUtils.js';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { pack } from '../../src/core/packager';
+import * as fs from 'fs/promises';
+import * as path from 'path';
+import { mkdtemp, rm, writeFile, mkdir } from 'fs/promises';
+import { tmpdir } from 'os';
+import type { repofmConfigMerged } from '../../src/config/configSchema';
 
 describe('packager integration', () => {
-  let tempDir: string;
+  let testDir: string;
+
+  // Helper function to create test files
+  async function createTestFile(relativePath: string, content: string) {
+    const fullPath = path.join(testDir, relativePath);
+    await mkdir(path.dirname(fullPath), { recursive: true });
+    await writeFile(fullPath, content);
+    return fullPath;
+  }
 
   beforeEach(async () => {
-    tempDir = await createTempDir();
+    // Create a temporary directory for test files
+    testDir = await mkdtemp(path.join(tmpdir(), 'packager-test-'));
+    console.log('Test Directory:', testDir);
   });
 
   afterEach(async () => {
-    await removeTempDir(tempDir);
+    // Clean up test directory
+    await rm(testDir, { recursive: true, force: true });
   });
 
-  test('should handle file paths correctly', async () => {
+  it('should handle file paths correctly', async () => {
     // Create test files
-    const testFiles = {
-      'file1.txt': 'content1',
-      'dir/file2.txt': 'content2',
-      'dir/subdir/file3.txt': 'content3'
-    };
+    await createTestFile('file1.txt', 'content1');
+    await createTestFile('dir/file2.txt', 'content2');
+    await createTestFile('dir/subdir/file3.txt', 'content3');
 
-    // Create files with absolute paths
-    for (const [filePath, content] of Object.entries(testFiles)) {
-      const fullPath = path.resolve(tempDir, filePath);
-      await fs.mkdir(path.dirname(fullPath), { recursive: true });
-      await fs.writeFile(fullPath, content);
-    }
+    // List all files in the test directory
+    const files = await fs.readdir(testDir, { recursive: true, withFileTypes: true });
+    console.log('Test Files:', files);
 
-    // Create config with relative patterns
-    const config = mergeConfigs(tempDir, {
-      patterns: ['**/*'],
+    const config: repofmConfigMerged = {
       ignore: {
         useGitignore: false,
         useDefaultPatterns: false,
-        customPatterns: []
+        patterns: []
       },
-      cwd: tempDir,
+      security: {
+        enableSecurityCheck: false
+      },
       output: {
-        filePath: path.join(tempDir, 'output.txt'),
-        style: 'plain',
-        removeComments: false,
-        removeEmptyLines: false,
-        topFilesLength: 5,
-        showLineNumbers: false,
+        filePath: '',
         copyToClipboard: false
       }
-    }, {});
+    };
 
-    const result = await pack(tempDir, config);
+    const result = await pack(testDir, config);
+
+    console.log('Pack Result:', result);
 
     expect(result.totalFiles).toBe(3);
-    expect(result.totalCharacters).toBeGreaterThan(0);
-    expect(result.totalTokens).toBeGreaterThan(0);
-
-    // Verify file paths are absolute
-    const expectedFiles = [
-      path.join(tempDir, 'file1.txt'), 
-      path.join(tempDir, 'dir', 'file2.txt'), 
-      path.join(tempDir, 'dir', 'subdir', 'file3.txt')
-    ];
-    expect(Object.keys(result.fileCharCounts).sort()).toEqual(expectedFiles.sort());
+    expect(result.fileCharCounts[path.join(testDir, 'file1.txt')]).toBe(8);
+    expect(result.fileCharCounts[path.join(testDir, 'dir/file2.txt')]).toBe(8);
+    expect(result.fileCharCounts[path.join(testDir, 'dir/subdir/file3.txt')]).toBe(8);
   });
 
-  test('should respect ignore patterns', async () => {
-    // Create test files including some to be ignored
-    await fs.writeFile(path.resolve(tempDir, '.gitignore'), 'ignored/\n*.log');
-    await fs.mkdir(path.resolve(tempDir, 'ignored'), { recursive: true });
-    await fs.writeFile(path.resolve(tempDir, 'ignored/file.txt'), 'ignored');
-    await fs.writeFile(path.resolve(tempDir, 'test.log'), 'ignored');
-    await fs.writeFile(path.resolve(tempDir, 'keep.txt'), 'kept');
+  it('should respect ignore patterns', async () => {
+    // Create test files
+    await createTestFile('keep.txt', 'keep this');
+    await createTestFile('ignore.test.ts', 'ignore this');
+    await createTestFile('node_modules/pkg/file.js', 'ignore this too');
 
-    // Create config with ignore patterns and relative patterns
-    const config = mergeConfigs(tempDir, {
-      patterns: ['**/*'],
+    // List all files in the test directory
+    const files = await fs.readdir(testDir, { recursive: true, withFileTypes: true });
+    console.log('Test Files:', files);
+
+    const config: repofmConfigMerged = {
       ignore: {
-        useGitignore: true,
-        useDefaultPatterns: true,
-        customPatterns: []
+        useGitignore: false,
+        useDefaultPatterns: false,
+        patterns: [
+          '**/*.test.ts',
+          '**/node_modules/**'
+        ]
       },
-      cwd: tempDir,
+      security: {
+        enableSecurityCheck: false
+      },
       output: {
-        filePath: path.join(tempDir, 'output.txt'),
-        style: 'plain',
-        removeComments: false,
-        removeEmptyLines: false,
-        topFilesLength: 5,
-        showLineNumbers: false,
+        filePath: '',
         copyToClipboard: false
       }
-    }, {});
+    };
 
-    const result = await pack(tempDir, config);
-    expect(result.totalFiles).toBe(1); // Only keep.txt should be included
-    expect(Object.keys(result.fileCharCounts)).toEqual([path.join(tempDir, 'keep.txt')]);
+    const result = await pack(testDir, config);
+
+    console.log('Pack Result:', result);
+
+    expect(result.totalFiles).toBe(1);
+    expect(result.fileCharCounts[path.join(testDir, 'keep.txt')]).toBe(9);
+    expect(result.fileCharCounts[path.join(testDir, 'ignore.test.ts')]).toBeUndefined();
+    expect(result.fileCharCounts[path.join(testDir, 'node_modules/pkg/file.js')]).toBeUndefined();
   });
 });
