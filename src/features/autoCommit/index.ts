@@ -1,32 +1,36 @@
+import simpleGit from 'simple-git';
 import inquirer from 'inquirer';
-import { exec } from 'child_process';
-import { promisify } from 'util';
-import { repofmError } from '../../shared/errorHandle.js';
-
-const execAsync = promisify(exec);
+import { logger } from '../../shared/logger';
 
 export interface AutoCommitOptions {
-  message?: string;
   interactive?: boolean;
+  message?: string;
 }
 
-export async function performAutoCommit(options: AutoCommitOptions = {}) {
-  try {
-    if (options.interactive) {
-      const answers = await inquirer.prompt([
-        {
-          type: 'input',
-          name: 'message',
-          message: 'Enter commit message:',
-          default: options.message || 'Auto commit'
-        }
-      ]);
-      options.message = answers.message;
-    }
+export async function autoCommit(workingDir: string, options: AutoCommitOptions = {}): Promise<void> {
+  const git = simpleGit(workingDir);
+  const status = await git.status();
 
-    await execAsync('git add .');
-    await execAsync(`git commit -m "${options.message || 'Auto commit'}"`);
-  } catch (error) {
-    throw new repofmError(`Auto commit failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  if (status.modified.length === 0) {
+    logger.info('No changes detected');
+    return;
   }
+
+  let commitMessage = options.message || 'Auto-commit: Changes detected';
+
+  if (options.interactive) {
+    const response = await inquirer.prompt([{
+      type: 'input',
+      name: 'message',
+      message: 'Enter commit message:',
+      default: commitMessage
+    }]);
+    commitMessage = response.message;
+  }
+
+  await git.add('.');
+  await git.commit(commitMessage);
+  logger.success(`Changes committed: ${commitMessage}`);
 }
+
+export default autoCommit;
