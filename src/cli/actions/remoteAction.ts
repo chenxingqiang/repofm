@@ -47,16 +47,17 @@ export const runRemoteAction = async (repoUrl: string, options: CliOptions): Pro
 export const formatGitUrl = (url: string): string => {
   // If the URL is in the format owner/repo, convert it to a GitHub URL
   if (/^[a-zA-Z0-9_-]+\/[a-zA-Z0-9_-]+$/.test(url)) {
-    logger.trace(`Formatting GitHub shorthand: ${url}`);
+    logger?.trace?.(`Formatting GitHub shorthand: ${url}`) ?? (() => {})();
     return `https://github.com/${url}.git`;
   }
 
   // Add .git to HTTPS URLs if missing
   if (url.startsWith('https://') && !url.endsWith('.git')) {
-    logger.trace(`Adding .git to HTTPS URL: ${url}`);
+    logger?.trace?.(`Adding .git to HTTPS URL: ${url}`) ?? (() => {})();
     return `${url}.git`;
   }
 
+  // If the URL already has .git or is an SSH URL, return it as-is
   return url;
 };
 
