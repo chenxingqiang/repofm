@@ -1,15 +1,14 @@
 #!/usr/bin/env node
 
-const { fileURLToPath } = require("url");
-const { dirname, join } = require("path");
-const currentDir = dirname(fileURLToPath(import.meta.url));
+const { fileURLToPath } = require('url');
+const { dirname, join } = require('path');
+const { default: cli } = require('../lib/cli.js');
 
 async function main() {
   try {
-    const cli = await import(join(currentDir, "../lib/cli.js"));
-    await cli.default();
+    await cli();
   } catch (error) {
-    console.error("Error loading CLI:", error);
+    console.error("Error running CLI:", error);
     process.exit(1);
   }
 }

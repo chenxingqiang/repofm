@@ -548,7 +548,7 @@ By default, repofm's security check feature is enabled. You can disable it by se
 
 ### Architecture Overview
 
-Repofm is designed with a modular, extensible architecture that prioritizes flexibility and performance. 
+Repofm is designed with a modular, extensible architecture that prioritizes flexibility and performance.
 
 ```mermaid
 C4Context

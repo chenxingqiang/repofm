@@ -41,11 +41,13 @@ C4Context
 ## Architecture Components
 
 ### CLI Interface
+
 - Entry point for all repository management operations
 - Provides command-line interactions
 - Routes commands to appropriate feature modules
 
 ### Core Features
+
 1. **AutoCommit**
    - Automated git commit management
    - Supports interactive and default commit strategies
@@ -62,6 +64,7 @@ C4Context
    - File collection and processing
 
 ### Core Modules
+
 1. **Configuration**
    - Manages project-level configurations
    - Supports custom config files
@@ -83,6 +86,7 @@ C4Context
    - Decorates and enhances output presentation
 
 ### External Services
+
 1. **Git Integration**
    - Low-level git operations
    - Uses `simple-git` library
@@ -93,6 +97,7 @@ C4Context
    - Provides additional storage and analytics capabilities
 
 ## Technology Stack
+
 - Language: TypeScript
 - Package Manager: pnpm
 - Testing: Vitest
@@ -102,6 +107,7 @@ C4Context
 - Logging: Custom logging utility
 
 ## Design Principles
+
 - Modular Architecture
 - Dependency Injection
 - Functional Programming
@@ -109,10 +115,11 @@ C4Context
 - Extensibility
 
 ## Scalability Considerations
+
 - Microservice-like feature modules
 - Pluggable architecture
 - Support for future feature extensions
 - Performance-optimized core modules
-```
 
+```
 <parameter name="EmptyFile">false
