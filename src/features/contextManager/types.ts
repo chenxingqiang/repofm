@@ -1,37 +1,30 @@
 export interface ContextConfig {
   workspaceRoot: string;
-  cloudSync: boolean;
-  supabaseUrl: string;
-  supabaseKey: string;
-  version: string;
+  excludePatterns: string[];
+  maxDepth: number;
+  ignoreCase?: boolean;
 }
 
 export interface PerformanceMetrics {
   operationLatency: number;
-  cacheHitRate: number;
-  requestCount: number;
 }
 
-export interface CacheEntry<T> {
-  value: T;
-  timestamp: number;
+export interface ICodeContextManager {
+  setCacheValue(arg0: string, arg1: string): unknown;
+  getCacheValue(arg0: string): any;
+  recordOperationLatency(arg0: number): unknown;
+  getPerformanceMetrics(): unknown;
+  getConfig(): ContextConfig;
+  getCurrentContext(): ContextConfig;
+  pushContext(context: Partial<ContextConfig>): void;
+  popContext(): ContextConfig | undefined;
+  isValidSourceFile(filePath: string): boolean;
+  withTemporaryContext<T>(context: Partial<ContextConfig>, callback: () => Promise<T>): Promise<T>;
 }
 
-export interface PersistentCache<T> {
-  get(key: string): Promise<T | undefined>;
-  set(key: string, value: T): Promise<void>;
-  delete(key: string): Promise<void>;
-  clear(): Promise<void>;
+export interface ICodeContextManagerConstructor {
+  getInstance(config?: ContextConfig): ICodeContextManager;
+  resetInstance(): void;
 }
 
-export enum MergeStrategy {
-  OVERRIDE = 'override',
-  MERGE = 'merge',
-  APPEND = 'append',
-  SKIP = 'skip'
-}
-
-export interface MergeOptions {
-  strategy: MergeStrategy;
-  conflictResolution?: 'manual' | 'auto';
-} 
+export type ContextManagerStatics = ICodeContextManagerConstructor; 
