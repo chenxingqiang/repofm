@@ -1,28 +1,50 @@
-# Release v2.0.4 - AutoCommit Feature Refinement
+# Release v2.0.7 - Module Compatibility and Type System Enhancements
 
 ## 🚀 Key Improvements
 
-### AutoCommit Feature Enhancements
+### 🔧 Technical Improvements
 
-- Refined implementation of `autoCommit` function
-- Improved test coverage for different commit scenarios
-- Enhanced error handling and logging
-- Simplified function-based approach
+- Resolved ES Module compatibility issues
+- Enhanced module resolution and import mechanisms
+- Improved TypeScript type definitions
+- Added explicit export paths for loggers
 
-### Testing Improvements
+### 🛠 Module System Enhancements
 
-- Comprehensive unit tests for AutoCommit feature
-- Robust integration tests with advanced mocking strategies
-- Added test scenarios for:
-  - Default commit messages
-  - Interactive commit workflows
-  - Handling repositories with no changes
+- Updated import statements to use `.js` extensions
+- Fixed dynamic import compatibility
+- Refined package.json export configurations
 
-### Technical Details
+### 🧩 Type System Updates
 
-- Converted from class-based to function-based implementation
-- Maintained flexible commit strategies
-- Improved type safety and function signatures
+- Added missing type definitions for context management
+- Enhanced `MergeStrategy` and `PersistentCache` interfaces
+- Improved type checking and compilation
+
+### 🔍 Key Changes
+
+- Comprehensive module compatibility refactoring
+- Maintained all existing functionality
+- 303 test cases passing
+- Improved overall package modularity
+
+### 🚀 Performance and Compatibility
+
+- Optimized for Node.js 18+ environments
+- Ensured smooth ES Module integration
+- Maintained minimal and focused function implementations
+
+### 🐛 Bug Fixes
+
+- Resolved import path resolution issues
+- Fixed potential type mismatches
+- Enhanced error handling in module loading
+
+### 📦 Dependency Management
+
+- Updated type definitions
+- Improved package export strategies
+- Maintained lean dependency footprint
 
 ## 🛠 Dependencies
 
@@ -33,11 +55,6 @@
 ## 🔍 Breaking Changes
 
 - None in this release
-
-## 🐛 Bug Fixes
-
-- Resolved potential edge cases in commit detection
-- Improved error handling in git interactions
 
 ## 🔮 Future Roadmap
 
@@ -52,7 +69,7 @@ Special thanks to all contributors and users providing feedback!
 ## Installation
 
 ```bash
-npm install repofm@2.0.4
+npm install repofm@2.0.7
 # or
-pnpm add repofm@2.0.4
+pnpm add repofm@2.0.7
 ```
