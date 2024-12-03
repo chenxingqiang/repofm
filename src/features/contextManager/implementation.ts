@@ -1,90 +1,118 @@
-import type { 
-  ContextConfig, 
-  PerformanceMetrics, 
-  ICodeContextManager,
-  ICodeContextManagerConstructor 
-} from './types';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import { Config, PerformanceMetrics, ICodeContextManager } from '../../types/config.js';
+import { CodeContext } from '../../types/context.js';
+import { extractContext } from '../../core/contextExtractor.js';
+
+export async function extractCodeContext(
+  target: string, 
+  type: string, 
+  depth: number, 
+  config: Config
+): Promise<CodeContext> {
+  try {
+    const absoluteTarget = path.isAbsolute(target) 
+      ? target 
+      : path.resolve(config.cwd, target);
+
+    return await extractContext({
+      target: absoluteTarget,
+      type,
+      depth,
+      cwd: config.cwd,
+      ignore: {
+        ...config.ignore,
+        useDefaultPatterns: true,
+        customPatterns: config.ignore.customPatterns,
+        excludePatterns: config.ignore.excludePatterns
+      },
+      output: config.output
+    });
+  } catch (error) {
+    console.error('Error extracting code context:', error);
+    throw error;
+  }
+}
+
+export { Config };
 
 export class CodeContextManager implements ICodeContextManager {
-  private static _instance: CodeContextManager | null = null;
-  private _cache: Map<string, any>;
-  private _metrics: PerformanceMetrics;
-  private _config: ContextConfig;
-  private _contextStack: ContextConfig[];
+  private static instance: CodeContextManager | null = null;
+  private config: any;
+  private contextStack: any[] = [];
 
-  private constructor(config: ContextConfig) {
-    this._config = {
-      ...config,
-      ignoreCase: config.ignoreCase ?? true,
-      excludePatterns: config.excludePatterns || ['node_modules/**', '*.log']
-    };
-    this._cache = new Map();
-    this._metrics = {
-      operationLatency: 0
-    };
-    this._contextStack = [];
+  private constructor(config?: any) {
+    if (!config) {
+      throw new Error('Configuration is required');
+    }
+    this.config = config;
   }
 
-  public static getInstance(config?: ContextConfig): CodeContextManager {
-    if (!CodeContextManager._instance) {
-      if (!config) {
-        throw new Error('CodeContextManager not initialized');
-      }
-      CodeContextManager._instance = new CodeContextManager(config);
+  public static getInstance(config?: any): CodeContextManager {
+    if (!this.instance && config) {
+      this.instance = new CodeContextManager(config);
     }
-    return CodeContextManager._instance;
+    return this.instance!;
   }
 
   public static resetInstance(): void {
-    if (CodeContextManager._instance) {
-      CodeContextManager._instance._cache.clear();
-      CodeContextManager._instance._contextStack = [];
-    }
-    CodeContextManager._instance = null;
+    this.instance = null;
   }
 
-  public getConfig(): ContextConfig {
-    return { ...this._config };
-  }
-
-  public setCacheValue(key: string, value: any): void {
-    this._cache.set(key, value);
-  }
-
-  public getCacheValue(key: string): any {
-    return this._cache.get(key);
-  }
-
-  public recordOperationLatency(latency: number): void {
-    this._metrics.operationLatency = latency;
+  public getConfig(): Config {
+    return { ...this.config };
   }
 
   public getPerformanceMetrics(): PerformanceMetrics {
-    return { ...this._metrics };
+    return { ...this.config.metrics };
   }
 
-  public pushContext(context: Partial<ContextConfig>): void {
-    this._contextStack.push({ ...this._config });
-    this._config = { ...this._config, ...context };
+  public setCacheValue(key: string, value: any): void {
+    this.config.cache.set(key, value);
   }
 
-  public popContext(): ContextConfig | undefined {
-    const previousContext = this._contextStack.pop();
+  public getCacheValue(key: string): any {
+    return this.config.cache.get(key);
+  }
+
+  public recordOperationLatency(latency: number): void {
+    this.config.metrics.operationLatency = latency;
+  }
+
+  public pushContext(context: Config): void {
+    this.contextStack.push({ ...this.config });
+    this.config = {
+      ...context,
+      ignore: {
+        ...context.ignore,
+        useDefaultPatterns: true,
+        customPatterns: context.ignore.customPatterns,
+        excludePatterns: context.ignore.excludePatterns
+      }
+    };
+  }
+
+  public popContext(): Config | undefined {
+    const previousContext = this.contextStack.pop();
     if (previousContext) {
-      this._config = previousContext;
+      this.config = previousContext;
       return previousContext;
     }
     return undefined;
   }
 
-  public getCurrentContext(): ContextConfig {
-    return { ...this._config };
+  public getCurrentContext(): Config {
+    return { ...this.config };
   }
 
   public isValidSourceFile(filePath: string): boolean {
     const normalizedPath = filePath.replace(/\\/g, '/');
     
-    for (const pattern of this._config.excludePatterns) {
+    const excludePatterns = this.config.ignore.excludePatterns || [];
+    const customPatterns = this.config.ignore.customPatterns || [];
+    const allPatterns = [...excludePatterns, ...customPatterns];
+
+    for (const pattern of allPatterns) {
       // Handle special patterns first
       if (pattern === 'node_modules/**' && (normalizedPath.startsWith('node_modules/') || normalizedPath.includes('/node_modules/'))) {
         return false;
@@ -102,44 +130,31 @@ export class CodeContextManager implements ICodeContextManager {
               return false;
             }
           }
-          continue;
         }
       }
 
-      // Handle other patterns
+      // Handle standard glob patterns
       if (this.matchPattern(normalizedPath, pattern)) {
         return false;
       }
     }
+
     return true;
   }
 
-  private matchPattern(filePath: string, pattern: string): boolean {
-    // Convert glob pattern to regex
+  private matchPattern(path: string, pattern: string): boolean {
+    // Simple pattern matching logic
     const regexPattern = pattern
       .replace(/\./g, '\\.')
-      .replace(/\*\*/g, '.*')
-      .replace(/\*/g, '[^/]*')
-      .replace(/\?/g, '[^/]');
+      .replace(/\*/g, '.*')
+      .replace(/\?/g, '.');
 
-    try {
-      // Handle directory patterns
-      if (pattern.endsWith('/**')) {
-        const dirPattern = regexPattern.replace(/\/\.\*$/, '(?:/.*)?');
-        const dirRegex = new RegExp(dirPattern, this._config.ignoreCase ? 'i' : '');
-        return dirRegex.test(filePath);
-      }
-
-      // Handle normal patterns
-      const regex = new RegExp(regexPattern, this._config.ignoreCase ? 'i' : '');
-      return regex.test(filePath);
-    } catch {
-      return false;
-    }
+    const regex = new RegExp(`^${regexPattern}$`);
+    return regex.test(path);
   }
 
   public async withTemporaryContext<T>(
-    context: Partial<ContextConfig>, 
+    context: Config, 
     callback: () => Promise<T>
   ): Promise<T> {
     this.pushContext(context);
@@ -149,9 +164,37 @@ export class CodeContextManager implements ICodeContextManager {
       this.popContext();
     }
   }
+
+  public async getContext(target: string, type: string, depth: number): Promise<CodeContext> {
+    const cacheKey = `${target}:${type}:${depth}`;
+    
+    // Try to get from cache first
+    const cachedContext = await this.getCacheValue(cacheKey);
+    if (cachedContext) {
+      return cachedContext;
+    }
+
+    // If not in cache, extract context
+    const context = await extractCodeContext(target, type, depth, this.config);
+
+    // Store in cache for future use
+    await this.setCacheValue(cacheKey, context);
+
+    return context;
+  }
+
+  public async clearCache(): Promise<void> {
+    this.config.cache.clear();
+  }
+
+  public withContext<T>(context: Config, operation: () => T): T {
+    try {
+      this.pushContext(context);
+      return operation();
+    } finally {
+      this.popContext();
+    }
+  }
 }
 
-export const contextManagerStatics: ICodeContextManagerConstructor = {
-  getInstance: CodeContextManager.getInstance.bind(CodeContextManager),
-  resetInstance: CodeContextManager.resetInstance.bind(CodeContextManager)
-};
+export default CodeContextManager;

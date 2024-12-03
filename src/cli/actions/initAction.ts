@@ -3,20 +3,20 @@ import path from 'node:path';
 import * as prompts from '@clack/prompts';
 import pc from 'picocolors';
 import {
-  type repofmConfigFile,
   type repofmOutputStyle,
   defaultConfig,
   defaultFilePathMap,
 } from '../../config/configSchema.js';
 import { getGlobalDirectory } from '../../config/globalDirectory.js';
 import { logger } from '../../shared/logger.js';
+import type { Config, OutputConfig } from '../../types/config.js';
 
 const onCancelOperation = () => {
   prompts.cancel('Initialization cancelled.');
   process.exit(0);
 };
 
-export const runInitAction = async (rootDir: string, isGlobal: boolean): Promise<void> => {
+export const runInitAction = async (rootDir: string = process.cwd(), isGlobal = false): Promise<void> => {
   try {
     const targetDir = isGlobal ? await getGlobalDirectory() : rootDir;
 
@@ -47,10 +47,8 @@ export const runInitAction = async (rootDir: string, isGlobal: boolean): Promise
 }
 
 export async function createConfigFile(rootDir: string, isGlobal: boolean): Promise<boolean> {
-  const isCancelled = false;
-
   const configPath = isGlobal
-    ? path.resolve(getGlobalDirectory(), 'repofm.config.json')
+    ? path.resolve(await getGlobalDirectory(), 'repofm.config.json')
     : path.resolve(rootDir, 'repofm.config.json');
 
   const isCreateConfig = await prompts.confirm({
@@ -90,9 +88,6 @@ export async function createConfigFile(rootDir: string, isGlobal: boolean): Prom
   const options = await prompts.group(
     {
       outputStyle: () => {
-        if (isCancelled) {
-          return;
-        }
         return prompts.select({
           message: 'Output style:',
           options: [
@@ -104,9 +99,6 @@ export async function createConfigFile(rootDir: string, isGlobal: boolean): Prom
         });
       },
       outputFilePath: ({ results }) => {
-        if (isCancelled) {
-          return;
-        }
         const defaultFilePath = defaultFilePathMap[results.outputStyle as repofmOutputStyle];
         return prompts.text({
           message: 'Output file path:',
@@ -120,13 +112,20 @@ export async function createConfigFile(rootDir: string, isGlobal: boolean): Prom
     },
   );
 
-  const config: repofmConfigFile = {
+  const outputConfig: OutputConfig = {
+    ...defaultConfig.output,
+    filePath: options.outputFilePath as string,
+    style: options.outputStyle as 'plain' | 'xml' | 'markdown',
+  };
+
+  const config: Config = {
     ...defaultConfig,
-    output: {
-      ...defaultConfig.output,
-      filePath: options.outputFilePath as string,
-      style: options.outputStyle as repofmOutputStyle,
-    },
+    output: outputConfig,
+    cwd: rootDir,
+    ignore: {
+      ...defaultConfig.ignore,
+      useDefaultPatterns: defaultConfig.ignore.useDefaultPatterns ?? true,
+    }
   };
 
   await fs.mkdir(path.dirname(configPath), { recursive: true });
@@ -191,4 +190,32 @@ export async function createIgnoreFile(rootDir: string, isGlobal: boolean): Prom
   );
 
   return true;
+}
+
+export async function runInitActionNew(directory: string = process.cwd(), useGlobal: boolean = false): Promise<void> {
+  try {
+    const configPath = useGlobal 
+      ? path.join(process.env.HOME || process.env.USERPROFILE || '', '.repofm.json')
+      : path.join(directory, '.repofm.json');
+
+    const config: Config = {
+      ...defaultConfig,
+      output: {
+        ...defaultConfig.output,
+        filePath: path.join(directory, 'output.md'),
+        headerText: 'Repository Content',
+        instructionFilePath: path.join(directory, 'instructions.md')
+      },
+      ignore: {
+        ...defaultConfig.ignore,
+        excludePatterns: ['node_modules/**', '.git/**', '*.log']
+      }
+    };
+
+    await fs.writeFile(configPath, JSON.stringify(config, null, 2), 'utf-8');
+    logger.success(`Configuration file created at: ${configPath}`);
+  } catch (error) {
+    logger.error('Error creating configuration file:', error instanceof Error ? error.message : String(error));
+    throw error;
+  }
 }

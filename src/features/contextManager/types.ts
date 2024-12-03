@@ -1,3 +1,5 @@
+import type { Config } from '../../types/config';
+
 export interface ContextConfig {
   workspaceRoot: string;
   excludePatterns: string[];
@@ -26,20 +28,20 @@ export interface PersistentCache<T> {
 }
 
 export interface ICodeContextManager {
-  setCacheValue(arg0: string, arg1: string): unknown;
-  getCacheValue(arg0: string): any;
-  recordOperationLatency(arg0: number): unknown;
-  getPerformanceMetrics(): unknown;
-  getConfig(): ContextConfig;
-  getCurrentContext(): ContextConfig;
-  pushContext(context: Partial<ContextConfig>): void;
-  popContext(): ContextConfig | undefined;
+  getConfig(): Config;
+  getCurrentContext(): Config;
+  pushContext(context: Partial<Config>): void;
+  popContext(): Config | undefined;
   isValidSourceFile(filePath: string): boolean;
-  withTemporaryContext<T>(context: Partial<ContextConfig>, callback: () => Promise<T>): Promise<T>;
+  withTemporaryContext<T>(context: Partial<Config>, callback: () => Promise<T>): Promise<T>;
+  setCacheValue(key: string, value: any): void;
+  getCacheValue(key: string): any;
+  recordOperationLatency(latency: number): void;
+  getPerformanceMetrics(): { operationLatency: number };
 }
 
 export interface ICodeContextManagerConstructor {
-  getInstance(config?: ContextConfig): ICodeContextManager;
+  getInstance(config?: Config): ICodeContextManager;
   resetInstance(): void;
 }
 

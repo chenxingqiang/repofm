@@ -6,13 +6,15 @@ import { promisify } from 'node:util';
 import pc from 'picocolors';
 import { repofmError } from '../../shared/errorHandle.js';
 import { logger } from '../../shared/logger.js';
-import type { CliOptions } from '../cliRun.js';
-import { CLISpinner as Spinner } from '../cliSpinner.js';
+import type { CliOptions, Config } from '../../types/config.js';
+import { Spinner } from '../../cli/types/spinner.js';
+import { createSpinner } from '../../cli/spinnerFactory.js';
 import { runDefaultAction } from './defaultAction.js';
+import { generateOutput } from '../../core/packager';
 
 const execAsync = promisify(exec);
 
-export const runRemoteAction = async (repoUrl: string, options: CliOptions): Promise<void> => {
+export const runRemoteAction = async (repoUrl: string, options: CliOptions = {}): Promise<void> => {
   const gitInstalled = await checkGitInstallation();
   if (!gitInstalled) {
     throw new repofmError('Git is not installed or not in the system PATH.');
@@ -20,24 +22,17 @@ export const runRemoteAction = async (repoUrl: string, options: CliOptions): Pro
 
   const formattedUrl = formatGitUrl(repoUrl);
   const tempDir = await createTempDirectory();
-  const spinner = new Spinner();
-  spinner.start('Cloning repository...');
+  const spinner = createSpinner('Cloning repository...');
 
   try {
     await cloneRepository(formattedUrl, tempDir);
     spinner.succeed('Repository cloned successfully!');
     logger.info('');
 
-    await runDefaultAction(
-      tempDir,
-      'repofm.config.json',
-      {
-        copyToClipboard: options.copy,
-        outputPath: options.output,
-        verbose: options.verbose,
-        global: options.global
-      }
-    );
+    await runDefaultAction({
+      ...options,
+      cwd: tempDir,
+    });
   } finally {
     // Clean up the temporary directory
     await cleanupTempDirectory(tempDir);
@@ -93,21 +88,5 @@ const checkGitInstallation = async (): Promise<boolean> => {
   } catch (error) {
     logger.debug('Git is not installed:', (error as Error).message);
     return false;
-  }
-};
-
-const copyOutputToCurrentDirectory = async (
-  sourceDir: string,
-  targetDir: string,
-  outputFileName: string,
-): Promise<void> => {
-  const sourcePath = path.join(sourceDir, outputFileName);
-  const targetPath = path.join(targetDir, outputFileName);
-
-  try {
-    logger.trace(`Copying output file from: ${sourcePath} to: ${targetPath}`);
-    await fs.copyFile(sourcePath, targetPath);
-  } catch (error) {
-    throw new repofmError(`Failed to copy output file: ${(error as Error).message}`);
   }
 };

@@ -1,15 +1,17 @@
 import { CLISpinner } from './cliSpinner.js';
-import { FallbackSpinner } from './fallbackSpinner.js';
-import type { Spinner } from './types/spinner.js';
-import { Logger } from '../shared/logger.js';
+
+export interface Spinner {
+  start(text?: string): void;
+  stop(): void;
+  succeed(text?: string): void;
+  fail(text?: string): void;
+}
 
 export function createSpinner(): Spinner {
-  try {
-    return new CLISpinner();
-  } catch (error) {
-    const logger = Logger.getInstance();
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    logger.warn('Using fallback spinner due to missing dependencies:', errorMessage);
-    return new FallbackSpinner();
-  }
-} 
+  return {
+    start: CLISpinner.start.bind(CLISpinner),
+    stop: CLISpinner.stop.bind(CLISpinner),
+    succeed: CLISpinner.succeed.bind(CLISpinner),
+    fail: CLISpinner.fail.bind(CLISpinner),
+  };
+}

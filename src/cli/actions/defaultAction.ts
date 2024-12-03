@@ -1,37 +1,17 @@
-import clipboardy from 'clipboardy';
-import { loadConfig } from '../../config/configLoad.js';
-import { processDirectory } from '../../core/index.js';
-import { logger } from '../../shared/logger.js';
-import * as fs from 'node:fs/promises';
-import { defaultConfig } from '../../config/configSchema.js';
+import { pack } from '../../core/packager.js';
 import type { Config } from '../../types/config.js';
+import type { CliOptions } from '../types.js';
+import { loadConfig } from '../../config/configLoad.js';
 
-interface DefaultActionParams {
-  config: Config;
-  workingDir: string;
-}
-
-export async function runDefaultAction({
-  config,
-  workingDir
-}: DefaultActionParams): Promise<boolean> {
+export async function runDefaultAction(
+  options: CliOptions
+): Promise<boolean> {
   try {
-    const result = await processDirectory(workingDir, config);
-
-    if (config.output.filePath) {
-      await fs.writeFile(config.output.filePath, result, 'utf-8');
-      logger.info(`Output written to: ${config.output.filePath}`);
-    }
-
-    if (config.output.copyToClipboard) {
-      await clipboardy.write(result);
-      logger.info('Output copied to clipboard');
-    }
-
-    logger.success('Successfully processed directory');
-    return true;
+    const config = await loadConfig(options.cwd);
+    const result = await pack(options.cwd, config);
+    return result.totalFiles > 0;
   } catch (error) {
-    logger.error('Error in default action:', error instanceof Error ? error.message : String(error));
+    console.error('Error in default action:', error);
     return false;
   }
 }

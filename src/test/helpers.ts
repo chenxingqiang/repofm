@@ -1,6 +1,6 @@
 import { vi } from 'vitest';
 import type { Logger } from '../types/logger';
-import type { ContextConfig } from '../features/contextManager';
+import type { Config } from '../types/config.js';
 
 export const createMockLogger = (): Logger => ({
   log: vi.fn(),
@@ -12,20 +12,46 @@ export const createMockLogger = (): Logger => ({
   trace: vi.fn()
 });
 
-export const createMockConfig = (): ContextConfig => ({
-  workspaceRoot: '/test/workspace',
-  cloudSync: false,
-  supabaseUrl: 'https://test.supabase.co',
-  supabaseKey: 'test-key',
-  version: '1.0.0'
-});
-
-export function createTestConfig(overrides?: Partial<ContextConfig>): ContextConfig {
-  return {
-    workspaceRoot: '/test',
-    excludePatterns: ['node_modules/**', '*.log'],
-    maxDepth: 5,
-    ignoreCase: true,
-    ...overrides
+export function createTestConfig(overrides: Partial<Config> = {}): Config {
+  const defaultConfig: Config = {
+    cwd: process.cwd(),
+    output: {
+      filePath: 'output.txt',
+      style: 'plain',
+      headerText: 'Test Header',
+      topFilesLength: 5,
+      showLineNumbers: false,
+      removeComments: false,
+      removeEmptyLines: false,
+      copyToClipboard: false,
+      instructionFilePath: 'instructions.md'
+    },
+    ignore: {
+      useGitignore: true,
+      useDefaultPatterns: true,
+      customPatterns: [],
+      excludePatterns: ['node_modules/**', '*.log']
+    },
+    security: {
+      enableSecurityCheck: true
+    },
+    include: []
   };
-} 
+
+  return {
+    ...defaultConfig,
+    ...overrides,
+    output: {
+      ...defaultConfig.output,
+      ...(overrides.output || {})
+    },
+    ignore: {
+      ...defaultConfig.ignore,
+      ...(overrides.ignore || {})
+    },
+    security: {
+      ...defaultConfig.security,
+      ...(overrides.security || {})
+    }
+  };
+}

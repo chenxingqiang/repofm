@@ -1,25 +1,34 @@
-export class FallbackSpinner {
-  private text: string = '';
+import { Spinner } from './types/spinner';
 
-  start(text: string = ''): void {
+export class FallbackSpinner implements Spinner {
+  private text: string | undefined;
+
+  constructor(text?: string) {
     this.text = text;
-    console.log(`⠋ ${text}`);
+  }
+
+  start(text?: string): void {
+    if (text) this.text = text;
+    console.log(`⏳ ${this.text || 'Processing...'}`);
   }
 
   stop(): void {
-    // No-op in fallback
-  }
-
-  update(text: string): void {
-    this.text = text;
-    console.log(`⠋ ${text}`);
+    // No-op for fallback spinner
   }
 
   succeed(text?: string): void {
-    console.log(`✔ ${text || this.text}`);
+    console.log(`✅ ${text || this.text || 'Completed'}`);
   }
 
   fail(text?: string): void {
-    console.log(`✖ ${text || this.text}`);
+    console.error(`❌ ${text || this.text || 'Failed'}`);
   }
-} 
+
+  warn(text?: string): void {
+    console.warn(`⚠️ ${text || this.text || 'Warning'}`);
+  }
+
+  info(text?: string): void {
+    console.info(`ℹ️ ${text || this.text || 'Information'}`);
+  }
+}

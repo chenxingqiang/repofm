@@ -1,43 +1,40 @@
-import ora, { type Ora } from 'ora';
+import ora, { Ora } from 'ora';
 
 export class CLISpinner {
-  private spinner: Ora;
-  private static instance: Ora;
+  private static spinner: Ora | null = null;
 
-  constructor() {
-    if (!CLISpinner.instance) {
-      CLISpinner.instance = ora({
-        spinner: 'dots',
-        isEnabled: !process.env.CI && !process.env.NODE_ENV?.includes('test')
-      });
+  static start(text?: string) {
+    const spinnerText = text || 'Processing...';
+    this.cleanup();
+    this.spinner = ora({
+      text: spinnerText,
+      spinner: 'dots',
+    }).start();
+    return this.spinner;
+  }
+
+  static stop() {
+    if (this.spinner) {
+      this.spinner.stop();
+      this.spinner = null;
     }
-    this.spinner = CLISpinner.instance;
   }
 
-  start(text: string = ''): void {
-    this.spinner.start(text);
-  }
-
-  stop(): void {
-    this.spinner.stop();
-  }
-
-  update(text: string): void {
-    this.spinner.text = text;
-  }
-
-  succeed(text?: string): void {
-    this.spinner.succeed(text);
-  }
-
-  fail(text?: string): void {
-    this.spinner.fail(text);
-  }
-
-  static cleanup(): void {
-    if (CLISpinner.instance) {
-      CLISpinner.instance.stop();
-      CLISpinner.instance = null as unknown as Ora;
+  static succeed(text?: string) {
+    if (this.spinner) {
+      this.spinner.succeed(text);
+      this.spinner = null;
     }
+  }
+
+  static fail(text?: string) {
+    if (this.spinner) {
+      this.spinner.fail(text);
+      this.spinner = null;
+    }
+  }
+
+  static cleanup() {
+    this.stop();
   }
 }

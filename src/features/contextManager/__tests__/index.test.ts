@@ -1,4 +1,4 @@
-import { CodeContextManager } from '../CodeContextManager';
+import { CodeContextManager } from '../index';
 import { ContextConfig } from '../types';
 import { describe, it, expect, beforeEach } from 'vitest';
 
@@ -18,14 +18,12 @@ describe('CodeContextManager', () => {
   };
 
   beforeEach(() => {
-    // Reset the instance before each test
     CodeContextManager.resetInstance();
   });
 
   it('should create a singleton instance', () => {
     const instance1 = CodeContextManager.getInstance(defaultConfig);
     const instance2 = CodeContextManager.getInstance();
-    
     expect(instance1).toBe(instance2);
   });
 
@@ -92,22 +90,46 @@ describe('CodeContextManager', () => {
 
   describe('Source File Validation', () => {
     it('should validate source files', () => {
-      const instance = CodeContextManager.getInstance(defaultConfig);
+      const instance = CodeContextManager.getInstance({
+        ...defaultConfig,
+        excludePatterns: [
+          '**/node_modules/**',
+          '**/*.test.*',
+          '**/test/**'
+        ]
+      });
       
+      // Valid files
       expect(instance.isValidSourceFile('src/valid/file.ts')).toBe(true);
+      expect(instance.isValidSourceFile('src/components/Button.js')).toBe(true);
+      
+      // Invalid files - should match exclude patterns
       expect(instance.isValidSourceFile('node_modules/package/file.js')).toBe(false);
+      expect(instance.isValidSourceFile('src/test/file.js')).toBe(false);
+      expect(instance.isValidSourceFile('src/components/Button.test.js')).toBe(false);
     });
 
     it('should handle complex glob patterns', () => {
-      const instance = CodeContextManager.getInstance(defaultConfig);
+      const instance = CodeContextManager.getInstance({
+        ...defaultConfig,
+        excludePatterns: [
+          '**/__tests__/**',
+          '**/test/**',
+          '**/tests/**',
+          '**/*.test.*',
+          '**/*.spec.*'
+        ]
+      });
       
-      expect(instance.isValidSourceFile('src/test/file.test.ts')).toBe(false);
-      expect(instance.isValidSourceFile('src/components/Button.spec.js')).toBe(false);
-      expect(instance.isValidSourceFile('src/utils/helper.ts')).toBe(true);
-      
+      // These should be excluded
       expect(instance.isValidSourceFile('src/__tests__/component.ts')).toBe(false);
       expect(instance.isValidSourceFile('test/unit/helper.js')).toBe(false);
       expect(instance.isValidSourceFile('src/components/test/utils.ts')).toBe(false);
+      expect(instance.isValidSourceFile('src/components/Button.spec.js')).toBe(false);
+      
+      // These should be included
+      expect(instance.isValidSourceFile('src/utils/helper.ts')).toBe(true);
+      expect(instance.isValidSourceFile('src/components/Button.js')).toBe(true);
     });
   });
 });

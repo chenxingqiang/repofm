@@ -1,4 +1,4 @@
-import { PersistentCache } from '../types.js';
+import { PersistentCache } from '../types';
 
 export class FilePersistentCache<T> implements PersistentCache<T> {
   private cache: Map<string, T>;
@@ -7,7 +7,7 @@ export class FilePersistentCache<T> implements PersistentCache<T> {
     this.cache = new Map();
   }
 
-  async get(key: string): Promise<T | undefined> {
+  get(key: string): T | undefined {
     return this.cache.get(key);
   }
 
@@ -22,4 +22,4 @@ export class FilePersistentCache<T> implements PersistentCache<T> {
   async clear(): Promise<void> {
     this.cache.clear();
   }
-} 
+}
