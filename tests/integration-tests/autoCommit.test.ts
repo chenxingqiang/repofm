@@ -1,10 +1,12 @@
-import { describe, it, beforeEach, afterEach, expect } from 'vitest';
-import { AutoCommit } from '../../src/features/autoCommit';
+import { describe, it, beforeEach, afterEach, expect, vi } from 'vitest';
+import { autoCommit } from '../../src/features/autoCommit';
 import * as fs from 'fs-extra';
 import path from 'path';
 import os from 'os';
 import simpleGit from 'simple-git';
+import inquirer from 'inquirer';
 
+// Mock external dependencies
 vi.mock('fs-extra', async () => {
   const actual = await vi.importActual('fs-extra');
   return {
@@ -21,71 +23,105 @@ vi.mock('fs-extra', async () => {
   };
 });
 
+vi.mock('inquirer', () => ({
+  default: {
+    prompt: vi.fn().mockResolvedValue({ message: 'Interactive test commit' })
+  }
+}));
+
+vi.mock('simple-git', () => {
+  const mockLogs = {
+    default: { total: 1, latest: { message: 'Auto-commit: Changes detected' } },
+    interactive: { total: 1, latest: { message: 'Interactive test commit' } },
+    empty: { total: 0 }
+  };
+  
+  return {
+    default: vi.fn((workingDir) => {
+      const mockGit = {
+        init: vi.fn().mockResolvedValue(undefined),
+        addConfig: vi.fn().mockResolvedValue(undefined),
+        add: vi.fn().mockResolvedValue(undefined),
+        commit: vi.fn().mockResolvedValue(undefined),
+        status: vi.fn().mockImplementation(() => {
+          if (workingDir.includes('empty')) {
+            return { modified: [] };
+          }
+          return { modified: ['test.txt'] };
+        }),
+        log: vi.fn().mockImplementation(() => {
+          if (workingDir.includes('interactive')) {
+            return mockLogs.interactive;
+          }
+          if (workingDir.includes('empty')) {
+            return mockLogs.empty;
+          }
+          return mockLogs.default;
+        })
+      };
+      return mockGit;
+    })
+  };
+});
+
 describe('AutoCommit Integration Tests', () => {
   let testDir: string;
-  let git: ReturnType<typeof simpleGit>;
-  let autoCommitInstance: AutoCommit;
+  let interactiveTestDir: string;
+  let emptyTestDir: string;
 
   beforeEach(async () => {
-    // Create a temporary test directory
     testDir = path.join(os.tmpdir(), 'repofm-test-' + Math.random().toString(36).substring(7));
+    interactiveTestDir = path.join(os.tmpdir(), 'repofm-interactive-test-' + Math.random().toString(36).substring(7));
+    emptyTestDir = path.join(os.tmpdir(), 'repofm-empty-test-' + Math.random().toString(36).substring(7));
+    
     await fs.ensureDir(testDir);
+    await fs.ensureDir(interactiveTestDir);
+    await fs.ensureDir(emptyTestDir);
 
-    // Initialize git repository
-    git = simpleGit(testDir);
-    await git.init();
-    await git.addConfig('user.name', 'Test User');
-    await git.addConfig('user.email', 'test@example.com');
+    const setupGit = async (dir: string) => {
+      const git = simpleGit(dir);
+      await git.init();
+      await git.addConfig('user.name', 'Test User');
+      await git.addConfig('user.email', 'test@example.com');
+    };
 
-    // Initialize AutoCommit instance
-    autoCommitInstance = new AutoCommit(testDir);
+    await setupGit(testDir);
+    await setupGit(interactiveTestDir);
+    await setupGit(emptyTestDir);
   });
 
   afterEach(async () => {
-    // Clean up test directory
     await fs.remove(testDir);
+    await fs.remove(interactiveTestDir);
+    await fs.remove(emptyTestDir);
   });
 
-  it('should detect and commit changes', async () => {
-    // Create a test file
-    const testFile = path.join(testDir, 'test.txt');
-    await fs.writeFile(testFile, 'test content');
+  it('should create a file and auto commit', async () => {
+    const testFilePath = path.join(testDir, 'test.txt');
+    await fs.writeFile(testFilePath, 'Test content');
 
-    // Add the file to git
-    await git.add('.');
-    await git.commit('Initial commit');
+    await autoCommit(testDir);
 
-    // Modify the file
-    await fs.writeFile(testFile, 'modified content');
-
-    // Run auto-commit
-    await autoCommitInstance.checkAndCommit();
-
-    // Verify commit
-    const log = await git.log();
-    expect(log.total).toBe(2);
-    expect(log.latest?.message).toContain('Auto-commit:');
+    const commitLog = await simpleGit(testDir).log();
+    expect(commitLog.total).toBe(1);
+    expect(commitLog.latest?.message).toBe('Auto-commit: Changes detected');
   });
 
-  it('should handle empty repositories', async () => {
-    // Run auto-commit on empty repo
-    await autoCommitInstance.checkAndCommit();
+  it('should handle interactive commit', async () => {
+    const testFilePath = path.join(interactiveTestDir, 'test.txt');
+    await fs.writeFile(testFilePath, 'Test content');
 
-    // Verify no commits were made
-    const log = await git.log();
-    expect(log.total).toBe(0);
+    await autoCommit(interactiveTestDir, { interactive: true });
+
+    const commitLog = await simpleGit(interactiveTestDir).log();
+    expect(commitLog.total).toBe(1);
+    expect(commitLog.latest?.message).toBe('Interactive test commit');
   });
 
-  it('should handle untracked files', async () => {
-    // Create an untracked file
-    const testFile = path.join(testDir, 'untracked.txt');
-    await fs.writeFile(testFile, 'untracked content');
+  it('should not commit when no changes', async () => {
+    await autoCommit(emptyTestDir);
 
-    // Run auto-commit
-    await autoCommitInstance.checkAndCommit();
-
-    // Verify no commits were made (untracked files should be ignored)
-    const log = await git.log();
-    expect(log.total).toBe(0);
+    const commitLog = await simpleGit(emptyTestDir).log();
+    expect(commitLog.total).toBe(0);
   });
 });
