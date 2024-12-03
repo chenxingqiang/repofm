@@ -12,9 +12,13 @@ import { logger } from '../../src/shared/logger.js';
 vi.mock('node:fs/promises');
 vi.mock('../../src/shared/logger', () => ({
   logger: {
+    error: vi.fn(),
+    warn: vi.fn(),
+    info: vi.fn(),
+    debug: vi.fn(),
     trace: vi.fn(),
-    note: vi.fn(),
-  },
+    log: vi.fn()
+  }
 }));
 vi.mock('../../src/config/globalDirectory', () => ({
   getGlobalDirectory: vi.fn(),
@@ -22,7 +26,7 @@ vi.mock('../../src/config/globalDirectory', () => ({
 
 describe('configLoad', () => {
   beforeEach(() => {
-    vi.resetAllMocks();
+    vi.clearAllMocks();
     process.env = {};
   });
 
@@ -67,7 +71,7 @@ describe('configLoad', () => {
     });
 
     test('should return an empty object if no config file is found', async () => {
-      const loggerSpy = vi.spyOn(logger, 'note').mockImplementation(vi.fn());
+      const loggerSpy = vi.spyOn(logger, 'info').mockImplementation(vi.fn());
       vi.mocked(getGlobalDirectory).mockReturnValue('/global/repofm');
       vi.mocked(fs.stat).mockRejectedValue(new Error('File not found'));
 
@@ -100,16 +104,14 @@ describe('configLoad', () => {
 
       expect(result.output.filePath).toBe('cli-output.txt');
       expect(result.ignore.useDefaultPatterns).toBe(true);
-      expect(result.ignore.customPatterns).toContain('file-ignore');
-      expect(result.ignore.customPatterns).toContain('cli-ignore');
+      expect(result.ignore.customPatterns).toEqual(['file-ignore', 'cli-ignore']);
     });
 
     test('should throw repofmConfigValidationError for invalid merged config', () => {
       const fileConfig: repofmConfigFile = {
-        output: { filePath: 'file-output.txt', style: 'plain' },
+        output: { filePath: 'file-output.txt' },
       };
       const cliConfig: repofmConfigCli = {
-        // @ts-ignore
         output: { style: 'invalid' }, // Invalid style
       };
 
