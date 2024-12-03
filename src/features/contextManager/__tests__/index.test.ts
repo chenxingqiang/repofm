@@ -1,72 +1,113 @@
+import { CodeContextManager } from '../CodeContextManager';
+import { ContextConfig } from '../types';
 import { describe, it, expect, beforeEach } from 'vitest';
-import { ContextManager } from '../index';
-import type { ContextConfig } from '../types';
 
-describe('ContextManager', () => {
-  let contextManager: ContextManager;
-  
-  const mockConfig: ContextConfig = {
+describe('CodeContextManager', () => {
+  const defaultConfig: ContextConfig = {
     workspaceRoot: '/test/workspace',
-    cloudSync: false,
-    supabaseUrl: 'https://test.supabase.co',
-    supabaseKey: 'test-key',
-    version: '1.0.0'
+    excludePatterns: [
+      '**/node_modules/**',
+      '**/*.test.*',
+      '**/*.spec.*',
+      '**/test/**',
+      '**/tests/**',
+      '**/__tests__/**'
+    ],
+    maxDepth: 5,
+    ignoreCase: true
   };
 
   beforeEach(() => {
-    ContextManager.resetInstance();
-    contextManager = ContextManager.getInstance(mockConfig);
+    // Reset the instance before each test
+    CodeContextManager.resetInstance();
   });
 
-  describe('Singleton Pattern', () => {
-    it('should maintain a single instance', () => {
-      const instance1 = ContextManager.getInstance(mockConfig);
-      const instance2 = ContextManager.getInstance(mockConfig);
-      expect(instance1).toBe(instance2);
-    });
+  it('should create a singleton instance', () => {
+    const instance1 = CodeContextManager.getInstance(defaultConfig);
+    const instance2 = CodeContextManager.getInstance();
+    
+    expect(instance1).toBe(instance2);
   });
 
-  describe('Cache Management', () => {
-    it('should cache and retrieve values', () => {
-      const key = 'testKey';
-      const value = 'testValue';
+  it('should throw an error when initializing without config', () => {
+    expect(() => CodeContextManager.getInstance()).toThrow('Workspace root is required for initialization');
+  });
+
+  it('should reset the instance', () => {
+    const instance1 = CodeContextManager.getInstance(defaultConfig);
+    CodeContextManager.resetInstance();
+    const instance2 = CodeContextManager.getInstance(defaultConfig);
+    
+    expect(instance1).not.toBe(instance2);
+  });
+
+  it('should handle config initialization', () => {
+    const instance = CodeContextManager.getInstance(defaultConfig);
+    const config = instance.getConfig();
+    
+    expect(config.workspaceRoot).toBe(defaultConfig.workspaceRoot);
+    expect(config.excludePatterns).toEqual(expect.arrayContaining(defaultConfig.excludePatterns));
+  });
+
+  it('should manage cache values', () => {
+    const instance = CodeContextManager.getInstance(defaultConfig);
+    const testKey = 'testKey';
+    const testValue = { data: 'test' };
+    
+    instance.setCacheValue(testKey, testValue);
+    expect(instance.getCacheValue(testKey)).toEqual(testValue);
+  });
+
+  it('should record and retrieve performance metrics', () => {
+    const instance = CodeContextManager.getInstance(defaultConfig);
+    const testLatency = 100;
+    
+    instance.recordOperationLatency(testLatency);
+    expect(instance.getPerformanceMetrics().operationLatency).toBe(testLatency);
+  });
+
+  describe('Context Management', () => {
+    it('should handle context stack operations', () => {
+      const instance = CodeContextManager.getInstance(defaultConfig);
+      const newContext = { maxDepth: 10 };
       
-      contextManager.setCacheValue(key, value);
-      expect(contextManager.getCacheValue(key)).toBe(value);
+      instance.pushContext(newContext);
+      expect(instance.getConfig().maxDepth).toBe(10);
+      
+      instance.popContext();
+      expect(instance.getConfig().maxDepth).toBe(defaultConfig.maxDepth);
     });
 
-    it('should handle cache misses', () => {
-      expect(contextManager.getCacheValue('nonexistent')).toBeUndefined();
-    });
-  });
-
-  describe('Performance Monitoring', () => {
-    it('should track operation latency', () => {
-      const latency = 100;
-      contextManager.recordOperationLatency(latency);
-      const metrics = contextManager.getPerformanceMetrics();
-      expect(metrics.operationLatency).toBe(latency);
-    });
-
-    it('should return a copy of metrics', () => {
-      const metrics1 = contextManager.getPerformanceMetrics();
-      const metrics2 = contextManager.getPerformanceMetrics();
-      expect(metrics1).not.toBe(metrics2);
-      expect(metrics1).toEqual(metrics2);
+    it('should support temporary context changes', async () => {
+      const instance = CodeContextManager.getInstance(defaultConfig);
+      const tempContext = { maxDepth: 15 };
+      
+      await instance.withTemporaryContext(tempContext, async () => {
+        expect(instance.getConfig().maxDepth).toBe(15);
+      });
+      
+      expect(instance.getConfig().maxDepth).toBe(defaultConfig.maxDepth);
     });
   });
 
-  describe('Configuration', () => {
-    it('should maintain configuration', () => {
-      const config = contextManager.getConfig();
-      expect(config).toEqual(mockConfig);
+  describe('Source File Validation', () => {
+    it('should validate source files', () => {
+      const instance = CodeContextManager.getInstance(defaultConfig);
+      
+      expect(instance.isValidSourceFile('src/valid/file.ts')).toBe(true);
+      expect(instance.isValidSourceFile('node_modules/package/file.js')).toBe(false);
     });
 
-    it('should return a copy of config', () => {
-      const config1 = contextManager.getConfig();
-      const config2 = contextManager.getConfig();
-      expect(config1).not.toBe(config2);
-      expect(config1).toEqual(config2);
+    it('should handle complex glob patterns', () => {
+      const instance = CodeContextManager.getInstance(defaultConfig);
+      
+      expect(instance.isValidSourceFile('src/test/file.test.ts')).toBe(false);
+      expect(instance.isValidSourceFile('src/components/Button.spec.js')).toBe(false);
+      expect(instance.isValidSourceFile('src/utils/helper.ts')).toBe(true);
+      
+      expect(instance.isValidSourceFile('src/__tests__/component.ts')).toBe(false);
+      expect(instance.isValidSourceFile('test/unit/helper.js')).toBe(false);
+      expect(instance.isValidSourceFile('src/components/test/utils.ts')).toBe(false);
     });
   });
 });
