@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { minimatch } from 'minimatch';
 import type { Config } from '../types/config.js';
-import type { ProcessedFile } from './types.js';
+import type { ProcessedFile, FileInfo, SuspiciousFileResult } from './types.js';
 import { searchFiles } from './file/fileSearch.js';
 import { collectFiles } from './file/fileCollect.js';
 import { processFiles } from './file/fileProcess.js';
@@ -23,7 +23,7 @@ export interface Dependencies {
   searchFiles: typeof searchFiles;
   collectFiles: typeof collectFiles;
   processFiles: typeof processFiles;
-  runSecurityCheck: typeof runSecurityCheck;
+  runSecurityCheck: (files: FileInfo[]) => Promise<SuspiciousFileResult[]>;
   generateOutput: typeof generateOutput;
 }
 
@@ -43,29 +43,40 @@ export const defaultDeps: Dependencies = {
 
 export async function pack(
   directory: string,
-  config: Config,
+  config: Config & { cwd: string },
   deps: Dependencies = defaultDeps
 ): Promise<PackResult> {
   try {
-    const files = await deps.searchFiles(directory, config.ignore);
-    const collected = await deps.collectFiles(files, directory);
+    const searchConfig = {
+      patterns: config.ignore.excludePatterns,
+      useGitignore: config.ignore.useGitignore,
+      useDefaultPatterns: config.ignore.useDefaultPatterns
+    };
+
+    const files = await deps.searchFiles(directory, searchConfig);
+    const collected = await deps.collectFiles(files, { ignoreErrors: true });
     const processed = await deps.processFiles(collected, config);
 
     // Optional security check
     const securityChecked = config.security.enableSecurityCheck 
       ? await deps.runSecurityCheck(processed.map(file => ({
-          ...file,
-          size: file.size || 0 // Ensure size is always a number
+          path: file.path,
+          content: file.content,
+          size: file.size || 0
         })))
       : processed;
 
     // Generate output  
-    const output = deps.generateOutput({ data: securityChecked, ...config.output });
+    const output = deps.generateOutput({ 
+      data: securityChecked, 
+      format: config.output.style === 'plain' || config.output.style === 'xml' ? 'text' : 'markdown',
+      pretty: true
+    });
 
     return {
       totalFiles: securityChecked.length,
       fileCharCounts: securityChecked.reduce<Record<string, number>>((acc, file) => {
-        if ('path' in file && 'content' in file) {
+        if ('content' in file && 'path' in file) {
           acc[file.path] = file.content.length;
         }
         return acc;

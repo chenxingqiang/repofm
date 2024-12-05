@@ -22,16 +22,16 @@ export const runRemoteAction = async (repoUrl: string, options: CliOptions = {})
 
   const formattedUrl = formatGitUrl(repoUrl);
   const tempDir = await createTempDirectory();
-  const spinner = createSpinner('Cloning repository...');
+  const spinner = createSpinner();
 
   try {
     await cloneRepository(formattedUrl, tempDir);
     spinner.succeed('Repository cloned successfully!');
     logger.info('');
 
-    await runDefaultAction({
+    await runDefaultAction(tempDir, {
       ...options,
-      cwd: tempDir,
+      output: options.output || 'default_output.txt'
     });
   } finally {
     // Clean up the temporary directory

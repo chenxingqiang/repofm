@@ -1,7 +1,7 @@
 import type { Config } from '../../types/config.js';
 import type { CodeContext } from '../../types/context.js';
 import { extractCodeContext } from './implementation.js';
-import { PersistentCache } from './cache/persistentCache.js';
+import { FilePersistentCache } from './cache/persistentCache.js';
 
 export interface ICodeContextManager {
   getContext(target: string, type: string, depth: number): Promise<CodeContext>;
@@ -10,10 +10,10 @@ export interface ICodeContextManager {
 
 export class CodeContextManager implements ICodeContextManager {
   private static _instance: CodeContextManager | null = null;
+  private _cache: FilePersistentCache;
   private _metrics: { operationLatency: number };
   private _config: Config;
   private _contextStack: Config[];
-  private cache: PersistentCache;
 
   private constructor(config: Config) {
     this._config = {
@@ -22,14 +22,14 @@ export class CodeContextManager implements ICodeContextManager {
         ...config.ignore,
         useDefaultPatterns: true,
         customPatterns: config.ignore.customPatterns || [],
-        excludePatterns: config.ignore.excludePatterns || ['node_modules/**', '*.log']
+        excludePatterns: config.ignore.excludePatterns || []
       }
     };
+    this._cache = new FilePersistentCache();
     this._metrics = {
       operationLatency: 0
     };
     this._contextStack = [];
-    this.cache = new PersistentCache(this._config);
   }
 
   public static getInstance(config?: Config): CodeContextManager {
@@ -69,7 +69,7 @@ export class CodeContextManager implements ICodeContextManager {
     const cacheKey = `${target}:${type}:${depth}`;
     
     // Try to get from cache first
-    const cachedContext = await this.cache.get(cacheKey);
+    const cachedContext = await this._cache.get(cacheKey);
     if (cachedContext) {
       return cachedContext;
     }
@@ -78,13 +78,13 @@ export class CodeContextManager implements ICodeContextManager {
     const context = await extractCodeContext(target, type, depth, this._config);
 
     // Store in cache for future use
-    await this.cache.set(cacheKey, context);
+    await this._cache.set(cacheKey, context);
 
     return context;
   }
 
   public async clearCache(): Promise<void> {
-    await this.cache.clear();
+    await this._cache.clear();
   }
 
   public recordLatency(latency: number): void {

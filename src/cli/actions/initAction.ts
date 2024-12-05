@@ -113,9 +113,15 @@ export async function createConfigFile(rootDir: string, isGlobal: boolean): Prom
   );
 
   const outputConfig: OutputConfig = {
-    ...defaultConfig.output,
     filePath: options.outputFilePath as string,
     style: options.outputStyle as 'plain' | 'xml' | 'markdown',
+    removeComments: false,
+    removeEmptyLines: false,
+    topFilesLength: 10,
+    showLineNumbers: true,
+    copyToClipboard: false,
+    headerText: 'Default Header',
+    instructionFilePath: 'instructions.txt'
   };
 
   const config: Config = {
@@ -123,8 +129,10 @@ export async function createConfigFile(rootDir: string, isGlobal: boolean): Prom
     output: outputConfig,
     cwd: rootDir,
     ignore: {
-      ...defaultConfig.ignore,
-      useDefaultPatterns: defaultConfig.ignore.useDefaultPatterns ?? true,
+      useDefaultPatterns: true,
+      useGitignore: true,
+      customPatterns: [],
+      excludePatterns: []
     }
   };
 

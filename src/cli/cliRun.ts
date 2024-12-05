@@ -2,8 +2,9 @@ import { Command } from 'commander';
 import { runDefaultAction } from './actions/defaultAction.js';
 import { runInitAction } from './actions/initAction.js';
 import { logger } from '../shared/logger.js';
-import type { CliOptions } from '../types/config.js';
+import type { CliOptions, Config } from '../types/config.js';
 import { CLISpinner } from './cliSpinner.js';
+import { createDefaultConfig } from '../config/configLoad.js';
 
 export async function run(): Promise<void> {
   const program = new Command();
@@ -19,27 +20,34 @@ export async function run(): Promise<void> {
     .option('--security', 'Enable security checks');
 
   program
-    .argument('[directory]', 'Target directory', process.cwd())
-    .action(async (directory: string) => {
-      const options = program.opts();
+    .action(async (options) => {
+      const cwd = process.cwd();
       try {
         CLISpinner.start('Processing repository...');
         
         if (options.init) {
-          await runInitAction(directory, options.global);
+          await runInitAction(cwd, options.global);
         } else {
-          const cliOptions: CliOptions = {
-            cwd: directory,
-            copy: options.copy,
-            output: options.output,
-            security: options.security,
-            global: options.global
+          const defaultConfig = createDefaultConfig(cwd);
+          const mergedOptions = {
+            ...defaultConfig,
+            output: {
+              filePath: options.output || defaultConfig.output.filePath,
+              style: defaultConfig.output.style,
+              removeComments: defaultConfig.output.removeComments,
+              removeEmptyLines: defaultConfig.output.removeEmptyLines,
+              topFilesLength: defaultConfig.output.topFilesLength,
+              showLineNumbers: defaultConfig.output.showLineNumbers,
+              copyToClipboard: options.copy ?? defaultConfig.output.copyToClipboard,
+              headerText: defaultConfig.output.headerText,
+              instructionFilePath: defaultConfig.output.instructionFilePath
+            },
+            security: {
+              enableSecurityCheck: options.security ?? defaultConfig.security.enableSecurityCheck
+            }
           };
-          
-          const success = await runDefaultAction(cliOptions);
-          if (!success) {
-            process.exit(1);
-          }
+
+          await runDefaultAction(cwd, mergedOptions as Partial<CliOptions & Config>);
         }
       } catch (error) {
         logger.error('Error:', error instanceof Error ? error.message : String(error));
@@ -51,9 +59,9 @@ export async function run(): Promise<void> {
 
   try {
     if (process.env.NODE_ENV !== 'test') {
-      await program.parseAsync(process.argv);
+      program.parse(process.argv);
     } else {
-      program.opts();
+      program.parse(process.argv);
     }
   } catch (error) {
     logger.error('Error running CLI:', error instanceof Error ? error.message : String(error));

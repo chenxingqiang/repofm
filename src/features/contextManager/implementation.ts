@@ -1,8 +1,10 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { Config, PerformanceMetrics, ICodeContextManager } from '../../types/config.js';
-import { CodeContext } from '../../types/context.js';
+import type { Config } from '../../types/config.js';
+import type { CodeContext } from '../../types/context.js';
 import { extractContext } from '../../core/contextExtractor.js';
+import type { ICodeContextManager } from './types';
+import { PerformanceMetrics } from './path/to/performanceMetrics';
 
 export async function extractCodeContext(
   target: string, 
@@ -13,21 +15,15 @@ export async function extractCodeContext(
   try {
     const absoluteTarget = path.isAbsolute(target) 
       ? target 
-      : path.resolve(config.cwd, target);
+      : path.resolve(config.cwd || process.cwd(), target);
 
-    return await extractContext({
-      target: absoluteTarget,
+    const content = await fs.readFile(absoluteTarget, 'utf-8');
+    return {
+      content,
       type,
-      depth,
-      cwd: config.cwd,
-      ignore: {
-        ...config.ignore,
-        useDefaultPatterns: true,
-        customPatterns: config.ignore.customPatterns,
-        excludePatterns: config.ignore.excludePatterns
-      },
-      output: config.output
-    });
+      path: target,
+      size: content.length
+    };
   } catch (error) {
     console.error('Error extracting code context:', error);
     throw error;

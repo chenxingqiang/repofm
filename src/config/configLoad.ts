@@ -3,151 +3,141 @@ import path from 'node:path';
 import { z } from 'zod';
 import { repofmError, repofmConfigValidationError } from '../shared/errorHandle.js';
 import { logger } from '../shared/logger.js';
-import {
-  type repofmConfigCli,
-  type repofmConfigFile,
-  type repofmConfigMerged,
-  defaultConfig,
-  defaultFilePathMap,
-  repofmConfigFileSchema,
-  repofmConfigMergedSchema,
-} from './configSchema.js';
+import type { Config, CliOptions } from '../types/config.js';
 import { getGlobalDirectory } from './globalDirectory.js';
+import { loadFileConfig } from './path/to/loadFileConfig';
 
-const defaultConfigPath = 'repofm.config.json';
+const defaultFilePathMap = {
+  plain: 'output.txt',
+  xml: 'output.xml',
+  markdown: 'output.md'
+} as const;
 
-export async function loadFileConfig(rootDir: string, argConfigPath: string | null): Promise<repofmConfigFile> {
-  let useDefaultConfig = false;
-  let configPath = argConfigPath;
-  if (!configPath) {
-    useDefaultConfig = true;
-    configPath = defaultConfigPath;
-  }
-
-  const fullPath = path.resolve(rootDir, configPath);
-  logger.trace(`Loading local config from: ${fullPath}`);
-
-  try {
-    await fs.stat(fullPath);
-    const content = await fs.readFile(fullPath, 'utf-8');
-    return await parseAndValidateConfig(content, fullPath);
-  } catch (error) {
-    if (error instanceof repofmConfigValidationError || (error instanceof Error && error.message === 'Invalid JSON')) {
-      throw error;
-    }
-
-    if (!useDefaultConfig) {
-      throw new repofmError(`Config file not found at ${configPath}`);
-    }
-
-    const globalConfigPath = path.join(getGlobalDirectory(), 'repofm.config.json');
-    logger.trace(`Loading global config from: ${globalConfigPath}`);
-
-    try {
-      await fs.stat(globalConfigPath);
-      const content = await fs.readFile(globalConfigPath, 'utf-8');
-      return await parseAndValidateConfig(content, globalConfigPath);
-    } catch (error) {
-      if (error instanceof repofmConfigValidationError || (error instanceof Error && error.message === 'Invalid JSON')) {
-        throw error;
-      }
-      logger.info(
-        `No custom config found at ${configPath} or global config at ${globalConfigPath}.\nYou can add a config file for additional settings.`
-      );
-      return {};
-    }
-  }
-}
-
-async function parseAndValidateConfig(content: string, filePath: string): Promise<repofmConfigFile> {
-  let config;
-  try {
-    config = JSON.parse(content);
-  } catch {
-    throw new Error('Invalid JSON');
-  }
-
-  try {
-    return repofmConfigFileSchema.parse(config);
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      const issues = error.issues.map(issue => 
-        `[${issue.path.join('.')}] ${issue.message}`
-      ).join('\n');
-      throw new repofmConfigValidationError(
-        `Invalid config file:\n${issues}`
-      );
-    }
-    throw new repofmConfigValidationError(
-      `Error validating config from ${filePath}: ${error instanceof Error ? error.message : 'Unknown error'}`
-    );
-  }
-}
-
-export const mergeConfigs = (
-  cwd: string,
-  fileConfig: repofmConfigFile,
-  cliConfig: repofmConfigCli,
-): repofmConfigMerged => {
-  logger.trace(`Default config: ${JSON.stringify(defaultConfig)}`);
-
-  const baseConfig = defaultConfig;
-
-  if (cliConfig.output?.filePath == null && fileConfig.output?.filePath == null) {
-    const style = cliConfig.output?.style || fileConfig.output?.style || baseConfig.output.style;
-    baseConfig.output.filePath = defaultFilePathMap[style];
-    logger.trace(`Default output file path is set to: ${baseConfig.output.filePath}`);
-  }
-
-  const mergedConfig = {
-    cwd,
+export function createDefaultConfig(cwd: string, options: Partial<CliOptions & Config> = {}): Config {
+  return {
     output: {
-      ...baseConfig.output,
-      ...fileConfig.output,
-      ...cliConfig.output,
+      filePath: options.output || defaultFilePathMap.plain,
+      style: 'plain',
+      removeComments: false,
+      removeEmptyLines: false,
+      topFilesLength: 10,
+      showLineNumbers: false,
+      copyToClipboard: options.copy || false,
+      headerText: 'Repository Content',
+      instructionFilePath: ''
     },
-    include: [...(baseConfig.include || []), ...(fileConfig.include || []), ...(cliConfig.include || [])],
+    include: options.include || [],
     ignore: {
-      ...baseConfig.ignore,
-      ...fileConfig.ignore,
-      ...cliConfig.ignore,
-      customPatterns: [
-        ...(baseConfig.ignore.customPatterns || []),
-        ...(fileConfig.ignore?.customPatterns || []),
-        ...(cliConfig.ignore?.customPatterns || []),
-      ],
+      customPatterns: options.ignore?.customPatterns || [],
+      useDefaultPatterns: true,
+      useGitignore: true,
+      excludePatterns: ['node_modules/**', '.git/**']
     },
     security: {
-      ...baseConfig.security,
-      ...fileConfig.security,
-      ...cliConfig.security,
+      enableSecurityCheck: options.security || false
     },
+    cwd
   };
+}
 
+const configSchema = z.object({
+  output: z.object({
+    filePath: z.string(),
+    style: z.enum(['plain', 'xml', 'markdown']),
+    removeComments: z.boolean(),
+    removeEmptyLines: z.boolean(),
+    topFilesLength: z.number(),
+    showLineNumbers: z.boolean(),
+    copyToClipboard: z.boolean(),
+    headerText: z.string(),
+    instructionFilePath: z.string()
+  }),
+  include: z.array(z.string()),
+  ignore: z.object({
+    customPatterns: z.array(z.string()),
+    useDefaultPatterns: z.boolean(),
+    useGitignore: z.boolean(),
+    excludePatterns: z.array(z.string())
+  }),
+  security: z.object({
+    enableSecurityCheck: z.boolean()
+  }),
+  cwd: z.string().optional()
+});
+
+export async function loadFileConfig(
+  cwd: string,
+  configFile: string | null = null
+): Promise<Partial<Config>> {
   try {
-    return repofmConfigMergedSchema.parse(mergedConfig);
+    // Try local config first
+    const localConfigPath = configFile || path.join(cwd, 'repofm.config.json');
+    try {
+      await fs.stat(localConfigPath);
+      const configContent = await fs.readFile(localConfigPath, 'utf-8');
+      const parsedConfig = JSON.parse(configContent);
+      return configSchema.parse(parsedConfig);
+    } catch (error) {
+      // If local config not found or invalid, try global config
+      const globalDir = getGlobalDirectory();
+      const globalConfigPath = path.join(globalDir, 'repofm.config.json');
+      
+      try {
+        await fs.stat(globalConfigPath);
+        const configContent = await fs.readFile(globalConfigPath, 'utf-8');
+        const parsedConfig = JSON.parse(configContent);
+        return configSchema.parse(parsedConfig);
+      } catch (globalError) {
+        // No config found, return empty object
+        logger.info('No custom config found, using defaults');
+        return {};
+      }
+    }
   } catch (error) {
     if (error instanceof z.ZodError) {
-      const issues = error.issues.map(issue => 
-        `[${issue.path.join('.')}] ${issue.message}`
-      ).join('\n');
-      throw new repofmConfigValidationError(
-        `Invalid merged config:\n${issues}`
-      );
+      throw new repofmConfigValidationError('Invalid config file', error);
+    }
+    if (error instanceof SyntaxError) {
+      throw new repofmError('Invalid JSON in config file');
     }
     throw error;
   }
-};
-
-export interface LoadConfigOptions {
-  global?: boolean;
-  verbose?: boolean;
 }
 
-export async function loadConfig(configPath: string, options: LoadConfigOptions = {}) {
-  // Implementation here
-  const config = {
-    // Your config implementation
+export function mergeConfigs(
+  cwd: string,
+  fileConfig: Partial<Config> = {},
+  cliConfig: Partial<CliOptions> = {}
+): Config {
+  const defaultConfig = createDefaultConfig(cwd);
+  
+  return {
+    ...defaultConfig,
+    ...fileConfig,
+    cwd,
+    output: {
+      ...defaultConfig.output,
+      ...fileConfig.output,
+      ...(typeof cliConfig.output === 'string' ? { filePath: cliConfig.output } : {}),
+      copyToClipboard: cliConfig.copy ?? fileConfig.output?.copyToClipboard ?? defaultConfig.output.copyToClipboard
+    },
+    security: {
+      ...defaultConfig.security,
+      ...fileConfig.security,
+      enableSecurityCheck: cliConfig.security ?? fileConfig.security?.enableSecurityCheck ?? defaultConfig.security.enableSecurityCheck
+    }
   };
-  return config;
+}
+
+export async function loadConfig(
+  cwd: string,
+  options: { global?: boolean } = {}
+): Promise<Config> {
+  try {
+    const fileConfig = await loadFileConfig(cwd);
+    return mergeConfigs(cwd, fileConfig, options);
+  } catch (error) {
+    logger.error('Error loading config:', error);
+    return createDefaultConfig(cwd, options);
+  }
 }

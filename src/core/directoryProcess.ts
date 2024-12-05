@@ -1,14 +1,19 @@
 import { repofmConfigMerged } from '../config/configSchema.js';
 import { logger } from '../shared/logger.js';
-import { generateOutput } from './packager';
+import { generateOutput as packagerGenerateOutput } from './packager.js';
 
-export async function processDirectory(
+function processDirectory(
   targetDir: string,
   config: repofmConfigMerged
 ): Promise<string> {
   logger.debug(`Processing directory: ${targetDir}`);
 
-  const result = await generateOutput(targetDir, config);
+  const result = packagerGenerateOutput({ 
+    data: targetDir,
+    format: config.output.style === 'plain' || config.output.style === 'xml' ? 'text' : 'markdown'
+  });
 
-  return result.toString();
+  return Promise.resolve(result);
 }
+
+export { processDirectory };

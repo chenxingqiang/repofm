@@ -1,6 +1,6 @@
 import { PersistentCache } from '../types';
 
-export class FilePersistentCache<T> implements PersistentCache<T> {
+export class FilePersistentCache<T = any> implements PersistentCache<T> {
   private cache: Map<string, T>;
 
   constructor() {
@@ -11,15 +11,15 @@ export class FilePersistentCache<T> implements PersistentCache<T> {
     return this.cache.get(key);
   }
 
-  async set(key: string, value: T): Promise<void> {
+  set(key: string, value: T): void {
     this.cache.set(key, value);
   }
 
-  async delete(key: string): Promise<void> {
+  delete(key: string): void {
     this.cache.delete(key);
   }
 
-  async clear(): Promise<void> {
+  clear(): void {
     this.cache.clear();
   }
 }

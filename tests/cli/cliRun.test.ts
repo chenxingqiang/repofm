@@ -4,7 +4,7 @@ import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
 import { run } from '../../src/cli/cliRun';
 import { Command } from 'commander';
 
-// Create mock program
+// Create mock program outside describe block
 const mockProgram = {
   version: vi.fn().mockReturnThis(),
   description: vi.fn().mockReturnThis(),
@@ -17,28 +17,28 @@ const mockProgram = {
 
 // Mock commander
 vi.mock('commander', () => ({
-  Command: vi.fn(() => mockProgram)
+  Command: vi.fn().mockImplementation(() => mockProgram)
 }));
 
 describe('CLI', () => {
   const originalArgv = process.argv;
-
+  
   beforeEach(() => {
     vi.clearAllMocks();
-    // Mock process.argv
-    process.argv = ['node', 'repofm', '--init'];
   });
-
+  
   afterEach(() => {
     process.argv = originalArgv;
   });
 
   describe('Global Options', () => {
     test('should handle global init', async () => {
+      const args = ['node', 'repofm', '--init'];
+      process.argv = args;
+      
       await run();
-      // Update to match actual implementation
-      expect(mockProgram.action).toHaveBeenCalled();
-      expect(mockProgram.opts).toHaveBeenCalled();
+      
+      expect(mockProgram.parse).toHaveBeenCalledWith(args);
     });
   });
 });
