@@ -53,6 +53,7 @@ We appreciate your understanding and cooperation during this transition.
 - **Customizable**: Easily configure what to include or exclude.
 - **Git-Aware**: Automatically respects your .gitignore files.
 - **Security-Focused**: Incorporates [Secretlint](https://github.com/secretlint/secretlint) for robust security checks to detect and prevent inclusion of sensitive information.
+- **Autocommit**: Easily commit and push changes with flexible options
 
 ## 🚀 Quick Start
 
@@ -634,3 +635,23 @@ This project is licensed under the [MIT License](LICENSE).
    - `GITHUB_TOKEN`: Your GitHub Personal Access Token
    - `SUPABASE_URL`: Your Supabase URL
    - `SUPABASE_KEY`: Your Supabase Key
+
+## RepofM CLI
+
+## Features
+
+- File management
+- Version tracking
+- **Autocommit**: Easily commit and push changes with flexible options
+
+### Autocommit Usage
+
+```bash
+# Commit all changes
+repofm autocommit --all
+
+# Commit specific files
+repofm autocommit --pattern "*.ts" -m "Update TypeScript files"
+
+# Commit and push to a specific branch
+repofm autocommit --all --push --branch main
