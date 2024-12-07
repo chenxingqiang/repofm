@@ -6,7 +6,7 @@ const path = require('path');
 
 async function main() {
   try {
-    const cliPath = path.join(__dirname, '..', 'lib', 'cli.js');
+    const cliPath = path.join(__dirname, '..', 'dist', 'cli', 'cliRun.js');
     const module = await import(cliPath);
     const runFunction = module.run || module.default?.run || module.default;
     

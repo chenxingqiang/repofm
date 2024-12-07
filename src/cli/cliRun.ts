@@ -1,6 +1,7 @@
 import { Command } from 'commander';
 import { runDefaultAction } from './actions/defaultAction.js';
 import { runInitAction } from './actions/initAction.js';
+import { runAutocommitAction } from './actions/autocommitAction.js';
 import { logger } from '../shared/logger.js';
 import type { CliOptions, Config } from '../types/config.js';
 import { CLISpinner } from './cliSpinner.js';
@@ -8,7 +9,7 @@ import { createDefaultConfig } from '../config/configLoad.js';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { searchFiles } from '../core/fileSearch.js';
-import { PACKAGE_VERSION } from '../version';
+import { PACKAGE_VERSION } from '../version.js';
 
 // Default ignored directories for list command
 const DEFAULT_LIST_IGNORE = [
@@ -130,6 +131,33 @@ export async function run(): Promise<void> {
         }
       } catch (err) {
         console.error('Failed to clean:', err);
+      }
+    });
+
+  // Add autocommit command
+  program
+    .command('autocommit')
+    .description('Automatically commit changes in the repository')
+    .option('-m, --message <message>', 'Custom commit message')
+    .option('-p, --pattern <pattern>', 'Stage files matching the pattern')
+    .option('--push', 'Push changes to remote after commit')
+    .option('-a, --all', 'Stage all changes')
+    .option('--branch <branch>', 'Specify branch to push to')
+    .option('--remote <remote>', 'Specify remote repository')
+    .action(async (options) => {
+      try {
+        const cwd = process.cwd();
+        await runAutocommitAction(cwd, {
+          message: options.message,
+          pattern: options.pattern,
+          push: options.push,
+          branch: options.branch,
+          remote: options.remote,
+          all: options.all
+        });
+      } catch (error) {
+        logger.error('Autocommit failed:', error);
+        process.exit(1);
       }
     });
 

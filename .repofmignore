@@ -6,3 +6,4 @@ tests/integration-tests/fixtures
 *.log
 *.log
 *.log
+*.test.ts

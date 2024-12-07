@@ -6,11 +6,11 @@
     "repofm": "./bin/repofm.cjs"
   },
   "exports": {
-    ".": "./lib/index.js",
-    "./logger": "./lib/shared/logger.js",
-    "./utils/logger": "./lib/utils/logger.js"
+    ".": "./dist/index.js",
+    "./logger": "./dist/shared/logger.js",
+    "./utils/logger": "./dist/utils/logger.js"
   },
-  "types": "./lib/index.d.ts",
+  "types": "./dist/index.d.ts",
   "scripts": {
     "build": "tsc",
     "test": "vitest run",

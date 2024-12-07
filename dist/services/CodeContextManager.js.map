@@ -1,0 +1,1 @@
+{"version":3,"file":"CodeContextManager.js","sourceRoot":"","sources":["../../src/services/CodeContextManager.ts"],"names":[],"mappings":"AAAA,MAAM,OAAO,kBAAkB;IAC7B,YAAoB,OAAiC;QAAjC,YAAO,GAAP,OAAO,CAA0B;IAAG,CAAC;IAEzD,KAAK,CAAC,UAAU,CAAC,OAKhB;QACC,sBAAsB;QACtB,OAAO,eAAe,OAAO,CAAC,MAAM,EAAE,CAAC;IACzC,CAAC;CACF"}

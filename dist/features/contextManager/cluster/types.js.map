@@ -1,0 +1,1 @@
+{"version":3,"file":"types.js","sourceRoot":"","sources":["../../../../src/features/contextManager/cluster/types.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,YAAY,EAAE,MAAM,QAAQ,CAAC;AAEtC,MAAM,OAAO,cAAe,SAAQ,YAAY;IAC9C,YAAY,QAAiB;QAC3B,KAAK,EAAE,CAAC;IACV,CAAC;IAED,eAAe,CAAC,SAAiB,EAAE,IAAS;QAC1C,IAAI,CAAC,IAAI,CAAC,gBAAgB,EAAE,SAAS,EAAE,IAAI,CAAC,CAAC;IAC/C,CAAC;CACF"}
