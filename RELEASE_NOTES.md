@@ -1,13 +1,12 @@
-# Release v2.0.7 - Module Compatibility and Type System Enhancements
+# Release v2.1.0 - CLI Command Enhancements and Testing Improvements
 
 ## 🚀 Key Improvements
 
 ### 🔧 Technical Improvements
 
-- Resolved ES Module compatibility issues
-- Enhanced module resolution and import mechanisms
-- Improved TypeScript type definitions
-- Added explicit export paths for loggers
+- Enhanced test suite for CLI commands
+- Improved Commander mock implementation in tests
+- Fixed exclude command functionality and testing
 
 ### 🛠 Module System Enhancements
 
@@ -39,6 +38,8 @@
 - Resolved import path resolution issues
 - Fixed potential type mismatches
 - Enhanced error handling in module loading
+- Resolved issues with subcommand testing
+- Improved test coverage for CLI commands
 
 ### 📦 Dependency Management
 
@@ -69,7 +70,7 @@ Special thanks to all contributors and users providing feedback!
 ## Installation
 
 ```bash
-npm install repofm@2.0.7
+npm install repofm@2.1.0
 # or
-pnpm add repofm@2.0.7
+pnpm add repofm@2.1.0
 ```
