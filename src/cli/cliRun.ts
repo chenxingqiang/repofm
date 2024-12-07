@@ -8,6 +8,7 @@ import { createDefaultConfig } from '../config/configLoad.js';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { searchFiles } from '../core/fileSearch.js';
+import { PACKAGE_VERSION } from '../version';
 
 // Default ignored directories for list command
 const DEFAULT_LIST_IGNORE = [
@@ -23,7 +24,7 @@ const DEFAULT_LIST_IGNORE = [
 export async function run(): Promise<void> {
   const program = new Command();
 
-  program.version('2.0.9');
+  program.version(PACKAGE_VERSION);
 
   // Add list command
   program

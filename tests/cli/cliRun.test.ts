@@ -2,6 +2,7 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { run } from '../../src/cli/cliRun';
+import { PACKAGE_VERSION } from '../../src/version';
 import { logger } from '../../src/shared/logger';
 import { Command } from 'commander';
 
@@ -86,7 +87,7 @@ describe('CLI Run', () => {
   it('should set up CLI with version and commands', async () => {
     process.argv = ['node', 'cli.js'];
     await run();
-    expect(commandMock.version).toHaveBeenCalledWith('2.0.9');
+    expect(commandMock.version).toHaveBeenCalledWith(PACKAGE_VERSION);
     expect(commandMock.command).toHaveBeenCalled();
   });
 
