@@ -1,72 +1,75 @@
 import pc from 'picocolors';
 
+type LogLevel = 'error' | 'warn' | 'info' | 'debug';
+
 export class Logger {
   private static instance: Logger | null = null;
 
-  public static getInstance(): Logger {
+  static getInstance(): Logger {
     if (!Logger.instance) {
       Logger.instance = new Logger();
     }
     return Logger.instance;
   }
 
-  public static resetInstance(): void {
+  static resetInstance(): void {
     Logger.instance = null;
   }
 
-  private isVerbose = false;
+  private level: LogLevel = 'info';
 
-  setVerbose(verbose: boolean): void {
-    this.isVerbose = verbose;
+  setLevel(newLevel: LogLevel): void {
+    this.level = newLevel;
+  }
+
+  private shouldLog(currentLevel: LogLevel): boolean {
+    const levels: LogLevel[] = ['error', 'warn', 'info', 'debug'];
+    return levels.indexOf(currentLevel) <= levels.indexOf(this.level);
   }
 
   private formatArgs(args: any[]): string {
-    return args.map(arg => {
-      if (arg instanceof Error) return arg.message;
-      if (typeof arg === 'object' && arg !== null) return JSON.stringify(arg);
-      return String(arg);
-    }).join(' ');
+    return args.map(arg => 
+      typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
+    ).join(' ');
+  }
+
+  error(...args: any[]): void {
+    if (this.shouldLog('error')) {
+      console.error(pc.red('ERROR:'), this.formatArgs(args));
+    }
+  }
+
+  success(...args: any[]): void {
+    console.log(pc.green('SUCCESS:'), this.formatArgs(args));
+  }
+
+  warn(...args: any[]): void {
+    if (this.shouldLog('warn')) {
+      console.log(pc.yellow('WARN:'), this.formatArgs(args));
+    }
+  }
+
+  info(...args: any[]): void {
+    if (this.shouldLog('info')) {
+      console.log(pc.cyan('INFO:'), this.formatArgs(args));
+    }
+  }
+
+  debug(...args: any[]): void {
+    if (this.shouldLog('debug')) {
+      console.log(pc.gray('DEBUG:'), this.formatArgs(args));
+    }
   }
 
   log(...args: any[]): void {
     console.log(this.formatArgs(args));
   }
 
-  error(...args: any[]): void {
-    console.error(pc.red(this.formatArgs(args)));
-  }
-
-  success(...args: any[]): void {
-    console.log(pc.green(this.formatArgs(args)));
-  }
-
-  warn(...args: any[]): void {
-    console.log(pc.yellow(this.formatArgs(args)));
-  }
-
-  info(...args: any[]): void {
-    console.log(pc.cyan(this.formatArgs(args)));
-  }
-
-  debug(...args: any[]): void {
-    if (this.isVerbose) {
-      console.log(pc.blue(this.formatArgs(args)));
-    }
-  }
-
-  public dim(...args: any[]): void {
-    console.log(pc.dim(this.formatArgs(args)));
-  }
-
-  note(...args: any[]): void {
-    console.log(pc.gray(this.formatArgs(args)));
-  }
-
   trace(...args: any[]): void {
-    if (this.isVerbose) {
-      console.trace(pc.gray(this.formatArgs(args)));
+    if (this.shouldLog('debug')) {
+      console.trace(pc.gray('TRACE:'), this.formatArgs(args));
     }
   }
 }
 
-export const logger = new Logger();
+export const logger = Logger.getInstance();

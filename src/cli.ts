@@ -3,6 +3,8 @@
 import { run } from './cli/cliRun.js';
 import { argv, exit } from 'node:process';
 
+export { run };
+
 // Run the CLI
 run().catch(err => {
   console.error('Error:', err);

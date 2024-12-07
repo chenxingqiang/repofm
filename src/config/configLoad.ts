@@ -5,7 +5,6 @@ import { repofmError, repofmConfigValidationError } from '../shared/errorHandle.
 import { logger } from '../shared/logger.js';
 import type { Config, CliOptions } from '../types/config.js';
 import { getGlobalDirectory } from './globalDirectory.js';
-import { loadFileConfig } from './path/to/loadFileConfig';
 
 const defaultFilePathMap = {
   plain: 'output.txt',
@@ -40,30 +39,32 @@ export function createDefaultConfig(cwd: string, options: Partial<CliOptions & C
   };
 }
 
+const outputSchema = z.object({
+  filePath: z.string().optional(),
+  style: z.enum(['plain', 'xml', 'markdown']).optional(),
+  removeComments: z.boolean().optional(),
+  removeEmptyLines: z.boolean().optional(),
+  topFilesLength: z.number().optional(),
+  showLineNumbers: z.boolean().optional(),
+  copyToClipboard: z.boolean().optional(),
+  headerText: z.string().optional(),
+  instructionFilePath: z.string().optional()
+}).strict().optional();
+
 const configSchema = z.object({
-  output: z.object({
-    filePath: z.string(),
-    style: z.enum(['plain', 'xml', 'markdown']),
-    removeComments: z.boolean(),
-    removeEmptyLines: z.boolean(),
-    topFilesLength: z.number(),
-    showLineNumbers: z.boolean(),
-    copyToClipboard: z.boolean(),
-    headerText: z.string(),
-    instructionFilePath: z.string()
-  }),
-  include: z.array(z.string()),
+  output: outputSchema,
+  include: z.array(z.string()).optional(),
   ignore: z.object({
-    customPatterns: z.array(z.string()),
-    useDefaultPatterns: z.boolean(),
-    useGitignore: z.boolean(),
-    excludePatterns: z.array(z.string())
-  }),
+    customPatterns: z.array(z.string()).optional(),
+    useDefaultPatterns: z.boolean().optional(),
+    useGitignore: z.boolean().optional(),
+    excludePatterns: z.array(z.string()).optional()
+  }).strict().optional(),
   security: z.object({
-    enableSecurityCheck: z.boolean()
-  }),
+    enableSecurityCheck: z.boolean().optional()
+  }).strict().optional(),
   cwd: z.string().optional()
-});
+}).strict();
 
 export async function loadFileConfig(
   cwd: string,
@@ -72,12 +73,29 @@ export async function loadFileConfig(
   try {
     // Try local config first
     const localConfigPath = configFile || path.join(cwd, 'repofm.config.json');
+    
     try {
       await fs.stat(localConfigPath);
       const configContent = await fs.readFile(localConfigPath, 'utf-8');
-      const parsedConfig = JSON.parse(configContent);
-      return configSchema.parse(parsedConfig);
-    } catch (error) {
+      
+      // Explicitly parse JSON and validate
+      let parsedConfig;
+      try {
+        parsedConfig = JSON.parse(configContent);
+      } catch (error) {
+        // Malformed JSON
+        return {};
+      }
+      
+      // Validate config schema
+      try {
+        configSchema.parse(parsedConfig);
+        return parsedConfig;
+      } catch (validationError) {
+        // Invalid config structure
+        return {};
+      }
+    } catch (localError) {
       // If local config not found or invalid, try global config
       const globalDir = getGlobalDirectory();
       const globalConfigPath = path.join(globalDir, 'repofm.config.json');
@@ -86,7 +104,14 @@ export async function loadFileConfig(
         await fs.stat(globalConfigPath);
         const configContent = await fs.readFile(globalConfigPath, 'utf-8');
         const parsedConfig = JSON.parse(configContent);
-        return configSchema.parse(parsedConfig);
+        
+        try {
+          configSchema.parse(parsedConfig);
+          return parsedConfig;
+        } catch (validationError) {
+          // Invalid config structure
+          return {};
+        }
       } catch (globalError) {
         // No config found, return empty object
         logger.info('No custom config found, using defaults');
@@ -94,13 +119,9 @@ export async function loadFileConfig(
       }
     }
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      throw new repofmConfigValidationError('Invalid config file', error);
-    }
-    if (error instanceof SyntaxError) {
-      throw new repofmError('Invalid JSON in config file');
-    }
-    throw error;
+    // Catch any unexpected errors
+    logger.error('Unexpected error loading config:', error);
+    return {};
   }
 }
 
@@ -109,7 +130,17 @@ export function mergeConfigs(
   fileConfig: Partial<Config> = {},
   cliConfig: Partial<CliOptions> = {}
 ): Config {
+  // Validate configs before merging
   const defaultConfig = createDefaultConfig(cwd);
+  
+  // Validate file config if provided
+  if (Object.keys(fileConfig).length > 0) {
+    try {
+      configSchema.parse(fileConfig);
+    } catch (error) {
+      throw error;
+    }
+  }
   
   return {
     ...defaultConfig,
@@ -134,10 +165,30 @@ export async function loadConfig(
   options: { global?: boolean } = {}
 ): Promise<Config> {
   try {
-    const fileConfig = await loadFileConfig(cwd);
-    return mergeConfigs(cwd, fileConfig, options);
+    logger.debug(`Loading config - CWD: ${cwd}, Global: ${options.global}`);
+    
+    const globalConfigPath = path.join(await getGlobalDirectory(), 'repofm.config.json');
+    logger.debug(`Global config path: ${globalConfigPath}`);
+    
+    const localConfigPath = path.join(cwd, 'repofm.config.json');
+    logger.debug(`Local config path: ${localConfigPath}`);
+    
+    const fileConfig = await loadFileConfig(
+      cwd, 
+      options.global ? globalConfigPath : localConfigPath
+    );
+    
+    logger.debug('Loaded file config:', JSON.stringify(fileConfig, null, 2));
+    
+    const defaultConfig = createDefaultConfig(cwd);
+    
+    const mergedConfig = mergeConfigs(cwd, fileConfig);
+    
+    logger.debug('Merged config:', JSON.stringify(mergedConfig, null, 2));
+    
+    return mergedConfig;
   } catch (error) {
     logger.error('Error loading config:', error);
-    return createDefaultConfig(cwd, options);
+    throw error;
   }
 }

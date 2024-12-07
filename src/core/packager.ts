@@ -6,7 +6,7 @@ import type { ProcessedFile, FileInfo, SuspiciousFileResult } from './types.js';
 import { searchFiles } from './file/fileSearch.js';
 import { collectFiles } from './file/fileCollect.js';
 import { processFiles } from './file/fileProcess.js';
-import { OutputGenerator, OutputGeneratorOptions } from './outputGenerator';
+import { OutputGenerator, OutputGeneratorOptions } from './outputGenerator.js';
 import { runSecurityCheck } from './security/securityCheck.js';
 
 export interface GenerateOutputOptions extends OutputGeneratorOptions {

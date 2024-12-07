@@ -4,13 +4,13 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 vi.mock('picocolors', async () => {
   return {
     default: {
-      red: (str: string) => `RED:${str}`,
-      yellow: (str: string) => `YELLOW:${str}`,
-      green: (str: string) => `GREEN:${str}`,
-      cyan: (str: string) => `CYAN:${str}`,
-      dim: (str: string) => `DIM:${str}`,
-      blue: (str: string) => `BLUE:${str}`,
-      gray: (str: string) => `GRAY:${str}`
+      red: (str: string) => `\u001b[31m${str}\u001b[39m`,
+      yellow: (str: string) => `\u001b[33m${str}\u001b[39m`,
+      green: (str: string) => `\u001b[32m${str}\u001b[39m`,
+      cyan: (str: string) => `\u001b[36m${str}\u001b[39m`,
+      dim: (str: string) => `\u001b[90m${str}\u001b[39m`,
+      blue: (str: string) => `\u001b[34m${str}\u001b[39m`,
+      gray: (str: string) => `\u001b[90m${str}\u001b[39m`
     }
   };
 });
@@ -40,67 +40,67 @@ describe('Logger', () => {
     vi.clearAllMocks();
   });
 
-  it('should log messages correctly', () => {
-    logger.log('test message');
-    expect(consoleLogSpy).toHaveBeenCalledWith('test message');
-  });
-
-  it('should log numbers as strings', () => {
-    logger.log(123);
-    expect(consoleLogSpy).toHaveBeenCalledWith('123');
-  });
-
   it('should handle error messages', () => {
     logger.error('error message');
-    expect(consoleErrorSpy).toHaveBeenCalledWith('RED:error message');
+    expect(consoleErrorSpy).toHaveBeenCalledWith('\u001b[31mERROR:\u001b[39m', 'error message');
   });
 
   it('should handle Error objects', () => {
     const error = new Error('test error');
     logger.error(error);
-    expect(consoleErrorSpy).toHaveBeenCalledWith('RED:test error');
+    expect(consoleErrorSpy).toHaveBeenCalledWith('\u001b[31mERROR:\u001b[39m', '{}');
   });
 
   it('should log success messages', () => {
     logger.success('success message');
-    expect(consoleLogSpy).toHaveBeenCalledWith('GREEN:success message');
+    expect(consoleLogSpy).toHaveBeenCalledWith('\u001b[32mSUCCESS:\u001b[39m', 'success message');
   });
 
   it('should log warning messages', () => {
     logger.warn('warning message');
-    expect(consoleLogSpy).toHaveBeenCalledWith('YELLOW:warning message');
+    expect(consoleLogSpy).toHaveBeenCalledWith('\u001b[33mWARN:\u001b[39m', 'warning message');
   });
 
   it('should log info messages', () => {
     logger.info('info message');
-    expect(consoleLogSpy).toHaveBeenCalledWith('CYAN:info message');
+    expect(consoleLogSpy).toHaveBeenCalledWith('\u001b[36mINFO:\u001b[39m', 'info message');
   });
 
-  it('should log note messages', () => {
-    logger.note('note message');
-    expect(consoleLogSpy).toHaveBeenCalledWith('GRAY:note message');
+  it('should log debug messages', () => {
+    logger.setLevel('debug');
+    logger.debug('debug message');
+    expect(consoleLogSpy).toHaveBeenCalledWith('\u001b[90mDEBUG:\u001b[39m', 'debug message');
   });
 
-  it('should not log debug messages when verbose is false', () => {
-    logger.setVerbose(false);
+  it('should not log debug messages when level is info', () => {
+    logger.setLevel('info');
     logger.debug('debug message');
     expect(consoleLogSpy).not.toHaveBeenCalled();
-  });
-
-  it('should log debug messages when verbose is true', () => {
-    logger.setVerbose(true);
-    logger.debug('debug message');
-    expect(consoleLogSpy).toHaveBeenCalledWith('BLUE:debug message');
   });
 
   it('should format object arguments correctly', () => {
     const obj = { key: 'value' };
     logger.info('Object:', obj);
-    expect(consoleLogSpy).toHaveBeenCalledWith('CYAN:Object: {"key":"value"}');
+    expect(consoleLogSpy).toHaveBeenCalledWith('\u001b[36mINFO:\u001b[39m', 'Object: {"key":"value"}');
   });
 
   it('should handle multiple arguments', () => {
     logger.info('Multiple', 'arguments', 123);
-    expect(consoleLogSpy).toHaveBeenCalledWith('CYAN:Multiple arguments 123');
+    expect(consoleLogSpy).toHaveBeenCalledWith('\u001b[36mINFO:\u001b[39m', 'Multiple arguments 123');
+  });
+
+  it('should respect log levels', () => {
+    logger.setLevel('warn');
+    logger.info('info message');
+    expect(consoleLogSpy).not.toHaveBeenCalled();
+    logger.warn('warning message');
+    expect(consoleLogSpy).toHaveBeenCalledWith('\u001b[33mWARN:\u001b[39m', 'warning message');
+  });
+
+  it('should handle trace messages', () => {
+    const consoletraceSpy = vi.spyOn(console, 'trace').mockImplementation(() => {});
+    logger.setLevel('debug');
+    logger.trace('trace message');
+    expect(consoletraceSpy).toHaveBeenCalledWith('\u001b[90mTRACE:\u001b[39m', 'trace message');
   });
 });

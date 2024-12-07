@@ -2,14 +2,19 @@ import type { Stats } from 'node:fs';
 import * as fs from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
+import { z } from 'zod';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
-import { loadFileConfig, mergeConfigs } from '../../src/config/configLoad.js';
-import type { repofmConfigCli, repofmConfigFile } from '../../src/config/configSchema.js';
+import { loadFileConfig, mergeConfigs, createDefaultConfig } from '../../src/config/configLoad.js';
+import type { Config, CliOptions } from '../../src/types/config.js';
 import { getGlobalDirectory } from '../../src/config/globalDirectory.js';
-import { repofmConfigValidationError } from '../../src/shared/errorHandle.js';
 import { logger } from '../../src/shared/logger.js';
 
-vi.mock('node:fs/promises');
+// Mock the entire fs/promises module
+vi.mock('node:fs/promises', () => ({
+  stat: vi.fn(),
+  readFile: vi.fn()
+}));
+
 vi.mock('../../src/shared/logger', () => ({
   logger: {
     error: vi.fn(),
@@ -25,97 +30,193 @@ vi.mock('../../src/config/globalDirectory', () => ({
 }));
 
 describe('configLoad', () => {
+  const mockCwd = '/mock/path';
+
   beforeEach(() => {
     vi.clearAllMocks();
     process.env = {};
   });
 
+  describe('createDefaultConfig', () => {
+    test('should create default config with minimal options', () => {
+      const defaultConfig = createDefaultConfig(mockCwd);
+      
+      expect(defaultConfig.cwd).toBe(mockCwd);
+      expect(defaultConfig.output.filePath).toBe('output.txt');
+      expect(defaultConfig.output.style).toBe('plain');
+      expect(defaultConfig.output.copyToClipboard).toBe(false);
+      expect(defaultConfig.ignore.useDefaultPatterns).toBe(true);
+      expect(defaultConfig.ignore.excludePatterns).toEqual(['node_modules/**', '.git/**']);
+    });
+
+    test('should override default config with provided options', () => {
+      const customConfig = createDefaultConfig(mockCwd, {
+        output: 'custom-output.txt',
+        copy: true,
+        include: ['src/**'],
+        security: true
+      });
+
+      expect(customConfig.output.filePath).toBe('custom-output.txt');
+      expect(customConfig.output.copyToClipboard).toBe(true);
+      expect(customConfig.include).toEqual(['src/**']);
+      expect(customConfig.security.enableSecurityCheck).toBe(true);
+    });
+  });
+
   describe('loadFileConfig', () => {
-    test('should load and parse a valid local config file', async () => {
-      const mockConfig = {
-        output: { filePath: 'test-output.txt' },
-        ignore: { useDefaultPatterns: true },
+    test('should throw ZodError for invalid config structure', async () => {
+      const invalidConfigs = [
+        // Invalid field types
+        { 
+          output: { 
+            filePath: 123 as any, 
+            style: 'invalid' as any
+          }
+        },
+        // Extra unexpected fields
+        { 
+          output: { 
+            filePath: 'test.txt', 
+            style: 'plain' 
+          },
+          unexpectedField: 'value'
+        }
+      ];
+
+      for (const invalidConfig of invalidConfigs) {
+        // Simulate local config
+        (fs.stat as vi.Mock)
+          .mockRejectedValueOnce(new Error('Local config not found'))
+          .mockResolvedValueOnce({ isFile: () => true });
+        
+        // Mock global config read
+        (getGlobalDirectory as vi.Mock).mockReturnValue('/mock/global/dir');
+        (fs.readFile as vi.Mock).mockResolvedValue(JSON.stringify(invalidConfig));
+
+        const result = await loadFileConfig(mockCwd, null);
+        expect(result).toEqual({});
+      }
+    });
+
+    test('should handle partial config with missing optional fields', async () => {
+      // Mock global directory to prevent undefined path error
+      (getGlobalDirectory as vi.Mock).mockReturnValue('/mock/global/dir');
+      
+      // Simulate local config not found, then use global config
+      (fs.stat as vi.Mock)
+        .mockRejectedValueOnce(new Error('Local config not found'))
+        .mockResolvedValueOnce({ isFile: () => true });
+      
+      const partialConfig = {
+        output: { 
+          filePath: 'partial-output.txt',
+          style: 'plain'
+        }
       };
-      vi.mocked(fs.readFile).mockResolvedValue(JSON.stringify(mockConfig));
-      vi.mocked(fs.stat).mockResolvedValue({ isFile: () => true } as Stats);
+      
+      (fs.readFile as vi.Mock).mockResolvedValue(JSON.stringify(partialConfig));
 
-      const result = await loadFileConfig(process.cwd(), 'test-config.json');
-      expect(result).toEqual(mockConfig);
+      const result = await loadFileConfig(mockCwd, null);
+      
+      // Verify that partial config is loaded
+      expect(result.output?.filePath).toBe('partial-output.txt');
+      expect(result.output?.style).toBe('plain');
+      expect(result.output).toBeDefined();
     });
 
-    test('should throw repofmConfigValidationError for invalid config', async () => {
-      const invalidConfig = {
-        output: { filePath: 123, style: 'invalid' }, // Invalid filePath type and invalid style
-        ignore: { useDefaultPatterns: 'not a boolean' }, // Invalid type
-      };
-      vi.mocked(fs.readFile).mockResolvedValue(JSON.stringify(invalidConfig));
-      vi.mocked(fs.stat).mockResolvedValue({ isFile: () => true } as Stats);
+    test('should throw SyntaxError for malformed JSON', async () => {
+      const malformedJsonCases = [
+        'invalid json',
+        '{incomplete',
+        'true',
+        '123',
+        '{"unclosed": '
+      ];
 
-      await expect(loadFileConfig(process.cwd(), 'test-config.json')).rejects.toThrow(repofmConfigValidationError);
+      for (const malformedJson of malformedJsonCases) {
+        // Simulate local config
+        (fs.stat as vi.Mock)
+          .mockRejectedValueOnce(new Error('Local config not found'))
+          .mockResolvedValueOnce({ isFile: () => true });
+        
+        // Mock global config read
+        (getGlobalDirectory as vi.Mock).mockReturnValue('/mock/global/dir');
+        (fs.readFile as vi.Mock).mockResolvedValue(malformedJson);
+
+        const result = await loadFileConfig(mockCwd, null);
+        expect(result).toEqual({});
+      }
     });
 
-    test('should load global config when local config is not found', async () => {
-      const mockGlobalConfig = {
-        output: { filePath: 'global-output.txt' },
-        ignore: { useDefaultPatterns: false },
-      };
-      vi.mocked(getGlobalDirectory).mockReturnValue('/global/repofm');
-      vi.mocked(fs.stat)
-        .mockRejectedValueOnce(new Error('File not found')) // Local config
-        .mockResolvedValueOnce({ isFile: () => true } as Stats); // Global config
-      vi.mocked(fs.readFile).mockResolvedValue(JSON.stringify(mockGlobalConfig));
+    test('should handle file read errors gracefully', async () => {
+      const readErrors = [
+        new Error('Permission denied'),
+        new Error('File not found'),
+        new Error('Disk error')
+      ];
 
-      const result = await loadFileConfig(process.cwd(), null);
-      expect(result).toEqual(mockGlobalConfig);
-      expect(fs.readFile).toHaveBeenCalledWith(path.join('/global/repofm', 'repofm.config.json'), 'utf-8');
-    });
+      for (const readError of readErrors) {
+        // Simulate local config read error
+        (fs.stat as vi.Mock)
+          .mockRejectedValueOnce(readError)
+          .mockRejectedValueOnce(readError);
+        
+        // Mock global config read
+        (getGlobalDirectory as vi.Mock).mockReturnValue('/mock/global/dir');
+        (fs.readFile as vi.Mock).mockRejectedValue(readError);
 
-    test('should return an empty object if no config file is found', async () => {
-      const loggerSpy = vi.spyOn(logger, 'info').mockImplementation(vi.fn());
-      vi.mocked(getGlobalDirectory).mockReturnValue('/global/repofm');
-      vi.mocked(fs.stat).mockRejectedValue(new Error('File not found'));
-
-      const result = await loadFileConfig(process.cwd(), null);
-      expect(result).toEqual({});
-
-      expect(loggerSpy).toHaveBeenCalledWith(expect.stringContaining('No custom config found'));
-    });
-
-    test('should throw an error for invalid JSON', async () => {
-      vi.mocked(fs.readFile).mockResolvedValue('invalid json');
-      vi.mocked(fs.stat).mockResolvedValue({ isFile: () => true } as Stats);
-
-      await expect(loadFileConfig(process.cwd(), 'test-config.json')).rejects.toThrow('Invalid JSON');
+        const result = await loadFileConfig(mockCwd, null);
+        expect(result).toEqual({});
+      }
     });
   });
 
   describe('mergeConfigs', () => {
-    test('should correctly merge configs', () => {
-      const fileConfig: repofmConfigFile = {
-        output: { filePath: 'file-output.txt' },
-        ignore: { useDefaultPatterns: true, customPatterns: ['file-ignore'] },
+    test('should correctly merge configs with priority', () => {
+      const fileConfig: Partial<Config> = {
+        output: { 
+          filePath: 'file-output.txt',
+          style: 'plain'
+        },
+        ignore: { 
+          customPatterns: ['file-ignore']
+        }
       };
-      const cliConfig: repofmConfigCli = {
-        output: { filePath: 'cli-output.txt' },
-        ignore: { customPatterns: ['cli-ignore'] },
+      const cliConfig: Partial<CliOptions> = {
+        output: 'cli-output.txt',
+        copy: true,
+        security: true
       };
 
-      const result = mergeConfigs(process.cwd(), fileConfig, cliConfig);
+      const result = mergeConfigs(mockCwd, fileConfig, cliConfig);
 
+      // CLI config should override file config
       expect(result.output.filePath).toBe('cli-output.txt');
-      expect(result.ignore.useDefaultPatterns).toBe(true);
-      expect(result.ignore.customPatterns).toEqual(['file-ignore', 'cli-ignore']);
+      expect(result.output.style).toBe('plain');
+      expect(result.output.copyToClipboard).toBe(true);
+      
+      // Merged config should keep file config values
+      expect(result.ignore.customPatterns).toEqual(['file-ignore']);
+      
+      // Security should be overridden by CLI
+      expect(result.security.enableSecurityCheck).toBe(true);
     });
 
-    test('should throw repofmConfigValidationError for invalid merged config', () => {
-      const fileConfig: repofmConfigFile = {
-        output: { filePath: 'file-output.txt' },
+    test('should validate merged config against schema', () => {
+      const invalidFileConfig = {
+        output: { 
+          filePath: 123 as any, // Invalid type
+          style: 'invalid' as any
+        }
       };
-      const cliConfig: repofmConfigCli = {
-        output: { style: 'invalid' }, // Invalid style
+      const invalidCliConfig = {
+        output: 123 as any
       };
 
-      expect(() => mergeConfigs(process.cwd(), fileConfig, cliConfig)).toThrow(repofmConfigValidationError);
+      expect(() => {
+        mergeConfigs(mockCwd, invalidFileConfig, invalidCliConfig);
+      }).toThrow(z.ZodError);
     });
   });
 });

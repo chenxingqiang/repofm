@@ -7,8 +7,14 @@ const path = require('path');
 async function main() {
   try {
     const cliPath = path.join(__dirname, '..', 'lib', 'cli.js');
-    const { default: cli } = await import(cliPath);
-    await cli();
+    const module = await import(cliPath);
+    const runFunction = module.run || module.default?.run || module.default;
+    
+    if (typeof runFunction !== 'function') {
+      throw new Error('Unable to find run function in CLI module');
+    }
+    
+    await runFunction();
   } catch (error) {
     console.error("Error running CLI:", error);
     process.exit(1);

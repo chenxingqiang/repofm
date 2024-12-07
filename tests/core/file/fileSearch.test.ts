@@ -213,4 +213,109 @@ describe('fileSearch', () => {
       );
     });
   });
+
+  describe('advanced scenarios', () => {
+    test('handles symlinks correctly', async () => {
+      const mockFiles = ['real/file.txt', 'symlink/file.txt'];
+      vi.mocked(globby).mockResolvedValueOnce(mockFiles);
+
+      const config: Partial<SearchConfig> = {
+        followSymlinks: true
+      };
+      const result = await searchFiles('/test/dir', config);
+      expect(result).toEqual(mockFiles);
+      expect(globby).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          followSymbolicLinks: true
+        })
+      );
+    });
+
+    test('handles hidden files based on configuration', async () => {
+      const mockFiles = ['.hidden', 'visible.txt', '.config/settings.json'];
+      vi.mocked(globby).mockResolvedValueOnce(mockFiles);
+
+      const config: Partial<SearchConfig> = {
+        dot: true,
+        patterns: ['**/*']
+      };
+      const result = await searchFiles('/test/dir', config);
+      expect(result).toEqual(mockFiles);
+      expect(globby).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          dot: true
+        })
+      );
+    });
+
+    test('handles complex pattern matching', async () => {
+      const mockFiles = [
+        'src/components/Button.tsx',
+        'src/components/Input.tsx',
+        'src/utils/helpers.ts'
+      ];
+      vi.mocked(globby).mockResolvedValueOnce(mockFiles);
+
+      const config: Partial<SearchConfig> = {
+        patterns: ['src/**/*.{ts,tsx}'],
+        ignore: {
+          patterns: ['**/*.test.*']
+        }
+      };
+      const result = await searchFiles('/test/dir', config);
+      expect(result).toContain('src/components/Button.tsx');
+      expect(result).toEqual(mockFiles);
+    });
+
+    test('handles large number of files efficiently', async () => {
+      const mockFiles = Array.from({ length: 10000 }, (_, i) => `file${i}.txt`);
+      vi.mocked(globby).mockResolvedValueOnce(mockFiles);
+
+      const startTime = Date.now();
+      const result = await searchFiles('/test/dir');
+      const endTime = Date.now();
+
+      expect(result).toHaveLength(10000);
+      expect(endTime - startTime).toBeLessThan(1000); // Should complete within 1 second
+    });
+
+    test('handles deeply nested directories', async () => {
+      const mockFiles = [
+        'a/b/c/d/e/f/g/file1.txt'
+      ];
+      vi.mocked(globby).mockResolvedValueOnce(mockFiles);
+
+      const config: Partial<SearchConfig> = {
+        patterns: ['**/*.txt'],
+        ignore: {
+          patterns: ['**/h/**']
+        }
+      };
+      const result = await searchFiles('/test/dir', config);
+      expect(result).toContain('a/b/c/d/e/f/g/file1.txt');
+      expect(result).toHaveLength(1);
+    });
+  });
+
+  describe('error recovery', () => {
+    test('handles errors gracefully', async () => {
+      const mockError = new Error('EACCES: permission denied');
+      vi.mocked(globby).mockRejectedValueOnce(mockError);
+
+      await expect(searchFiles('/test/dir')).rejects.toThrow();
+      expect(logger.error).toHaveBeenCalled();
+    });
+
+    test('handles invalid pattern gracefully', async () => {
+      const config: Partial<SearchConfig> = {
+        patterns: ['[invalid pattern']
+      };
+      
+      vi.mocked(globby).mockRejectedValueOnce(new Error('Invalid pattern'));
+      await expect(searchFiles('/test/dir', config)).rejects.toThrow();
+      expect(logger.error).toHaveBeenCalled();
+    });
+  });
 });

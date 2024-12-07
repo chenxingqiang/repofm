@@ -6,11 +6,9 @@ import { promisify } from 'node:util';
 import pc from 'picocolors';
 import { repofmError } from '../../shared/errorHandle.js';
 import { logger } from '../../shared/logger.js';
-import type { CliOptions, Config } from '../../types/config.js';
-import { Spinner } from '../../cli/types/spinner.js';
+import type { CliOptions } from '../../types/config.js';
 import { createSpinner } from '../../cli/spinnerFactory.js';
 import { runDefaultAction } from './defaultAction.js';
-import { generateOutput } from '../../core/packager';
 
 const execAsync = promisify(exec);
 

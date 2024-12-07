@@ -2,3 +2,7 @@ node_modules
 .yarn
 .eslinttcache
 tests/integration-tests/fixtures
+
+*.log
+*.log
+*.log

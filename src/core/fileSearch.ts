@@ -2,7 +2,6 @@ import { minimatch } from 'minimatch';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import type { Config } from '../types/config.js';
-import type { FileSearchResult } from './types.js';
 
 export async function searchFiles(directory: string, config: Config): Promise<string[]> {
   const results: string[] = [];
