@@ -1,4 +1,4 @@
-import { minimatch } from 'minimatch';
+import { minimatch } from 'minimatch.js';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 export async function searchFiles(directory, config) {
@@ -32,4 +32,3 @@ export async function searchFiles(directory, config) {
     await walk(directory);
     return results;
 }
-//# sourceMappingURL=fileSearch.js.map

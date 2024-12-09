@@ -7,4 +7,3 @@ export function createSpinner() {
         fail: CLISpinner.fail.bind(CLISpinner),
     };
 }
-//# sourceMappingURL=spinnerFactory.js.map

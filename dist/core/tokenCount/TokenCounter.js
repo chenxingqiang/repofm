@@ -4,4 +4,3 @@ export class TokenCounter {
         return tokens.length;
     }
 }
-//# sourceMappingURL=TokenCounter.js.map

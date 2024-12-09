@@ -212,4 +212,3 @@ function getFileExtension(filePath) {
     const fileExtension = filePath.split('.').pop() || '';
     return LANGUAGE_MAP[fileExtension] || fileExtension;
 }
-//# sourceMappingURL=outputGenerate.js.map

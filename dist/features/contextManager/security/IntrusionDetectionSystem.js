@@ -10,4 +10,3 @@ export class IntrusionDetectionSystem {
         return suspiciousPatterns.some(pattern => requestStr.includes(pattern));
     }
 }
-//# sourceMappingURL=IntrusionDetectionSystem.js.map

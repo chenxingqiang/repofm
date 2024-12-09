@@ -1,4 +1,5 @@
-import { ContextConfig } from './types';
+import { ContextConfig } from './types.js';
+import path from 'path';
 import { minimatch } from 'minimatch';
 
 class CodeContextManager {

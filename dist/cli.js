@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { run } from './cli/cliRun.js';
-import { argv, exit } from 'node:process';
+import { argv, exit } from 'node:process.js';
 export { run };
 // Run the CLI
 run().catch(err => {
@@ -11,4 +11,3 @@ run().catch(err => {
 if (import.meta.url === `file://${argv[1]}`) {
     // empty block
 }
-//# sourceMappingURL=cli.js.map

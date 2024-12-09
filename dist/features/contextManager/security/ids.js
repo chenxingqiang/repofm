@@ -1,4 +1,4 @@
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'events.js';
 export class IntrusionDetectionSystem extends EventEmitter {
     constructor() {
         super();
@@ -48,4 +48,3 @@ export class IntrusionDetectionSystem extends EventEmitter {
         this.suspiciousActivities = this.suspiciousActivities.slice(-this.maxLogSize);
     }
 }
-//# sourceMappingURL=ids.js.map

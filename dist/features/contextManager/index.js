@@ -1,4 +1,4 @@
-import { minimatch } from 'minimatch';
+import { minimatch } from 'minimatch.js';
 class CodeContextManager {
     constructor(config) {
         this.contextStack = [];
@@ -74,4 +74,3 @@ class CodeContextManager {
 CodeContextManager.instance = null;
 export { CodeContextManager };
 export default CodeContextManager;
-//# sourceMappingURL=index.js.map

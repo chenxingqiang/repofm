@@ -10,4 +10,3 @@ export function formatFindResults(results, options) {
     // Plain format - just list the files
     return results.join('\n');
 }
-//# sourceMappingURL=formatOutput.js.map

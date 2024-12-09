@@ -1,5 +1,5 @@
 import path from 'node:path';
-import strip from 'strip-comments';
+import strip from 'strip-comments.js';
 const rtrimLines = (content) => content
     .split('\n')
     .map((line) => line.trimEnd())
@@ -173,4 +173,3 @@ export const getFileManipulator = (filePath) => {
     const ext = path.extname(filePath);
     return manipulators[ext] || null;
 };
-//# sourceMappingURL=fileManipulate.js.map

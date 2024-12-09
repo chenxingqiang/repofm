@@ -1,4 +1,4 @@
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'events.js';
 
 export class IntrusionDetectionSystem extends EventEmitter {
   private readonly patterns: Map<string, RegExp> = new Map();

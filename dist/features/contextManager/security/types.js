@@ -1,4 +1,4 @@
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'events.js';
 import { webcrypto } from 'node:crypto';
 export class EncryptionManager {
     constructor() {
@@ -52,4 +52,3 @@ export class IntrusionDetectionSystem {
         return suspiciousPatterns.some(pattern => requestStr.includes(pattern));
     }
 }
-//# sourceMappingURL=types.js.map

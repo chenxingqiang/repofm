@@ -1,10 +1,10 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { jest, beforeEach, describe, expect, test } from '@jest/globals';
 import { pack, generateOutput } from '../../src/core/packager.js';
 import { createTestConfig } from '../../src/test/helpers.js';
 
 describe('packager', () => {
   beforeEach(() => {
-    vi.resetAllMocks();
+    jest.resetAllMocks();
   });
 
   describe('Basic functionality', () => {
@@ -14,11 +14,11 @@ describe('packager', () => {
       ];
 
       const mockDeps = {
-        searchFiles: vi.fn().mockResolvedValue(['test.txt']),
-        collectFiles: vi.fn().mockResolvedValue(mockFiles),
-        processFiles: vi.fn().mockResolvedValue(mockFiles),
-        runSecurityCheck: vi.fn().mockResolvedValue(mockFiles),
-        generateOutput: vi.fn().mockReturnValue('output')
+        searchFiles: jest.fn().mockResolvedValue(['test.txt']),
+        collectFiles: jest.fn().mockResolvedValue(mockFiles),
+        processFiles: jest.fn().mockResolvedValue(mockFiles),
+        runSecurityCheck: jest.fn().mockResolvedValue(mockFiles),
+        generateOutput: jest.fn().mockReturnValue('output')
       };
 
       const config = createTestConfig({
@@ -64,14 +64,14 @@ describe('packager', () => {
     test('should propagate and log errors', async () => {
       const mockError = new Error('Test error');
       const mockDeps = {
-        searchFiles: vi.fn().mockRejectedValue(mockError),
-        collectFiles: vi.fn(),
-        processFiles: vi.fn(),
-        runSecurityCheck: vi.fn(),
-        generateOutput: vi.fn()
+        searchFiles: jest.fn().mockRejectedValue(mockError),
+        collectFiles: jest.fn(),
+        processFiles: jest.fn(),
+        runSecurityCheck: jest.fn(),
+        generateOutput: jest.fn()
       };
 
-      const consoleSpy = vi.spyOn(console, 'error');
+      const consoleSpy = jest.spyOn(console, 'error');
       
       await expect(pack('test-dir', createTestConfig(), mockDeps))
         .rejects.toThrow(mockError);
@@ -84,11 +84,11 @@ describe('packager', () => {
     test('should skip security check when disabled', async () => {
       const mockFiles = [{ path: 'test.txt', content: 'test', size: null }];
       const mockDeps = {
-        searchFiles: vi.fn().mockResolvedValue(['test.txt']),
-        collectFiles: vi.fn().mockResolvedValue(mockFiles),
-        processFiles: vi.fn().mockResolvedValue(mockFiles),
-        runSecurityCheck: vi.fn(),
-        generateOutput: vi.fn().mockReturnValue('output')
+        searchFiles: jest.fn().mockResolvedValue(['test.txt']),
+        collectFiles: jest.fn().mockResolvedValue(mockFiles),
+        processFiles: jest.fn().mockResolvedValue(mockFiles),
+        runSecurityCheck: jest.fn(),
+        generateOutput: jest.fn().mockReturnValue('output')
       };
 
       const config = createTestConfig({ security: { enableSecurityCheck: false } });

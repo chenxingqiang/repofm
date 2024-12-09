@@ -16,4 +16,3 @@ export async function runCLI() {
         process.exit(1);
     }
 }
-//# sourceMappingURL=index.js.map

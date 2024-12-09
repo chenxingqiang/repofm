@@ -2,14 +2,14 @@
 
 import { Stats } from 'node:fs';
 import * as fs from 'node:fs/promises';
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { jest, describe, expect, test, beforeEach } from '@jest/globals';
 import { checkFilePermissions } from '../../../src/core/file/permissionCheck.js';
 
-vi.mock('fs/promises');
+jest.mock('fs/promises');
 
 describe('checkFilePermissions', () => {
   beforeEach(() => {
-    vi.resetAllMocks();
+    jest.resetAllMocks();
   });
 
   test('should return true for readable files', async () => {
@@ -18,8 +18,8 @@ describe('checkFilePermissions', () => {
       isFile: () => true,
     };
 
-    vi.mocked(fs.stat).mockResolvedValue(mockStats as Stats);
-    vi.mocked(fs.access).mockResolvedValue(undefined);
+    jest.mocked(fs.stat).mockResolvedValue(mockStats as Stats);
+    jest.mocked(fs.access).mockResolvedValue(undefined);
 
     const result = await checkFilePermissions('test.txt');
     expect(result).toBe(true);
@@ -31,15 +31,15 @@ describe('checkFilePermissions', () => {
       isFile: () => true,
     };
 
-    vi.mocked(fs.stat).mockResolvedValue(mockStats as Stats);
-    vi.mocked(fs.access).mockRejectedValue(new Error('Permission denied'));
+    jest.mocked(fs.stat).mockResolvedValue(mockStats as Stats);
+    jest.mocked(fs.access).mockRejectedValue(new Error('Permission denied'));
 
     const result = await checkFilePermissions('test.txt');
     expect(result).toBe(false);
   });
 
   test('should return false for non-existent files', async () => {
-    vi.mocked(fs.stat).mockRejectedValue(new Error('ENOENT'));
+    jest.mocked(fs.stat).mockRejectedValue(new Error('ENOENT'));
 
     const result = await checkFilePermissions('nonexistent.txt');
     expect(result).toBe(false);
@@ -51,14 +51,14 @@ describe('checkFilePermissions', () => {
       isFile: () => false,
     };
 
-    vi.mocked(fs.stat).mockResolvedValue(mockStats as Stats);
+    jest.mocked(fs.stat).mockResolvedValue(mockStats as Stats);
 
     const result = await checkFilePermissions('testdir');
     expect(result).toBe(false);
   });
 
   test('should handle file system errors gracefully', async () => {
-    vi.mocked(fs.stat).mockRejectedValue(new Error('Unknown error'));
+    jest.mocked(fs.stat).mockRejectedValue(new Error('Unknown error'));
 
     const result = await checkFilePermissions('test.txt');
     expect(result).toBe(false);

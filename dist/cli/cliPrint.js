@@ -1,5 +1,5 @@
 import path from 'node:path';
-import pc from 'picocolors';
+import pc from 'picocolors.js';
 import { logger } from '../shared/logger.js';
 export const printSummary = (totalFiles, totalCharacters, totalTokens, outputPath, suspiciousFilesResults, config) => {
     let securityCheckMessage = '';
@@ -58,4 +58,3 @@ export const printCompletion = () => {
     logger.info(pc.green('🎉 All Done!'));
     logger.info(pc.white('Your repository has been successfully packed.'));
 };
-//# sourceMappingURL=cliPrint.js.map

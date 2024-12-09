@@ -2,10 +2,10 @@ export {
   generateOutput,
   processFiles,
   runSecurityCheck,
-} from './packager';
+} from './packager.js';
 
 // Re-export other core functionality as needed
-export * from './outputGenerator';
+export * from './outputGenerator.js';
 
 export * from './directoryProcess.js';
 export * from './file/filePathSort.js';

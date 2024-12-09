@@ -1,6 +1,6 @@
-import { CodeContextManager } from '../index';
-import { ContextConfig } from '../types';
-import { describe, it, expect, beforeEach } from 'vitest';
+import { CodeContextManager } from '../index.js';
+import { ContextConfig } from '../types.js';
+import { describe, it, expect, beforeEach } from '@jest/globals';
 
 describe('CodeContextManager', () => {
   const defaultConfig: ContextConfig = {

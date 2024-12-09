@@ -1,5 +1,5 @@
-export { generateOutput, processFiles, runSecurityCheck, } from './packager';
-export * from './outputGenerator';
+export { generateOutput, processFiles, runSecurityCheck, } from './packager.js';
+export * from './outputGenerator.js';
 export * from './directoryProcess.js';
 export * from './file/filePathSort.js';
 export * from './file/fileTreeGenerate.js';

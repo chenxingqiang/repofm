@@ -1,12 +1,12 @@
-import { describe, test, expect, vi, beforeEach } from 'vitest';
+import { jest, describe, test, expect, beforeEach } from '@jest/globals';
 import { runDefaultAction } from '../../../src/cli/actions/defaultAction.js';
 import * as packager from '../../../src/core/packager.js';
 import { loadConfig, createDefaultConfig } from '../../../src/config/configLoad.js';
 import { createTestConfig } from '../../../src/test/helpers.js';
 
 // Mock the packager module
-vi.mock('../../../src/core/packager.js', () => ({
-  pack: vi.fn().mockImplementation((cwd, config) => Promise.resolve({
+jest.mock('../../../src/core/packager.js', () => ({
+  pack: jest.fn().mockImplementation((cwd, config) => Promise.resolve({
     totalFiles: 5,
     fileCharCounts: { 'src/index.ts': 100, 'src/utils.ts': 200 },
     output: 'Mock output content'
@@ -14,9 +14,9 @@ vi.mock('../../../src/core/packager.js', () => ({
 }));
 
 // Mock the config module
-vi.mock('../../../src/config/configLoad.js', () => ({
-  loadConfig: vi.fn(),
-  createDefaultConfig: vi.fn().mockImplementation((cwd) => ({
+jest.mock('../../../src/config/configLoad.js', () => ({
+  loadConfig: jest.fn(),
+  createDefaultConfig: jest.fn().mockImplementation((cwd) => ({
     output: {
       filePath: 'output.txt',
       style: 'plain',
@@ -41,7 +41,7 @@ vi.mock('../../../src/config/configLoad.js', () => ({
 
 describe('Default Action', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    jest.clearAllMocks();
   });
 
   test('runs default action successfully', async () => {
@@ -68,7 +68,7 @@ describe('Default Action', () => {
       security: { enableSecurityCheck: true }
     });
 
-    vi.mocked(loadConfig).mockResolvedValue(mockLoadedConfig);
+    jest.mocked(loadConfig).mockResolvedValue(mockLoadedConfig);
 
     const result = await runDefaultAction(mockCwd, { copy: true, security: true });
 
@@ -115,8 +115,8 @@ describe('Default Action', () => {
       security: { enableSecurityCheck: false }
     });
 
-    vi.mocked(loadConfig).mockResolvedValue(mockLoadedConfig);
-    vi.mocked(packager.pack).mockResolvedValueOnce({
+    jest.mocked(loadConfig).mockResolvedValue(mockLoadedConfig);
+    jest.mocked(packager.pack).mockResolvedValueOnce({
       totalFiles: 0,
       fileCharCounts: {},
       output: ''

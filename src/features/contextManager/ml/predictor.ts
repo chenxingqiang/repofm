@@ -1,4 +1,4 @@
-import { ContextConfig } from '../types';
+import { ContextConfig } from '../types.js';
 
 interface UsagePattern {
   contextId: string;

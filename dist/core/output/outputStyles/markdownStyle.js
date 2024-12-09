@@ -1,4 +1,4 @@
-import Handlebars from 'handlebars';
+import Handlebars from 'handlebars.js';
 Handlebars.registerHelper('getFileExtension', (filePath) => {
     const extension = filePath.split('.').pop()?.toLowerCase();
     switch (extension) {
@@ -191,4 +191,3 @@ function formatTreeStructure(files) {
     }
     return renderTree(tree);
 }
-//# sourceMappingURL=markdownStyle.js.map

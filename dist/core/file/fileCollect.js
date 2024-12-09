@@ -1,5 +1,5 @@
 import { logger } from '../../shared/logger.js';
-import * as fs from 'fs/promises';
+import * as fs from 'fs/promises.js';
 export async function collectFiles(filePaths, options = {}) {
     const results = [];
     for (const filePath of filePaths) {
@@ -35,4 +35,3 @@ function isBinaryContent(buffer) {
     }
     return false;
 }
-//# sourceMappingURL=fileCollect.js.map

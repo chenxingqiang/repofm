@@ -3,8 +3,8 @@ import path from 'node:path';
 import type { Config } from '../../types/config.js';
 import type { CodeContext } from '../../types/context.js';
 import { extractContext } from '../../core/contextExtractor.js';
-import type { ICodeContextManager } from './types';
-import { PerformanceMetrics } from './types';
+import type { ICodeContextManager } from './types.js';
+import { PerformanceMetrics } from './types.js';
 
 export async function extractCodeContext(
   target: string, 

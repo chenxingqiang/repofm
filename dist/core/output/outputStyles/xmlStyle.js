@@ -70,4 +70,3 @@ export const getXmlTemplate = () => {
 </repository>
 `;
 };
-//# sourceMappingURL=xmlStyle.js.map

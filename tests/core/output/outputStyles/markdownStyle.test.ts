@@ -1,14 +1,14 @@
 import process from 'node:process';
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { jest, describe, expect, test, beforeEach } from '@jest/globals';
 import { generateOutput } from '../../../../src/core/output/outputGenerate.js';
 import { createMockConfig } from '../../../testing/testUtils.js';
 import type { FileInfo } from '../../../../src/core/types.js';
 
-vi.mock('fs/promises');
+jest.mock('fs/promises');
 
 describe('markdownStyle', () => {
   beforeEach(() => {
-    vi.resetAllMocks();
+    jest.resetAllMocks();
   });
 
   describe('Basic functionality', () => {
@@ -23,6 +23,7 @@ describe('markdownStyle', () => {
           removeComments: false,
           removeEmptyLines: false,
           copyToClipboard: false,
+          instructionFilePath: '',
         },
       }, {});
 
@@ -59,6 +60,7 @@ describe('markdownStyle', () => {
           removeComments: false,
           removeEmptyLines: false,
           copyToClipboard: false,
+          instructionFilePath: '',
         },
       }, {});
 
@@ -81,6 +83,7 @@ describe('markdownStyle', () => {
           removeComments: false,
           removeEmptyLines: false,
           copyToClipboard: false,
+          instructionFilePath: '',
         },
       }, {});
 
@@ -109,6 +112,7 @@ describe('markdownStyle', () => {
           removeComments: false,
           removeEmptyLines: false,
           copyToClipboard: false,
+          instructionFilePath: '',
         },
       }, {});
 
@@ -137,6 +141,7 @@ describe('markdownStyle', () => {
           removeComments: false,
           removeEmptyLines: false,
           copyToClipboard: false,
+          instructionFilePath: '',
         },
       }, {});
 
@@ -168,6 +173,7 @@ describe('markdownStyle', () => {
           removeComments: false,
           removeEmptyLines: false,
           copyToClipboard: false,
+          instructionFilePath: '',
         },
       }, {});
 
@@ -191,6 +197,7 @@ describe('markdownStyle', () => {
           removeComments: false,
           removeEmptyLines: false,
           copyToClipboard: false,
+          instructionFilePath: '',
         },
       }, {});
 
@@ -218,6 +225,7 @@ describe('markdownStyle', () => {
           removeComments: false,
           removeEmptyLines: false,
           copyToClipboard: false,
+          instructionFilePath: '',
         },
       }, {});
 

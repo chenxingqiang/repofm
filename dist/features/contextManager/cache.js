@@ -1,4 +1,4 @@
-import { LRUCache } from 'lru-cache';
+import { LRUCache } from 'lru-cache.js';
 export class Cache {
     constructor() {
         this.memoryCache = new LRUCache({
@@ -7,4 +7,3 @@ export class Cache {
         });
     }
 }
-//# sourceMappingURL=cache.js.map

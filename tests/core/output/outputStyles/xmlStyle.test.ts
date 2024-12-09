@@ -1,38 +1,38 @@
-import process from 'node:process';
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { jest, describe, expect, test, beforeEach } from '@jest/globals';
 import { generateOutput } from '../../../../src/core/output/outputGenerate.js';
 import { createMockConfig } from '../../../testing/testUtils.js';
 import type { FileInfo } from '../../../../src/core/types.js';
+import { OutputConfig } from '../../../../src/types/config.js';
 
-vi.mock('fs/promises');
+jest.mock('fs/promises');
 
 describe('xmlStyle', () => {
   beforeEach(() => {
-    vi.resetAllMocks();
+    jest.resetAllMocks();
   });
 
   describe('Basic functionality', () => {
-    test('should generate valid XML output with basic configuration', async () => {
-      const mockConfig = createMockConfig({
-        output: {
-          filePath: 'output.xml',
-          style: 'xml',
-          headerText: 'Basic XML test',
-          topFilesLength: 2,
-          showLineNumbers: false,
-          removeComments: false,
-          removeEmptyLines: false,
-        },
-      }, {});
+    it('should generate valid XML output with basic configuration', async () => {
+      const mockConfig: OutputConfig = {
+        filePath: 'output.xml',
+        style: 'xml',
+        headerText: 'Basic XML test',
+        topFilesLength: 2,
+        showLineNumbers: false,
+        removeComments: false,
+        removeEmptyLines: false,
+        copyToClipboard: false,
+        instructionFilePath: '',
+      };
 
       const files: FileInfo[] = [
         {
-            path: 'file1.txt', content: 'Content 1',
-            size: 10
+          path: 'file1.txt', content: 'Content 1',
+          size: 10
         },
         {
-            path: 'file2.txt', content: 'Content 2',
-            size: 20
+          path: 'file2.txt', content: 'Content 2',
+          size: 20
         },
       ];
 
@@ -49,19 +49,19 @@ describe('xmlStyle', () => {
       expect(output).toContain('</file_summary>');
     });
 
-    test('should include user-provided header text', async () => {
+    it('should include user-provided header text', async () => {
       const headerText = 'Custom XML header text';
-      const mockConfig = createMockConfig({
-        output: {
-          filePath: 'output.xml',
-          style: 'xml',
-          headerText,
-          topFilesLength: 2,
-          showLineNumbers: false,
-          removeComments: false,
-          removeEmptyLines: false,
-        },
-      }, {});
+      const mockConfig: OutputConfig = {
+        filePath: 'output.xml',
+        style: 'xml',
+        headerText,
+        topFilesLength: 2,
+        showLineNumbers: false,
+        removeComments: false,
+        removeEmptyLines: false,
+        copyToClipboard: false,
+        instructionFilePath: '',
+      };
 
       const output = await generateOutput(process.cwd(), mockConfig, [], []);
 
@@ -70,23 +70,23 @@ describe('xmlStyle', () => {
   });
 
   describe('Content formatting', () => {
-    test('should properly escape special XML characters', async () => {
-      const mockConfig = createMockConfig({
-        output: {
-          filePath: 'output.xml',
-          style: 'xml',
-          headerText: 'XML escaping test',
-          topFilesLength: 2,
-          showLineNumbers: false,
-          removeComments: false,
-          removeEmptyLines: false,
-        },
-      }, {});
+    it('should properly escape special XML characters', async () => {
+      const mockConfig: OutputConfig = {
+        filePath: 'output.xml',
+        style: 'xml',
+        headerText: 'XML escaping test',
+        topFilesLength: 2,
+        showLineNumbers: false,
+        removeComments: false,
+        removeEmptyLines: false,
+        copyToClipboard: false,
+        instructionFilePath: '',
+      };
 
       const files: FileInfo[] = [
         {
-            path: 'special.txt', content: '< > & " \'',
-            size: 15
+          path: 'special.txt', content: '< > & " \'',
+          size: 15
         },
       ];
 
@@ -96,23 +96,23 @@ describe('xmlStyle', () => {
       expect(output).not.toContain('< > & "');
     });
 
-    test('should handle line numbers when enabled', async () => {
-      const mockConfig = createMockConfig({
-        output: {
-          filePath: 'output.xml',
-          style: 'xml',
-          headerText: 'Line numbers test',
-          topFilesLength: 2,
-          showLineNumbers: true,
-          removeComments: false,
-          removeEmptyLines: false,
-        },
-      }, {});
+    it('should handle line numbers when enabled', async () => {
+      const mockConfig: OutputConfig = {
+        filePath: 'output.xml',
+        style: 'xml',
+        headerText: 'Line numbers test',
+        topFilesLength: 2,
+        showLineNumbers: true,
+        removeComments: false,
+        removeEmptyLines: false,
+        copyToClipboard: false,
+        instructionFilePath: '',
+      };
 
       const files: FileInfo[] = [
         {
-            path: 'multiline.txt', content: 'Line 1\nLine 2\nLine 3',
-            size: 25
+          path: 'multiline.txt', content: 'Line 1\nLine 2\nLine 3',
+          size: 25
         },
       ];
 
@@ -123,24 +123,24 @@ describe('xmlStyle', () => {
       expect(output).toContain('<line number="3">Line 3</line>');
     });
 
-    test('should remove comments when configured', async () => {
-      const mockConfig = createMockConfig({
-        output: {
-          filePath: 'output.xml',
-          style: 'xml',
-          headerText: 'Remove comments test',
-          topFilesLength: 2,
-          showLineNumbers: false,
-          removeComments: true,
-          removeEmptyLines: false,
-        },
-      }, {});
+    it('should remove comments when configured', async () => {
+      const mockConfig: OutputConfig = {
+        filePath: 'output.xml',
+        style: 'xml',
+        headerText: 'Remove comments test',
+        topFilesLength: 2,
+        showLineNumbers: false,
+        removeComments: true,
+        removeEmptyLines: false,
+        copyToClipboard: false,
+        instructionFilePath: '',
+      };
 
       const files: FileInfo[] = [
         {
-            path: 'code.js',
-            content: '// Comment\ncode();\n/* Block comment */\nmore code();',
-            size: 50
+          path: 'code.js',
+          content: '// Comment\ncode();\n/* Block comment */\nmore code();',
+          size: 50
         },
       ];
 
@@ -151,24 +151,24 @@ describe('xmlStyle', () => {
       expect(output).toContain('<content>code();\nmore code();</content>');
     });
 
-    test('should remove empty lines when configured', async () => {
-      const mockConfig = createMockConfig({
-        output: {
-          filePath: 'output.xml',
-          style: 'xml',
-          headerText: 'Remove empty lines test',
-          topFilesLength: 2,
-          showLineNumbers: false,
-          removeComments: false,
-          removeEmptyLines: true,
-        },
-      }, {});
+    it('should remove empty lines when configured', async () => {
+      const mockConfig: OutputConfig = {
+        filePath: 'output.xml',
+        style: 'xml',
+        headerText: 'Remove empty lines test',
+        topFilesLength: 2,
+        showLineNumbers: false,
+        removeComments: false,
+        removeEmptyLines: true,
+        copyToClipboard: false,
+        instructionFilePath: '',
+      };
 
       const files: FileInfo[] = [
         {
-            path: 'text.txt',
-            content: 'Line 1\n\n\nLine 2\n\nLine 3',
-            size: 30
+          path: 'text.txt',
+          content: 'Line 1\n\n\nLine 2\n\nLine 3',
+          size: 30
         },
       ];
 
@@ -176,21 +176,21 @@ describe('xmlStyle', () => {
 
       expect(output).toContain('<content>Line 1\nLine 2\nLine 3</content>');
     });
-  }, {});
+  });
 
   describe('Edge cases', () => {
-    test('should handle empty file list', async () => {
-      const mockConfig = createMockConfig({
-        output: {
-          filePath: 'output.xml',
-          style: 'xml',
-          headerText: 'Empty test',
-          topFilesLength: 2,
-          showLineNumbers: false,
-          removeComments: false,
-          removeEmptyLines: false,
-        },
-      }, {});
+    it('should handle empty file list', async () => {
+      const mockConfig: OutputConfig = {
+        filePath: 'output.xml',
+        style: 'xml',
+        headerText: 'Empty test',
+        topFilesLength: 2,
+        showLineNumbers: false,
+        removeComments: false,
+        removeEmptyLines: false,
+        copyToClipboard: false,
+        instructionFilePath: '',
+      };
 
       const output = await generateOutput(process.cwd(), mockConfig, [], []);
 
@@ -199,23 +199,23 @@ describe('xmlStyle', () => {
       expect(output).toContain('<files_processed>0</files_processed>');
     });
 
-    test('should handle files with special characters in paths', async () => {
-      const mockConfig = createMockConfig({
-        output: {
-          filePath: 'output.xml',
-          style: 'xml',
-          headerText: 'Special paths test',
-          topFilesLength: 2,
-          showLineNumbers: false,
-          removeComments: false,
-          removeEmptyLines: false,
-        },
-      }, {});
+    it('should handle files with special characters in paths', async () => {
+      const mockConfig: OutputConfig = {
+        filePath: 'output.xml',
+        style: 'xml',
+        headerText: 'Special paths test',
+        topFilesLength: 2,
+        showLineNumbers: false,
+        removeComments: false,
+        removeEmptyLines: false,
+        copyToClipboard: false,
+        instructionFilePath: '',
+      };
 
       const files: FileInfo[] = [
         {
-            path: 'path/with spaces & symbols.txt', content: 'Content',
-            size: 20
+          path: 'path/with spaces & symbols.txt', content: 'Content',
+          size: 20
         },
       ];
 
@@ -225,24 +225,24 @@ describe('xmlStyle', () => {
       expect(output).toContain('<content>Content</content>');
     });
 
-    test('should handle very large files', async () => {
-      const mockConfig = createMockConfig({
-        output: {
-          filePath: 'output.xml',
-          style: 'xml',
-          headerText: 'Large file test',
-          topFilesLength: 2,
-          showLineNumbers: false,
-          removeComments: false,
-          removeEmptyLines: false,
-        },
-      }, {});
+    it('should handle very large files', async () => {
+      const mockConfig: OutputConfig = {
+        filePath: 'output.xml',
+        style: 'xml',
+        headerText: 'Large file test',
+        topFilesLength: 2,
+        showLineNumbers: false,
+        removeComments: false,
+        removeEmptyLines: false,
+        copyToClipboard: false,
+        instructionFilePath: '',
+      };
 
       const largeContent = 'a'.repeat(100000);
       const files: FileInfo[] = [
         {
-            path: 'large.txt', content: largeContent,
-            size: 100000
+          path: 'large.txt', content: largeContent,
+          size: 100000
         },
       ];
 
@@ -253,35 +253,35 @@ describe('xmlStyle', () => {
       expect(output.length).toBeGreaterThan(100000);
     });
 
-    test('should respect topFilesLength configuration', async () => {
-      const mockConfig = createMockConfig({
-        output: {
-          filePath: 'output.xml',
-          style: 'xml',
-          headerText: 'Top files test',
-          topFilesLength: 2,
-          showLineNumbers: false,
-          removeComments: false,
-          removeEmptyLines: false,
-        },
-      }, {});
+    it('should respect topFilesLength configuration', async () => {
+      const mockConfig: OutputConfig = {
+        filePath: 'output.xml',
+        style: 'xml',
+        headerText: 'Top files test',
+        topFilesLength: 2,
+        showLineNumbers: false,
+        removeComments: false,
+        removeEmptyLines: false,
+        copyToClipboard: false,
+        instructionFilePath: '',
+      };
 
       const files: FileInfo[] = [
         {
-            path: 'file1.txt', content: 'Content 1',
-            size: 10
+          path: 'file1.txt', content: 'Content 1',
+          size: 10
         },
         {
-            path: 'file2.txt', content: 'Content 2',
-            size: 20
+          path: 'file2.txt', content: 'Content 2',
+          size: 20
         },
         {
-            path: 'file3.txt', content: 'Content 3',
-            size: 30
+          path: 'file3.txt', content: 'Content 3',
+          size: 30
         },
         {
-            path: 'file4.txt', content: 'Content 4',
-            size: 40
+          path: 'file4.txt', content: 'Content 4',
+          size: 40
         },
       ];
 

@@ -1,5 +1,5 @@
-import * as dotenv from 'dotenv';
-import { z } from 'zod';
+import * as dotenv from 'dotenv.js';
+import { z } from 'zod.js';
 // Load environment variables
 dotenv.config();
 const configSchema = z.object({
@@ -28,4 +28,3 @@ export function loadConfig() {
     // Validate config
     return configSchema.parse(fullConfig);
 }
-//# sourceMappingURL=loadConfig.js.map

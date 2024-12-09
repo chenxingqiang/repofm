@@ -2,6 +2,7 @@ import { exec } from 'node:child_process';
 import path from 'node:path';
 import { promisify } from 'node:util';
 import { logger } from '../shared/logger.js';
+import { minimatch } from 'minimatch.js';
 const execAsync = promisify(exec);
 export class GitService {
     constructor(cwd) {
@@ -29,8 +30,71 @@ export class GitService {
     async stageAll() {
         await this.execGit('add -A');
     }
-    async stageFiles(pattern) {
-        await this.execGit(`add ${pattern}`);
+    /**
+     * Advanced file staging with comprehensive pattern matching
+     * @param includePatterns Glob patterns to include
+     * @param excludePatterns Glob patterns to exclude
+     * @param options Additional options for fine-tuned matching
+     */
+    async stageFiles(includePatterns, excludePatterns = [], options = {}) {
+        // Normalize options
+        const { ignoreCase = true, dot = false, debug = false } = options;
+        try {
+            // Get all tracked and untracked files
+            const { stdout: allFilesOutput } = await this.execGit('ls-files --modified --others --exclude-standard');
+            // Split and clean file list
+            const allFiles = allFilesOutput.trim().split('\n').filter(Boolean);
+            // Filter files based on include and exclude patterns
+            const matchedFiles = allFiles.filter(file => {
+                // Normalize file path to be relative to project root
+                const relativePath = path.relative(this.cwd, path.resolve(this.cwd, file));
+                // Check include patterns
+                const matchesInclude = includePatterns.length === 0 ||
+                    includePatterns.some(pattern => minimatch(relativePath, pattern, {
+                        matchBase: true,
+                        nocase: ignoreCase,
+                        dot
+                    }));
+                // Check exclude patterns
+                const matchesExclude = excludePatterns.some(pattern => minimatch(relativePath, pattern, {
+                    matchBase: true,
+                    nocase: ignoreCase,
+                    dot
+                }));
+                // Debug logging if enabled
+                if (debug) {
+                    console.log(`File: ${file}`);
+                    console.log(`Relative Path: ${relativePath}`);
+                    console.log(`Matches Include: ${matchesInclude}`);
+                    console.log(`Matches Exclude: ${matchesExclude}`);
+                    console.log('---');
+                }
+                // Final file selection logic
+                return matchesInclude && !matchesExclude;
+            });
+            // Log matched files if in debug mode
+            if (debug) {
+                console.log('Matched Files:', matchedFiles);
+            }
+            // Stage matched files
+            if (matchedFiles.length > 0) {
+                const stagedFiles = matchedFiles.map(f => `"${f}"`).join(' ');
+                await this.execGit(`add ${stagedFiles}`);
+                // Optional: Log staged files
+                if (debug) {
+                    console.log('Staged Files:', matchedFiles);
+                }
+            }
+            else {
+                // Provide informative message when no files match
+                console.log('No files matched the specified patterns.');
+            }
+        }
+        catch (error) {
+            // Enhanced error handling
+            console.error('Error in advanced file staging:', error);
+            throw new Error(`Failed to stage files: ${error instanceof Error ? error.message : String(error)}`);
+        }
     }
     async getStagedFiles() {
         const { stdout } = await this.execGit('diff --name-only --cached');
@@ -102,4 +166,3 @@ export class GitService {
         }
     }
 }
-//# sourceMappingURL=GitService.js.map

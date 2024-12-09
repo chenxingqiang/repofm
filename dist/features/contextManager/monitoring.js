@@ -1,4 +1,4 @@
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'events.js';
 export class MonitoringSystem extends EventEmitter {
     constructor() {
         super();
@@ -111,4 +111,3 @@ export class MonitoringSystem extends EventEmitter {
         this.services.set(service, isHealthy);
     }
 }
-//# sourceMappingURL=monitoring.js.map

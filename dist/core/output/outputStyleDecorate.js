@@ -47,4 +47,3 @@ export const generateSummaryAdditionalInfo = () => {
 For more information about repofm, visit: https://github.com/chenxingqiang/repofm
 `.trim();
 };
-//# sourceMappingURL=outputStyleDecorate.js.map

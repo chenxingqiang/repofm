@@ -1,4 +1,4 @@
-import { sep } from 'path';
+import { sep } from 'path.js';
 const specialRootOrder = ['package.json', 'root.txt'];
 function createNode(name, isDirectory = false, isRoot = false) {
     return {
@@ -119,4 +119,3 @@ export function generateTreeString(files) {
 export function generateFileTree(files) {
     return buildTree(files);
 }
-//# sourceMappingURL=fileTreeGenerate.js.map

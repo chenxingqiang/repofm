@@ -3,37 +3,21 @@ import * as fs from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
 import { z } from 'zod';
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { jest, describe, expect, test, beforeEach } from '@jest/globals';
 import { loadFileConfig, mergeConfigs, createDefaultConfig } from '../../src/config/configLoad.js';
 import type { Config, CliOptions } from '../../src/types/config.js';
 import { getGlobalDirectory } from '../../src/config/globalDirectory.js';
 import { logger } from '../../src/shared/logger.js';
 
-// Mock the entire fs/promises module
-vi.mock('node:fs/promises', () => ({
-  stat: vi.fn(),
-  readFile: vi.fn()
-}));
-
-vi.mock('../../src/shared/logger', () => ({
-  logger: {
-    error: vi.fn(),
-    warn: vi.fn(),
-    info: vi.fn(),
-    debug: vi.fn(),
-    trace: vi.fn(),
-    log: vi.fn()
-  }
-}));
-vi.mock('../../src/config/globalDirectory', () => ({
-  getGlobalDirectory: vi.fn(),
-}));
+jest.mock('node:fs/promises');
+jest.mock('../../src/config/globalDirectory.js');
+jest.mock('../../src/shared/logger.js');
 
 describe('configLoad', () => {
   const mockCwd = '/mock/path';
 
   beforeEach(() => {
-    vi.clearAllMocks();
+    jest.clearAllMocks();
     process.env = {};
   });
 
@@ -86,13 +70,13 @@ describe('configLoad', () => {
 
       for (const invalidConfig of invalidConfigs) {
         // Simulate local config
-        (fs.stat as vi.Mock)
+        (fs.stat as jest.Mock)
           .mockRejectedValueOnce(new Error('Local config not found'))
           .mockResolvedValueOnce({ isFile: () => true });
         
         // Mock global config read
-        (getGlobalDirectory as vi.Mock).mockReturnValue('/mock/global/dir');
-        (fs.readFile as vi.Mock).mockResolvedValue(JSON.stringify(invalidConfig));
+        (getGlobalDirectory as jest.Mock).mockReturnValue('/mock/global/dir');
+        (fs.readFile as jest.Mock).mockResolvedValue(JSON.stringify(invalidConfig));
 
         const result = await loadFileConfig(mockCwd, null);
         expect(result).toEqual({});
@@ -101,10 +85,10 @@ describe('configLoad', () => {
 
     test('should handle partial config with missing optional fields', async () => {
       // Mock global directory to prevent undefined path error
-      (getGlobalDirectory as vi.Mock).mockReturnValue('/mock/global/dir');
+      (getGlobalDirectory as jest.Mock).mockReturnValue('/mock/global/dir');
       
       // Simulate local config not found, then use global config
-      (fs.stat as vi.Mock)
+      (fs.stat as jest.Mock)
         .mockRejectedValueOnce(new Error('Local config not found'))
         .mockResolvedValueOnce({ isFile: () => true });
       
@@ -115,7 +99,7 @@ describe('configLoad', () => {
         }
       };
       
-      (fs.readFile as vi.Mock).mockResolvedValue(JSON.stringify(partialConfig));
+      (fs.readFile as jest.Mock).mockResolvedValue(JSON.stringify(partialConfig));
 
       const result = await loadFileConfig(mockCwd, null);
       
@@ -136,13 +120,13 @@ describe('configLoad', () => {
 
       for (const malformedJson of malformedJsonCases) {
         // Simulate local config
-        (fs.stat as vi.Mock)
+        (fs.stat as jest.Mock)
           .mockRejectedValueOnce(new Error('Local config not found'))
           .mockResolvedValueOnce({ isFile: () => true });
         
         // Mock global config read
-        (getGlobalDirectory as vi.Mock).mockReturnValue('/mock/global/dir');
-        (fs.readFile as vi.Mock).mockResolvedValue(malformedJson);
+        (getGlobalDirectory as jest.Mock).mockReturnValue('/mock/global/dir');
+        (fs.readFile as jest.Mock).mockResolvedValue(malformedJson);
 
         const result = await loadFileConfig(mockCwd, null);
         expect(result).toEqual({});
@@ -158,13 +142,13 @@ describe('configLoad', () => {
 
       for (const readError of readErrors) {
         // Simulate local config read error
-        (fs.stat as vi.Mock)
+        (fs.stat as jest.Mock)
           .mockRejectedValueOnce(readError)
           .mockRejectedValueOnce(readError);
         
         // Mock global config read
-        (getGlobalDirectory as vi.Mock).mockReturnValue('/mock/global/dir');
-        (fs.readFile as vi.Mock).mockRejectedValue(readError);
+        (getGlobalDirectory as jest.Mock).mockReturnValue('/mock/global/dir');
+        (fs.readFile as jest.Mock).mockRejectedValue(readError);
 
         const result = await loadFileConfig(mockCwd, null);
         expect(result).toEqual({});
@@ -213,6 +197,44 @@ describe('configLoad', () => {
       const invalidCliConfig = {
         output: 123 as any
       };
+
+      expect(() => {
+        mergeConfigs(mockCwd, invalidFileConfig, invalidCliConfig);
+      }).toThrow(z.ZodError);
+    });
+
+    test('should handle type issues with config', () => {
+      const invalidConfig = {
+        output: {
+          filePath: 'test.txt',
+          style: 'markdown',
+          headerText: 'Test',
+          topFilesLength: 10,
+          showLineNumbers: false,
+          removeComments: false,
+          removeEmptyLines: false,
+          copyToClipboard: false,
+          instructionFilePath: 'instructions.txt'
+        } as OutputConfig,
+        ignore: {
+          useDefaultPatterns: true,
+          useGitignore: true,
+          excludePatterns: [],
+          customPatterns: ['*.log']
+        } as IgnoreConfig
+      };
+
+      const invalidFileConfig = {
+        output: 'custom-output.txt'
+      };
+
+      const invalidCliConfig = {
+        security: true
+      };
+
+      expect(() => {
+        mergeConfigs(mockCwd, invalidConfig, invalidFileConfig);
+      }).toThrow(z.ZodError);
 
       expect(() => {
         mergeConfigs(mockCwd, invalidFileConfig, invalidCliConfig);

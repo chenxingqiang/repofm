@@ -1,5 +1,5 @@
 import path from 'node:path';
-import pc from 'picocolors';
+import pc from 'picocolors.js';
 import type { repofmConfigMerged } from '../config/configSchema.js';
 import type { SuspiciousFileResult } from '../core/types.js';
 import { logger } from '../shared/logger.js';

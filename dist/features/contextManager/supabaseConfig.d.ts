@@ -1,4 +1,4 @@
-import { SupabaseClient } from '@supabase/supabase-js';
+import { SupabaseClient } from '@supabase/supabase-js.js';
 export interface SupabaseConfig {
     url: string;
     anonKey: string;

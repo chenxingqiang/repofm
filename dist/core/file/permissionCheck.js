@@ -30,4 +30,3 @@ export const checkFilePermissions = async (filePath) => {
         return false;
     }
 };
-//# sourceMappingURL=permissionCheck.js.map

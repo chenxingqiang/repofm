@@ -1,4 +1,4 @@
-import { ContextConfig } from './types';
+import { ContextConfig } from './types.js';
 declare class CodeContextManager {
     private static instance;
     private config;

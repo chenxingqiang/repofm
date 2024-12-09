@@ -1,7 +1,7 @@
-import { MLPredictor } from '../ml/types';
-import { ClusterManager } from '../cluster';
-import { EncryptionManager } from '../security';
-import { vi, describe, beforeEach, it, expect } from 'vitest';
+import { MLPredictor } from '../ml/types.js';
+import { ClusterManager } from '../cluster.js';
+import { EncryptionManager } from '../security.js';
+import { jest, describe, beforeEach, it, expect } from '@jest/globals';
 
 describe('ML Features', () => {
   let predictor: MLPredictor;

@@ -1,6 +1,6 @@
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath } from 'node:url.js';
 import { logger } from '../../utils/logger.js';
 let cachedVersion = null;
 export const getPackageVersion = async (pkgPath) => {
@@ -55,4 +55,3 @@ export const parsePackageJson = (content) => {
         return {};
     }
 };
-//# sourceMappingURL=packageJsonParse.js.map

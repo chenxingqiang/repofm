@@ -52,4 +52,3 @@ export async function updateGitignore(rootDir) {
         throw error;
     }
 }
-//# sourceMappingURL=migrationAction.js.map

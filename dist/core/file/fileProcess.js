@@ -1,4 +1,4 @@
-import pMap from 'p-map';
+import pMap from 'p-map.js';
 import { getProcessConcurrency } from '../../shared/processConcurrency.js';
 import { getFileManipulator } from './fileManipulate.js';
 export const processFiles = async (rawFiles, config) => {
@@ -33,4 +33,3 @@ export const processContent = async (content, filePath, config = {}) => {
     }
     return processedContent;
 };
-//# sourceMappingURL=fileProcess.js.map

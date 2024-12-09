@@ -1,21 +1,23 @@
-import path from 'node:path';
-import { sep } from 'path';
+import * as fs from 'fs/promises';
+import * as path from 'path';
+import { logger } from '../../shared/logger.js';
 
 const specialRootOrder = ['package.json', 'root.txt'];
 
 export interface TreeNode {
   name: string;
-  children: TreeNode[];
-  isDirectory: boolean;
-  isRoot?: boolean;
+  path: string;
+  type: 'file' | 'directory';
+  size?: number;
+  children?: TreeNode[];
 }
 
-function createNode(name: string, isDirectory = false, isRoot = false): TreeNode {
+function createNode(name: string, path: string, type: 'file' | 'directory', size?: number): TreeNode {
   return {
     name,
-    children: [],
-    isDirectory,
-    isRoot
+    path,
+    type,
+    size
   };
 }
 
@@ -31,8 +33,8 @@ function sortFiles(files: string[]): string[] {
     }
 
     // Split paths into segments
-    const aParts = a.split(sep);
-    const bParts = b.split(sep);
+    const aParts = a.split(path.sep);
+    const bParts = b.split(path.sep);
     
     // Compare each segment
     const minLength = Math.min(aParts.length, bParts.length);
@@ -54,50 +56,53 @@ function sortFiles(files: string[]): string[] {
 }
 
 function buildTree(files: string[]): TreeNode {
-  const root = createNode('root', true, true);
+  const root = createNode('root', '', 'directory');
   const sortedFiles = sortFiles(files);
 
   for (const filePath of sortedFiles) {
     let current = root;
-    const parts = filePath.split(sep).filter(Boolean);
-    const isDirectory = filePath.endsWith(sep);
+    const parts = filePath.split(path.sep).filter(Boolean);
+    const isDirectory = filePath.endsWith(path.sep);
 
     for (let i = 0; i < parts.length; i++) {
       const part = parts[i];
       const isLastPart = i === parts.length - 1;
       const isDir = isDirectory || !isLastPart;
 
-      let child = current.children.find(c => c.name === part);
+      let child = current.children?.find(c => c.name === part);
       if (!child) {
-        child = createNode(part, isDir);
+        child = createNode(part, path.join(current.path, part), isDir ? 'directory' : 'file');
+        if (!current.children) current.children = [];
         current.children.push(child);
       }
 
       // Sort children after adding a new child
-      current.children.sort((a, b) => {
-        // Special handling for root level
-        if (current.isRoot) {
-          const aIsSpecial = specialRootOrder.indexOf(a.name);
-          const bIsSpecial = specialRootOrder.indexOf(b.name);
-          if (aIsSpecial !== -1 || bIsSpecial !== -1) {
-            if (aIsSpecial === -1) return 1;
-            if (bIsSpecial === -1) return -1;
-            return aIsSpecial - bIsSpecial;
+      if (current.children) {
+        current.children.sort((a, b) => {
+          // Special handling for root level
+          if (current.name === 'root') {
+            const aIsSpecial = specialRootOrder.indexOf(a.name);
+            const bIsSpecial = specialRootOrder.indexOf(b.name);
+            if (aIsSpecial !== -1 || bIsSpecial !== -1) {
+              if (aIsSpecial === -1) return 1;
+              if (bIsSpecial === -1) return -1;
+              return aIsSpecial - bIsSpecial;
+            }
           }
-        }
 
-        // Directories come before files, except for index.js which comes after components/
-        if (a.isDirectory !== b.isDirectory) {
-          if (b.name === 'index.js' && a.name === 'components') return -1;
-          if (a.name === 'index.js' && b.name === 'components') return 1;
-          if (b.name === 'index.js') return 1;
-          if (a.name === 'index.js') return -1;
-          return a.isDirectory ? -1 : 1;
-        }
+          // Directories come before files, except for index.js which comes after components/
+          if (a.type !== b.type) {
+            if (b.name === 'index.js' && a.name === 'components') return -1;
+            if (a.name === 'index.js' && b.name === 'components') return 1;
+            if (b.name === 'index.js') return 1;
+            if (a.name === 'index.js') return -1;
+            return a.type === 'directory' ? -1 : 1;
+          }
 
-        // Alphabetical sorting
-        return a.name.localeCompare(b.name);
-      });
+          // Alphabetical sorting
+          return a.name.localeCompare(b.name);
+        });
+      }
 
       current = child;
     }
@@ -106,15 +111,49 @@ function buildTree(files: string[]): TreeNode {
   return root;
 }
 
+export async function generateFileTree(rootPath: string): Promise<TreeNode> {
+  try {
+    const stats = await fs.stat(rootPath);
+    const name = path.basename(rootPath);
+
+    if (!stats.isDirectory()) {
+      return {
+        name,
+        path: rootPath,
+        type: 'file',
+        size: stats.size
+      };
+    }
+
+    const entries = await fs.readdir(rootPath);
+    const children = await Promise.all(
+      entries.map(async entry => {
+        const fullPath = path.join(rootPath, entry);
+        return generateFileTree(fullPath);
+      })
+    );
+
+    return {
+      name,
+      path: rootPath,
+      type: 'directory',
+      children
+    };
+  } catch (error) {
+    logger.error(`Error generating file tree for ${rootPath}:`, error);
+    throw error;
+  }
+}
+
 export function treeToString(node: TreeNode, prefix = '', isRoot = true): string {
   if (!isRoot && !node.name) return '';
 
   let result = '';
   if (!isRoot) {
-    result = prefix + node.name + (node.isDirectory ? '/' : '');
+    result = prefix + node.name + (node.type === 'directory' ? '/' : '');
   }
 
-  if (node.children.length > 0) {
+  if (node.children) {
     if (!isRoot) result += '\n';
     const childPrefix = isRoot ? '' : prefix + '  ';
     result += node.children
@@ -128,13 +167,13 @@ export function treeToString(node: TreeNode, prefix = '', isRoot = true): string
 export function generateTreeString(files: string[]): string {
   if (files.length === 0) return '';
   if (files.length === 1) {
-    return files[0] + (files[0].endsWith(sep) ? '' : '');
+    return files[0] + (files[0].endsWith(path.sep) ? '' : '');
   }
 
   const tree = buildTree(files);
   return treeToString(tree);
 }
 
-export function generateFileTree(files: string[]): TreeNode {
+export function generateFileTreeLegacy(files: string[]): TreeNode {
   return buildTree(files);
 }

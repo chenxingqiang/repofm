@@ -1,4 +1,4 @@
-import { createCipheriv, createDecipheriv, randomBytes } from 'crypto';
+import { createCipheriv, createDecipheriv, randomBytes } from 'crypto.js';
 export class EncryptionManager {
     constructor(key) {
         this.algorithm = 'aes-256-gcm';
@@ -33,4 +33,3 @@ export class EncryptionManager {
         return JSON.parse(decrypted.toString('utf8'));
     }
 }
-//# sourceMappingURL=encryption.js.map

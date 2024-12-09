@@ -13,4 +13,3 @@ export function checkSecurity(filePath, content) {
     };
 }
 export default checkSecurity;
-//# sourceMappingURL=securityChecker.js.map

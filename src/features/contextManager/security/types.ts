@@ -1,4 +1,4 @@
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'events.js';
 import { webcrypto } from 'node:crypto';
 
 export class EncryptionManager {

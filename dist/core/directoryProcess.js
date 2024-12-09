@@ -9,4 +9,3 @@ function processDirectory(targetDir, config) {
     return Promise.resolve(result);
 }
 export { processDirectory };
-//# sourceMappingURL=directoryProcess.js.map

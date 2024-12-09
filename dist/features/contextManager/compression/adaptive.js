@@ -42,4 +42,3 @@ export class AdaptiveCompression {
         };
     }
 }
-//# sourceMappingURL=adaptive.js.map

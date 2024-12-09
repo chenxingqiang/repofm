@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from '@supabase/supabase-js.js';
 export class SupabaseConfigManager {
     constructor() {
         this.client = null;
@@ -44,4 +44,3 @@ export class SupabaseConfigManager {
         }
     }
 }
-//# sourceMappingURL=supabaseConfig.js.map

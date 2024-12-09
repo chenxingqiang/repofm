@@ -1,4 +1,4 @@
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'events.js';
 export class ZeroTrustManager extends EventEmitter {
     constructor() {
         super(...arguments);
@@ -79,4 +79,3 @@ export class ZeroTrustManager extends EventEmitter {
         await this.requestAdditionalVerification(userId, 'reauthorize');
     }
 }
-//# sourceMappingURL=zeroTrust.js.map

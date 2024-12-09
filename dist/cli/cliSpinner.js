@@ -1,4 +1,4 @@
-import ora from 'ora';
+import ora from 'ora.js';
 export class CLISpinner {
     static start(text) {
         const spinnerText = text || 'Processing...';
@@ -32,4 +32,3 @@ export class CLISpinner {
     }
 }
 CLISpinner.spinner = null;
-//# sourceMappingURL=cliSpinner.js.map

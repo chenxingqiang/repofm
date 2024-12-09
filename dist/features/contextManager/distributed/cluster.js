@@ -1,4 +1,4 @@
-import { createClient } from 'redis';
+import { createClient } from 'redis.js';
 export class ClusterManager {
     constructor(redisUrl) {
         this.redis = createClient({
@@ -9,4 +9,3 @@ export class ClusterManager {
         await this.redis.connect();
     }
 }
-//# sourceMappingURL=cluster.js.map

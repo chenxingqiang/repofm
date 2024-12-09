@@ -1,4 +1,4 @@
-import { get_encoding } from 'tiktoken';
+import { get_encoding } from 'tiktoken.js';
 const MODEL_ENCODINGS = {
     'gpt-3.5-turbo': 'gpt-3.5-turbo',
     'gpt-4': 'gpt-4'
@@ -65,4 +65,3 @@ export const countTokens = async (text, options = {}) => {
         encoding.free();
     }
 };
-//# sourceMappingURL=tokenCount.js.map

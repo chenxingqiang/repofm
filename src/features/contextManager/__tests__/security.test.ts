@@ -1,40 +1,40 @@
 import { DeepAnalytics } from "../analytics/deepAnalytics";
 import { RiskAnalyzer } from "../analytics/riskAnalysis";
 import { IntrusionDetectionSystem } from "../security/types";
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { ZeroTrustManager } from '../security/zeroTrust';
+import { describe, it, expect, jest, beforeEach } from '@jest/globals';
+import { ZeroTrustManager } from '../security/zeroTrust.js';
 import { SecurityManager } from "../security/SecurityManager";
 
 // Mock TensorFlow with dynamic prediction length
-vi.mock('@tensorflow/tfjs', () => ({
-  sequential: vi.fn(() => ({
-    compile: vi.fn(),
-    fit: vi.fn().mockResolvedValue(undefined),
-    predict: vi.fn((input) => ({
+jest.mock('@tensorflow/tfjs', () => ({
+  sequential: jest.fn(() => ({
+    compile: jest.fn(),
+    fit: jest.fn().mockResolvedValue(undefined),
+    predict: jest.fn((input) => ({
       array: () => Promise.resolve(
         Array(input.shape[0]).fill(0).map(() => [0.5])
       ),
-      dispose: vi.fn()
+      dispose: jest.fn()
     }))
   })),
   layers: {
-    dense: vi.fn(() => ({
+    dense: jest.fn(() => ({
       units: 50,
       inputShape: [10],
       activation: 'relu'
     }))
   },
-  tensor2d: vi.fn((data) => ({
+  tensor2d: jest.fn((data) => ({
     shape: [data.length, data[0].length],
-    dispose: vi.fn()
+    dispose: jest.fn()
   })),
   train: {
-    adam: vi.fn()
+    adam: jest.fn()
   }
 }));
 
 // Mock ZeroTrustManager to ensure event emission
-vi.mock('../security/zeroTrust', () => {
+jest.mock('../security/zeroTrust', () => {
   const EventEmitter = require('events');
   return {
     ZeroTrustManager: class extends EventEmitter {
@@ -71,7 +71,7 @@ describe('Advanced Security Features', () => {
     zeroTrust = new ZeroTrustManager();
     ids = new IntrusionDetectionSystem();
     analytics = new DeepAnalytics();
-    vi.clearAllMocks();
+    jest.clearAllMocks();
   });
 
   describe('Zero Trust Security', () => {
@@ -90,7 +90,7 @@ describe('Advanced Security Features', () => {
     });
 
     it('should verify event emitter functionality', () => {
-      const spy = vi.fn();
+      const spy = jest.fn();
       zeroTrust.on('test', spy);
       zeroTrust.emit('test', 'data');
       expect(spy).toHaveBeenCalledWith('data');
@@ -98,7 +98,7 @@ describe('Advanced Security Features', () => {
 
     it('should detect high-risk activities', async () => {
       // Setup spy for verification event
-      const verificationSpy = vi.fn();
+      const verificationSpy = jest.fn();
       zeroTrust.on('verification-required', verificationSpy);
 
       // Trigger verification with high-risk context

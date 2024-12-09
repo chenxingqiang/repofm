@@ -75,4 +75,3 @@ export function throwIfError(error) {
         process.exit(1);
     }
 }
-//# sourceMappingURL=validation.js.map

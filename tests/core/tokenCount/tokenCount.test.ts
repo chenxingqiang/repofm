@@ -1,9 +1,8 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest';
-
+import { jest, beforeEach, describe, expect, test } from '@jest/globals';
 
 // Mock tiktoken module with more realistic behavior
-vi.mock('tiktoken', () => ({
-  get_encoding: vi.fn((model: string) => {
+jest.mock('tiktoken', () => ({
+  get_encoding: jest.fn((model: string) => {
     const encodings = {
       'gpt-3.5-turbo': (text: string) => Array.from(text).map((_, i) => i + 1),
       'gpt-4': (text: string) => Array.from(text).map((_, i) => i + 100),
@@ -12,7 +11,7 @@ vi.mock('tiktoken', () => ({
 
     return {
       encode: (text: string) => encodings[model] ? encodings[model](text) : encodings.default(text),
-      free: vi.fn(),
+      free: jest.fn(),
     };
   })
 }));
@@ -22,7 +21,7 @@ import { countTokens, TokenCounter } from '../../../src/core/tokenCount/tokenCou
 
 describe('tokenCount', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    jest.clearAllMocks();
   });
 
   describe('countTokens function', () => {
@@ -108,7 +107,7 @@ describe('tokenCount', () => {
     });
 
     test('should free resources properly', async () => {
-      const freeSpy = vi.spyOn(counter as any, 'free');
+      const freeSpy = jest.spyOn(counter as any, 'free');
       await counter.addText('Test');
       counter.free();
       expect(freeSpy).toHaveBeenCalled();

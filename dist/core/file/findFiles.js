@@ -35,4 +35,3 @@ export async function findFiles(rootDir, config) {
     }
     return results;
 }
-//# sourceMappingURL=findFiles.js.map

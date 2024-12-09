@@ -1,23 +1,21 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { jest, describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 
 // Mock picocolors module
-vi.mock('picocolors', async () => {
+jest.mock('picocolors', async () => {
   return {
-    default: {
-      red: (str: string) => `\u001b[31m${str}\u001b[39m`,
-      yellow: (str: string) => `\u001b[33m${str}\u001b[39m`,
-      green: (str: string) => `\u001b[32m${str}\u001b[39m`,
-      cyan: (str: string) => `\u001b[36m${str}\u001b[39m`,
-      dim: (str: string) => `\u001b[90m${str}\u001b[39m`,
-      blue: (str: string) => `\u001b[34m${str}\u001b[39m`,
-      gray: (str: string) => `\u001b[90m${str}\u001b[39m`
-    }
+    red: (text: string) => `red(${text})`,
+    yellow: (text: string) => `yellow(${text})`,
+    blue: (text: string) => `blue(${text})`,
+    green: (text: string) => `green(${text})`,
+    cyan: (text: string) => `cyan(${text})`,
+    dim: (text: string) => `dim(${text})`,
+    gray: (text: string) => `gray(${text})`
   };
 });
 
 // Mock logger module
-vi.mock('../../src/shared/logger', async () => {
-  const actual = await vi.importActual('../../src/shared/logger');
+jest.mock('../../src/shared/logger', async () => {
+  const actual = await jest.importActual('../../src/shared/logger');
   return actual;
 });
 
@@ -32,44 +30,44 @@ describe('Logger', () => {
   beforeEach(() => {
     Logger.resetInstance();
     logger = Logger.getInstance();
-    consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-    consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
   });
 
   afterEach(() => {
-    vi.clearAllMocks();
+    jest.clearAllMocks();
   });
 
   it('should handle error messages', () => {
     logger.error('error message');
-    expect(consoleErrorSpy).toHaveBeenCalledWith('\u001b[31mERROR:\u001b[39m', 'error message');
+    expect(consoleErrorSpy).toHaveBeenCalledWith('red(ERROR:) error message');
   });
 
   it('should handle Error objects', () => {
     const error = new Error('test error');
     logger.error(error);
-    expect(consoleErrorSpy).toHaveBeenCalledWith('\u001b[31mERROR:\u001b[39m', '{}');
+    expect(consoleErrorSpy).toHaveBeenCalledWith('red(ERROR:) {}');
   });
 
   it('should log success messages', () => {
     logger.success('success message');
-    expect(consoleLogSpy).toHaveBeenCalledWith('\u001b[32mSUCCESS:\u001b[39m', 'success message');
+    expect(consoleLogSpy).toHaveBeenCalledWith('green(SUCCESS:) success message');
   });
 
   it('should log warning messages', () => {
     logger.warn('warning message');
-    expect(consoleLogSpy).toHaveBeenCalledWith('\u001b[33mWARN:\u001b[39m', 'warning message');
+    expect(consoleLogSpy).toHaveBeenCalledWith('yellow(WARN:) warning message');
   });
 
   it('should log info messages', () => {
     logger.info('info message');
-    expect(consoleLogSpy).toHaveBeenCalledWith('\u001b[36mINFO:\u001b[39m', 'info message');
+    expect(consoleLogSpy).toHaveBeenCalledWith('cyan(INFO:) info message');
   });
 
   it('should log debug messages', () => {
     logger.setLevel('debug');
     logger.debug('debug message');
-    expect(consoleLogSpy).toHaveBeenCalledWith('\u001b[90mDEBUG:\u001b[39m', 'debug message');
+    expect(consoleLogSpy).toHaveBeenCalledWith('dim(DEBUG:) debug message');
   });
 
   it('should not log debug messages when level is info', () => {
@@ -81,12 +79,12 @@ describe('Logger', () => {
   it('should format object arguments correctly', () => {
     const obj = { key: 'value' };
     logger.info('Object:', obj);
-    expect(consoleLogSpy).toHaveBeenCalledWith('\u001b[36mINFO:\u001b[39m', 'Object: {"key":"value"}');
+    expect(consoleLogSpy).toHaveBeenCalledWith('cyan(INFO:) Object: {"key":"value"}');
   });
 
   it('should handle multiple arguments', () => {
     logger.info('Multiple', 'arguments', 123);
-    expect(consoleLogSpy).toHaveBeenCalledWith('\u001b[36mINFO:\u001b[39m', 'Multiple arguments 123');
+    expect(consoleLogSpy).toHaveBeenCalledWith('cyan(INFO:) Multiple arguments 123');
   });
 
   it('should respect log levels', () => {
@@ -94,13 +92,13 @@ describe('Logger', () => {
     logger.info('info message');
     expect(consoleLogSpy).not.toHaveBeenCalled();
     logger.warn('warning message');
-    expect(consoleLogSpy).toHaveBeenCalledWith('\u001b[33mWARN:\u001b[39m', 'warning message');
+    expect(consoleLogSpy).toHaveBeenCalledWith('yellow(WARN:) warning message');
   });
 
   it('should handle trace messages', () => {
-    const consoletraceSpy = vi.spyOn(console, 'trace').mockImplementation(() => {});
+    const consoletraceSpy = jest.spyOn(console, 'trace').mockImplementation(() => {});
     logger.setLevel('debug');
     logger.trace('trace message');
-    expect(consoletraceSpy).toHaveBeenCalledWith('\u001b[90mTRACE:\u001b[39m', 'trace message');
+    expect(consoletraceSpy).toHaveBeenCalledWith('dim(TRACE:) trace message');
   });
 });

@@ -16,11 +16,13 @@ export const createMockConfig = (config: Partial<Config>, overrides: Partial<Con
       removeComments: false,
       removeEmptyLines: false,
       copyToClipboard: false,
+      instructionFilePath: '',
     },
     ignore: {
       useGitignore: true,
       useDefaultPatterns: true,
       customPatterns: [],
+      excludePatterns: [],
     },
     security: {
       enableSecurityCheck: true,

@@ -1,45 +1,42 @@
-import { logger } from '../../shared/logger.js';
+import * as path from 'path';
 import * as fs from 'fs/promises';
+import { logger } from '../../shared/logger.js';
 
-export async function collectFiles(
-  filePaths: string[],
-  options: { ignoreErrors?: boolean } = {}
-) {
-  const results = [];
-
-  for (const filePath of filePaths) {
-    try {
-      const content = await fs.readFile(filePath);
-      const stats = await fs.stat(filePath);
-      
-      // Check if file is binary
-      if (isBinaryContent(content)) {
-        logger.debug('Skipping binary file', filePath);
-        continue;
-      }
-
-      results.push({
-        path: filePath,
-        content: content.toString(),
-        size: stats.size
-      });
-    } catch (error) {
-      logger.error('Error reading file', filePath);
-      
-      if (!options.ignoreErrors) {
-        throw error;
-      }
-    }
-  }
-
-  return results;
+export interface FileInfo {
+  path: string;
+  content: string;
+  size: number;
+  lastModified: Date;
 }
 
-function isBinaryContent(buffer: Buffer): boolean {
-  // Simple binary check - looks for null bytes in first 1024 bytes
-  const sampleSize = Math.min(1024, buffer.length);
-  for (let i = 0; i < sampleSize; i++) {
-    if (buffer[i] === 0) return true;
+export async function collectFileInfo(filePath: string): Promise<FileInfo> {
+  try {
+    const stats = await fs.stat(filePath);
+    const content = await fs.readFile(filePath, 'utf8');
+    
+    return {
+      path: filePath,
+      content,
+      size: stats.size,
+      lastModified: stats.mtime
+    };
+  } catch (error) {
+    logger.error(`Error collecting file info for ${filePath}:`, error);
+    throw error;
   }
-  return false;
+}
+
+export async function collectFilesInfo(filePaths: string[]): Promise<FileInfo[]> {
+  const results: FileInfo[] = [];
+  
+  for (const filePath of filePaths) {
+    try {
+      const fileInfo = await collectFileInfo(filePath);
+      results.push(fileInfo);
+    } catch (error) {
+      logger.warn(`Skipping file ${filePath} due to error:`, error);
+    }
+  }
+  
+  return results;
 }

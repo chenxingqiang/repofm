@@ -1,4 +1,4 @@
-import { Spinner } from './types/spinner';
+import { Spinner } from './types/spinner.js';
 
 export class FallbackSpinner implements Spinner {
   private text: string | undefined;

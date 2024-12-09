@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { CLISpinner } from '../cliSpinner';
+import { describe, it, expect, vi, beforeEach } from 'vitest.js';
+import { CLISpinner } from '../cliSpinner.js';
 
 vi.mock('ora', () => {
   return {

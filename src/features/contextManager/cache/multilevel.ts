@@ -1,6 +1,6 @@
-import { LRUCache } from 'lru-cache';
+import { LRUCache } from 'lru-cache.js';
 import { PersistentCache } from '../types.js';
-import { FilePersistentCache } from './persistentCache';
+import { FilePersistentCache } from './persistentCache.js';
 
 export class MultilevelCache {
   private l1Cache: Map<string, any>;

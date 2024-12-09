@@ -1,10 +1,10 @@
 import fs from 'node:fs/promises';
-import path from 'node:path';
+import path from 'path';
 import { minimatch } from 'minimatch';
-import type { Config } from '../types/config.js';
+import type { Config } from '../config/configSchema.js';
 import type { ProcessedFile, FileInfo, SuspiciousFileResult } from './types.js';
 import { searchFiles } from './file/fileSearch.js';
-import { collectFiles } from './file/fileCollect.js';
+import { collectFilesInfo } from './file/fileCollect.js';
 import { processFiles } from './file/fileProcess.js';
 import { OutputGenerator, OutputGeneratorOptions } from './outputGenerator.js';
 import { runSecurityCheck } from './security/securityCheck.js';
@@ -21,7 +21,7 @@ export function generateOutput(options: GenerateOutputOptions): string {
 
 export interface Dependencies {
   searchFiles: typeof searchFiles;
-  collectFiles: typeof collectFiles;
+  collectFiles: typeof collectFilesInfo;
   processFiles: typeof processFiles;
   runSecurityCheck: (files: FileInfo[]) => Promise<SuspiciousFileResult[]>;
   generateOutput: typeof generateOutput;
@@ -35,7 +35,7 @@ export interface PackResult {
 
 export const defaultDeps: Dependencies = {
   searchFiles,
-  collectFiles,
+  collectFiles: collectFilesInfo,
   processFiles,
   runSecurityCheck,
   generateOutput,

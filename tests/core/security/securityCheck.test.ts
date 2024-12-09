@@ -1,10 +1,10 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { jest, beforeEach, describe, expect, test } from '@jest/globals';
 import { runSecurityCheck } from '../../../src/core/security/securityCheck.js';
 import type { FileInfo } from '../../../src/core/types.js';
 
 describe('securityCheck', () => {
   beforeEach(() => {
-    vi.resetAllMocks();
+    jest.resetAllMocks();
   });
 
   describe('Basic functionality', () => {

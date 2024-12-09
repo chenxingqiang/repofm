@@ -89,4 +89,3 @@ export async function createIgnoreFile(rootDir, isGlobal) {
         throw error;
     }
 }
-//# sourceMappingURL=initAction.js.map

@@ -22,4 +22,3 @@ export class BehaviorAnalytics {
         };
     }
 }
-//# sourceMappingURL=BehaviorAnalytics.js.map

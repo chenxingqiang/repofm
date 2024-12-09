@@ -1,5 +1,5 @@
-import { vi } from 'vitest';
-import type { Logger } from '../types/logger';
+import { vi } from 'vitest.js';
+import type { Logger } from '../types/logger.js';
 import type { Config } from '../types/config.js';
 
 export const createMockLogger = (): Logger => ({

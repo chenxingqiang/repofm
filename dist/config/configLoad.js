@@ -1,6 +1,6 @@
 import * as fs from 'node:fs/promises';
 import path from 'node:path';
-import { z } from 'zod';
+import { z } from 'zod.js';
 import { logger } from '../shared/logger.js';
 import { getGlobalDirectory } from './globalDirectory.js';
 const defaultFilePathMap = {
@@ -163,4 +163,3 @@ export async function loadConfig(cwd, options = {}) {
         throw error;
     }
 }
-//# sourceMappingURL=configLoad.js.map

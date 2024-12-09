@@ -1,7 +1,7 @@
-import * as fs from 'node:fs/promises';
-import * as path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { logger } from '../../utils/logger.js';
+import * as fs from 'fs/promises';
+import * as path from 'path';
+import { fileURLToPath } from 'url';
+import { logger } from '../../shared/logger.js';
 
 let cachedVersion: string | null = null;
 
@@ -52,7 +52,53 @@ export const clearVersionCache = (): void => {
   cachedVersion = null;
 };
 
-export const parsePackageJson = (content: string): Record<string, any> => {
+export interface PackageJson {
+  name: string;
+  version: string;
+  description?: string;
+  dependencies?: Record<string, string>;
+  devDependencies?: Record<string, string>;
+  scripts?: Record<string, string>;
+  [key: string]: unknown;
+}
+
+export async function findPackageJson(startDir: string): Promise<string | null> {
+  let currentDir = startDir;
+  
+  while (currentDir !== path.parse(currentDir).root) {
+    const packageJsonPath = path.join(currentDir, 'package.json');
+    
+    try {
+      await fs.access(packageJsonPath);
+      return packageJsonPath;
+    } catch {
+      currentDir = path.dirname(currentDir);
+    }
+  }
+  
+  return null;
+}
+
+export async function parsePackageJson(filePath: string): Promise<PackageJson> {
+  try {
+    const content = await fs.readFile(filePath, 'utf8');
+    return JSON.parse(content);
+  } catch (error) {
+    logger.error(`Error parsing package.json at ${filePath}:`, error);
+    throw error;
+  }
+}
+
+export async function writePackageJson(filePath: string, data: PackageJson): Promise<void> {
+  try {
+    await fs.writeFile(filePath, JSON.stringify(data, null, 2));
+  } catch (error) {
+    logger.error(`Error writing package.json at ${filePath}:`, error);
+    throw error;
+  }
+}
+
+export const parsePackageJsonContent = (content: string): Record<string, any> => {
   try {
     return JSON.parse(content);
   } catch (error) {

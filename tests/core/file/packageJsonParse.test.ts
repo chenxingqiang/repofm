@@ -1,25 +1,25 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { jest, describe, test, expect, beforeEach, afterEach } from '@jest/globals';
 import { parsePackageJson } from '../../../src/core/file/packageJsonParse.js';
 import { logger } from '../../../src/utils/logger.js';
 
-vi.mock('../../../src/utils/logger.js', () => ({
+jest.mock('../../../src/utils/logger.js', () => ({
   logger: {
-    error: vi.fn(),
-    warn: vi.fn(),
-    info: vi.fn()
+    error: jest.fn(),
+    warn: jest.fn(),
+    info: jest.fn()
   }
 }));
 
 describe('parsePackageJson', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    jest.clearAllMocks();
   });
 
   afterEach(() => {
-    vi.resetAllMocks();
+    jest.resetAllMocks();
   });
 
-  it('should parse valid JSON', () => {
+  test('should parse valid JSON', () => {
     const validJson = '{"name": "test", "version": "1.0.0"}';
     const result = parsePackageJson(validJson);
     expect(result).toEqual({ name: 'test', version: '1.0.0' });

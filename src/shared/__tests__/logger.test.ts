@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest.js';
 import { Logger } from '../logger.js';
 
 vi.mock('picocolors', async () => {

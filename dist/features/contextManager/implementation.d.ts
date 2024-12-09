@@ -1,7 +1,7 @@
 import type { Config } from '../../types/config.js';
 import type { CodeContext } from '../../types/context.js';
-import type { ICodeContextManager } from './types';
-import { PerformanceMetrics } from './types';
+import type { ICodeContextManager } from './types.js';
+import { PerformanceMetrics } from './types.js';
 export declare function extractCodeContext(target: string, type: string, depth: number, config: Config): Promise<CodeContext>;
 export { Config };
 export declare class CodeContextManager implements ICodeContextManager {

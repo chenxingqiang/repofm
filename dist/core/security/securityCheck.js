@@ -106,4 +106,3 @@ export async function runSecurityCheck(files) {
     }
     return results;
 }
-//# sourceMappingURL=securityCheck.js.map

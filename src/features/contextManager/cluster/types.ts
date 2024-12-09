@@ -1,4 +1,4 @@
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'events.js';
 
 export class ClusterManager extends EventEmitter {
   constructor(redisUrl?: string) {

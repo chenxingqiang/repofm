@@ -3,7 +3,7 @@ import * as fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { promisify } from 'node:util';
-import pc from 'picocolors';
+import pc from 'picocolors.js';
 import { repofmError } from '../../shared/errorHandle.js';
 import { logger } from '../../shared/logger.js';
 import type { CliOptions } from '../../types/config.js';

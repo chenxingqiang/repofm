@@ -1,4 +1,4 @@
-import * as tf from '@tensorflow/tfjs';
+import * as tf from '@tensorflow/tfjs.js';
 export class DeepAnalytics {
     constructor() {
         this.isInitialized = false;
@@ -68,4 +68,3 @@ export class DeepAnalytics {
         }
     }
 }
-//# sourceMappingURL=deepAnalytics.js.map

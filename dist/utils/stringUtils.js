@@ -6,4 +6,3 @@ export function escapeHtml(str) {
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#039;');
 }
-//# sourceMappingURL=stringUtils.js.map

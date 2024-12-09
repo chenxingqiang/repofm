@@ -1,5 +1,5 @@
-import { EventEmitter } from 'events';
-import { createHash } from 'crypto';
+import { EventEmitter } from 'events.js';
+import { createHash } from 'crypto.js';
 
 interface SecurityContext {
   userId: string;

@@ -1,4 +1,4 @@
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'events.js';
 export declare class IntrusionDetectionSystem extends EventEmitter {
     private readonly patterns;
     private suspiciousActivities;

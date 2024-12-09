@@ -1,4 +1,4 @@
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'events.js';
 interface SecurityContext {
     userId: string;
     deviceId: string;

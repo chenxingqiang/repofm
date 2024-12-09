@@ -2,6 +2,7 @@ import { exec } from 'node:child_process';
 import { promisify } from 'node:util';
 import { logger } from '../../shared/logger.js';
 import { GitService } from '../../services/GitService.js';
+import { AICommitGenerator } from '../../services/AICommitGenerator.js';
 const execAsync = promisify(exec);
 export async function runAutocommitAction(targetDir, options = {}) {
     try {
@@ -16,12 +17,16 @@ export async function runAutocommitAction(targetDir, options = {}) {
             logger.info('No changes to commit');
             return;
         }
-        // If all flag is set, stage all changes
+        // Stage files based on options
         if (options.all) {
             await gitService.stageAll();
         }
-        else if (options.pattern) {
-            await gitService.stageFiles(options.pattern);
+        else if (options.patterns && options.patterns.length > 0) {
+            await gitService.stageFiles(options.patterns, options.excludePatterns, {
+                ignoreCase: options.ignoreCase ?? true,
+                dot: options.includeDotFiles ?? false,
+                debug: options.debug ?? false
+            });
         }
         // Get staged files
         const stagedFiles = await gitService.getStagedFiles();
@@ -29,22 +34,36 @@ export async function runAutocommitAction(targetDir, options = {}) {
             logger.info('No files staged for commit');
             return;
         }
-        // Generate commit message if not provided
-        const message = options.message || await gitService.generateCommitMessage(stagedFiles);
-        // Create commit
-        await gitService.commit(message);
-        logger.info(`Created commit: ${message}`);
-        // Push if requested
+        // Generate commit message
+        let commitMessage;
+        if (options.message) {
+            // Use provided message
+            commitMessage = options.message;
+        }
+        else if (options.aiCommitMessage) {
+            // Generate AI commit message
+            commitMessage = await AICommitGenerator.generateCommitMessage({
+                stagedFiles,
+                maxLength: options.maxCommitLength ?? 72
+            });
+        }
+        else {
+            // Default commit message
+            commitMessage = `Auto-commit: Staged ${stagedFiles.length} file(s)`;
+        }
+        // Perform commit
+        await gitService.commit(commitMessage);
+        logger.info(`Created commit: ${commitMessage}`);
+        // Optional push
         if (options.push) {
+            const branch = options.branch || 'main';
             const remote = options.remote || 'origin';
-            const branch = options.branch || await gitService.getCurrentBranch();
             await gitService.push(remote, branch);
             logger.info(`Pushed to ${remote}/${branch}`);
         }
     }
     catch (error) {
-        logger.error('Error in autocommit action:', error instanceof Error ? error.message : String(error));
+        logger.error('Autocommit failed:', error);
         throw error;
     }
 }
-//# sourceMappingURL=autocommitAction.js.map

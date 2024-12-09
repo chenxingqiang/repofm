@@ -1,5 +1,5 @@
-import { LRUCache } from 'lru-cache';
-import { FilePersistentCache } from './persistentCache';
+import { LRUCache } from 'lru-cache.js';
+import { FilePersistentCache } from './persistentCache.js';
 export class MultilevelCache {
     constructor() {
         this.l1Cache = new Map();
@@ -45,4 +45,3 @@ export class MultilevelCache {
         await this.l3Cache.clear();
     }
 }
-//# sourceMappingURL=multilevel.js.map

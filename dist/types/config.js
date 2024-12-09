@@ -10,4 +10,3 @@ export const normalizeIgnoreConfig = (ignore) => {
     }
     return ignore;
 };
-//# sourceMappingURL=config.js.map

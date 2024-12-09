@@ -1,6 +1,6 @@
 import simpleGit from 'simple-git';
 import inquirer from 'inquirer';
-import { logger } from '../../shared/logger';
+import { logger } from '../../shared/logger.js';
 
 export interface AutoCommitOptions {
   interactive?: boolean;

@@ -1,4 +1,4 @@
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'events.js';
 export class ClusterManager extends EventEmitter {
     constructor(redisUrl) {
         super();
@@ -7,4 +7,3 @@ export class ClusterManager extends EventEmitter {
         this.emit('context-update', contextId, data);
     }
 }
-//# sourceMappingURL=types.js.map

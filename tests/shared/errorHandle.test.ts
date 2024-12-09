@@ -1,27 +1,31 @@
 // tests/shared/errorHandle.test.ts
 
 import { z } from 'zod';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import { handleError, repofmConfigValidationError, repofmError, rethrowValidationErrorIfZodError } from '../../src/shared/errorHandle.js';
 import { logger } from '../../src/shared/logger.js';
 
-vi.mock('../../src/shared/logger.js', () => {
+jest.mock('../../src/shared/logger.js', () => {
   return {
     logger: {
-      error: vi.fn(),
-      debug: vi.fn(),
-      info: vi.fn()
+      error: jest.fn(),
+      debug: jest.fn(),
+      info: jest.fn()
     }
   };
 });
 
 describe('errorHandle', () => {
+    let consoleErrorSpy: jest.SpyInstance;
+
     beforeEach(() => {
-        vi.clearAllMocks();
+        consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+        jest.clearAllMocks();
     });
 
     afterEach(() => {
-        vi.resetAllMocks();
+        consoleErrorSpy.mockRestore();
+        jest.resetAllMocks();
     });
 
     describe('handleError', () => {
@@ -308,6 +312,16 @@ describe('errorHandle', () => {
             expect(logger.error).toHaveBeenCalledWith(
                 expect.stringContaining('Original error')
             );
+        });
+    });
+
+    describe('Error Handling', () => {
+        it('Config validation error should have correct message', () => {
+            const validationError = new repofmConfigValidationError('Config validation', '[field]', 'Expected string, received number');
+            
+            expect(validationError.message).toContain('Config validation');
+            expect(validationError.message).toContain('[field]');
+            expect(validationError.message).toContain('Expected string, received number');
         });
     });
 });

@@ -1,4 +1,4 @@
-import { globby } from 'globby';
+import { globby } from 'globby.js';
 import { logger } from '../../shared/logger.js';
 const DEFAULT_CONFIG = {
     patterns: ['**/*'],
@@ -55,4 +55,3 @@ export const searchFiles = async (rootDir, config = {}) => {
 export function sortFiles(files) {
     return files.sort((a, b) => a.localeCompare(b));
 }
-//# sourceMappingURL=fileSearch.js.map

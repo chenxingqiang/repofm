@@ -1,4 +1,4 @@
-import { createClient } from 'redis';
+import { createClient } from 'redis.js';
 
 export class ClusterManager {
   private redis;

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { run } from './cli/cliRun.js';
-import { argv, exit } from 'node:process';
+import { argv, exit } from 'node:process.js';
 
 export { run };
 

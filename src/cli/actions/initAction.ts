@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import pc from 'picocolors';
+import pc from 'picocolors.js';
 import {
   type repofmOutputStyle,
   defaultConfig,

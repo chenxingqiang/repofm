@@ -1,4 +1,4 @@
-import { PersistentCache } from '../types';
+import { PersistentCache } from '../types.js';
 
 export class FilePersistentCache<T = any> implements PersistentCache<T> {
   private cache: Map<string, T>;

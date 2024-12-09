@@ -1,4 +1,4 @@
-import type { Config } from '../../types/config';
+import type { Config } from '../../types/config.js';
 export interface ContextConfig {
     workspaceRoot: string;
     excludePatterns: string[];

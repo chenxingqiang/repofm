@@ -1,13 +1,10 @@
-import { describe, expect, test } from 'vitest';
+import { jest, describe, expect, test } from '@jest/globals';
 import { getFileManipulator } from '../../../src/core/file/fileManipulate.js';
 
 // Helper function to normalize whitespace and line endings
-const normalize = (str: string) => str
-  .replace(/\r\n/g, '\n')
-  .split('\n')
-  .map(line => line.trim())
-  .filter(line => line)
-  .join('\n');
+function normalizeWhitespace(text: string): string {
+  return text.replace(/\r\n/g, '\n').trim();
+}
 
 describe('fileManipulate', () => {
   describe('C-style languages', () => {
@@ -67,7 +64,7 @@ describe('fileManipulate', () => {
     testCases.forEach(({ name, ext, input, expected }) => {
       test(name, () => {
         const manipulator = getFileManipulator(`test${ext}`);
-        expect(normalize(manipulator?.removeComments(input) || '')).toBe(normalize(expected));
+        expect(normalizeWhitespace(manipulator?.removeComments(input) || '')).toBe(normalizeWhitespace(expected));
       });
     });
   });
@@ -136,7 +133,7 @@ describe('fileManipulate', () => {
     testCases.forEach(({ name, ext, input, expected }) => {
       test(name, () => {
         const manipulator = getFileManipulator(`test${ext}`);
-        expect(normalize(manipulator?.removeComments(input) || '')).toBe(normalize(expected));
+        expect(normalizeWhitespace(manipulator?.removeComments(input) || '')).toBe(normalizeWhitespace(expected));
       });
     });
   });
@@ -217,7 +214,7 @@ describe('fileManipulate', () => {
     testCases.forEach(({ name, ext, input, expected }) => {
       test(name, () => {
         const manipulator = getFileManipulator(`test${ext}`);
-        expect(normalize(manipulator?.removeComments(input) || '')).toBe(normalize(expected));
+        expect(normalizeWhitespace(manipulator?.removeComments(input) || '')).toBe(normalizeWhitespace(expected));
       });
     });
   });
@@ -255,7 +252,7 @@ describe('fileManipulate', () => {
     testCases.forEach(({ name, ext, input, expected }) => {
       test(name, () => {
         const manipulator = getFileManipulator(`test${ext}`);
-        expect(normalize(manipulator?.removeEmptyLines(input) || '')).toBe(normalize(expected));
+        expect(normalizeWhitespace(manipulator?.removeEmptyLines(input) || '')).toBe(normalizeWhitespace(expected));
       });
     });
   });
@@ -291,7 +288,7 @@ describe('fileManipulate', () => {
     testCases.forEach(({ name, ext, input, expected }) => {
       test(name, () => {
         const manipulator = getFileManipulator(`test${ext}`);
-        expect(normalize(manipulator?.removeComments(input) || '')).toBe(normalize(expected));
+        expect(normalizeWhitespace(manipulator?.removeComments(input) || '')).toBe(normalizeWhitespace(expected));
       });
     });
   });

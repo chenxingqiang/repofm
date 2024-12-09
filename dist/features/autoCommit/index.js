@@ -1,6 +1,6 @@
-import simpleGit from 'simple-git';
-import inquirer from 'inquirer';
-import { logger } from '../../shared/logger';
+import simpleGit from 'simple-git.js';
+import inquirer from 'inquirer.js';
+import { logger } from '../../shared/logger.js';
 export async function autoCommit(workingDir, options = {}) {
     const git = simpleGit(workingDir);
     const status = await git.status();
@@ -23,4 +23,3 @@ export async function autoCommit(workingDir, options = {}) {
     logger.success(`Changes committed: ${commitMessage}`);
 }
 export default autoCommit;
-//# sourceMappingURL=index.js.map
