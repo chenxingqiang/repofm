@@ -1,15 +1,13 @@
-import { SupabaseClient } from '@supabase/supabase-js.js';
 export interface SupabaseConfig {
     url: string;
-    anonKey: string;
-    enableLogging?: boolean;
+    key: string;
 }
 export declare class SupabaseConfigManager {
     private client;
     private config;
     initialize(config: SupabaseConfig): void;
     isInitialized(): boolean;
-    getClient(): SupabaseClient;
+    getClient(): any;
     getConfig(): SupabaseConfig;
     testConnection(): Promise<boolean>;
 }

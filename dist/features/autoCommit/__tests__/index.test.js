@@ -1,23 +1,23 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest.js';
+import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 import { autoCommit } from '../index.js';
 import inquirer from 'inquirer.js';
 import simpleGit from 'simple-git.js';
-vi.mock('simple-git', () => ({
-    default: vi.fn(() => ({
-        status: vi.fn().mockResolvedValue({ modified: ['test.txt'] }),
-        add: vi.fn().mockResolvedValue(undefined),
-        commit: vi.fn().mockResolvedValue(undefined)
+jest.mock('simple-git', () => ({
+    default: jest.fn(() => ({
+        status: jest.fn().mockResolvedValue({ modified: ['test.txt'] }),
+        add: jest.fn().mockResolvedValue(undefined),
+        commit: jest.fn().mockResolvedValue(undefined)
     }))
 }));
-vi.mock('inquirer', () => ({
+jest.mock('inquirer', () => ({
     default: {
-        prompt: vi.fn().mockResolvedValue({ message: 'Test commit message' })
+        prompt: jest.fn().mockResolvedValue({ message: 'Test commit message' })
     }
 }));
 describe('AutoCommit', () => {
     const testPath = '/test/path';
     beforeEach(() => {
-        vi.clearAllMocks();
+        jest.clearAllMocks();
     });
     it('should perform auto commit with default message', async () => {
         await autoCommit(testPath);
@@ -33,12 +33,13 @@ describe('AutoCommit', () => {
             }]);
     });
     it('should skip commit when no changes detected', async () => {
-        vi.mocked(simpleGit).mockReturnValue({
-            status: vi.fn().mockResolvedValue({ modified: [] }),
-            add: vi.fn(),
-            commit: vi.fn()
+        jest.mocked(simpleGit).mockReturnValue({
+            status: jest.fn().mockResolvedValue({ modified: [] }),
+            add: jest.fn(),
+            commit: jest.fn()
         });
         await autoCommit(testPath);
         expect(simpleGit().commit).not.toHaveBeenCalled();
     });
 });
+//# sourceMappingURL=index.test.js.map

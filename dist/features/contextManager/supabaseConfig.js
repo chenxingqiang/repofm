@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js.js';
+import { createClient } from '@supabase/supabase-js';
 export class SupabaseConfigManager {
     constructor() {
         this.client = null;
@@ -6,7 +6,7 @@ export class SupabaseConfigManager {
     }
     initialize(config) {
         this.config = config;
-        this.client = createClient(config.url, config.anonKey, {
+        this.client = createClient(config.url, config.key, {
             auth: {
                 persistSession: false
             }
@@ -44,3 +44,4 @@ export class SupabaseConfigManager {
         }
     }
 }
+//# sourceMappingURL=supabaseConfig.js.map

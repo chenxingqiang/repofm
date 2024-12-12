@@ -8,9 +8,9 @@ describe('fileTreeGenerate', () => {
     const sep = path.sep;
 
     describe('generateFileTree', () => {
-        test('should generate correct tree structure for flat files', () => {
+        test('should generate correct tree structure for flat files', async () => {
             const files = ['file1.txt', 'file2.txt'];
-            const tree = generateFileTree(files);
+            const tree = await generateFileTree(files);
 
             expect(tree.name).toBe('root');
             expect(tree.isDirectory).toBe(true);
@@ -18,20 +18,20 @@ describe('fileTreeGenerate', () => {
             expect(tree.children.map(child => child.name)).toEqual(['file1.txt', 'file2.txt']);
         });
 
-        test('should generate correct tree structure for nested files', () => {
+        test('should generate correct tree structure for nested files', async () => {
             const files = [
                 'src/index.js',
                 'src/utils/helper.js',
                 'tests/test.js'
             ];
-            const tree = generateFileTree(files);
+            const tree = await generateFileTree(files);
 
             expect(tree.name).toBe('root');
             expect(tree.children).toHaveLength(2);
         });
 
-        test('should handle empty input', () => {
-            const tree = generateFileTree([]);
+        test('should handle empty input', async () => {
+            const tree = await generateFileTree([]);
 
             expect(tree.name).toBe('root');
             expect(tree.isDirectory).toBe(true);
@@ -40,14 +40,14 @@ describe('fileTreeGenerate', () => {
     });
 
     describe('treeToString', () => {
-        test('should generate correct string representation for flat structure', () => {
+        test('should generate correct string representation for flat structure', async () => {
             const files = [
                 'file1.txt',
                 'file2.js',
                 'file3.css',
             ];
 
-            const tree = generateFileTree(files);
+            const tree = await generateFileTree(files);
             const result = treeToString(tree);
 
             const expected = [
@@ -59,14 +59,14 @@ describe('fileTreeGenerate', () => {
             expect(result).toBe(expected);
         });
 
-        test('should generate correct string representation for nested structure', () => {
+        test('should generate correct string representation for nested structure', async () => {
             const files = [
                 `src${sep}index.js`,
                 `src${sep}utils${sep}helper.js`,
                 `tests${sep}test.js`,
             ];
 
-            const tree = generateFileTree(files);
+            const tree = await generateFileTree(files);
             const result = treeToString(tree);
 
             const expected = [
@@ -81,19 +81,19 @@ describe('fileTreeGenerate', () => {
             expect(result).toBe(expected);
         });
 
-        test('should handle empty tree', () => {
-            const tree = generateFileTree([]);
+        test('should handle empty tree', async () => {
+            const tree = await generateFileTree([]);
             const result = treeToString(tree);
 
             expect(result).toBe('');
         });
 
-        test('should handle deep nesting', () => {
+        test('should handle deep nesting', async () => {
             const files = [
                 `a${sep}b${sep}c${sep}d${sep}file.txt`,
             ];
 
-            const tree = generateFileTree(files);
+            const tree = await generateFileTree(files);
             const result = treeToString(tree);
 
             const expected = [

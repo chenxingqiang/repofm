@@ -1,14 +1,20 @@
-export interface IgnoreConfig {
-    useGitignore?: boolean;
-    useDefaultPatterns?: boolean;
-    customPatterns?: string[];
-    patterns?: string[];
-}
-export interface SearchConfig {
+export interface IgnoreOptions {
     patterns: string[];
-    ignore: IgnoreConfig;
-    dot: boolean;
-    followSymlinks: boolean;
+    useGitignore: boolean;
+    useDefaultPatterns: boolean;
 }
-export declare const searchFiles: (rootDir: string, config?: Partial<SearchConfig>) => Promise<string[]>;
-export declare function sortFiles(files: string[]): string[];
+export interface SearchOptions {
+    dot?: boolean;
+    followSymlinks?: boolean;
+    ignore?: string[] | IgnoreOptions;
+}
+export interface SearchResult {
+    path: string;
+    matches?: {
+        line: number;
+        content: string;
+    }[];
+}
+export declare function searchFiles(searchPath: string, pattern: string, options?: SearchOptions): Promise<SearchResult[]>;
+export declare function findFiles(searchPath: string, patterns: string[], options?: SearchOptions): Promise<string[]>;
+export declare function matchPattern(filePath: string, pattern: string, caseSensitive?: boolean): boolean;

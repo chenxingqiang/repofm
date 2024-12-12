@@ -9,3 +9,4 @@ export class ClusterManager {
         await this.redis.connect();
     }
 }
+//# sourceMappingURL=cluster.js.map

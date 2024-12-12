@@ -191,3 +191,4 @@ function formatTreeStructure(files) {
     }
     return renderTree(tree);
 }
+//# sourceMappingURL=markdownStyle.js.map

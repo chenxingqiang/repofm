@@ -65,3 +65,4 @@ CommitGeneratorConfig.defaultSettings = {
 };
 // Singleton export for easy configuration access
 export const commitConfig = CommitGeneratorConfig;
+//# sourceMappingURL=CommitGeneratorConfig.js.map

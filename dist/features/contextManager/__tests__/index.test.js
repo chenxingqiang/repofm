@@ -1,5 +1,5 @@
 import { CodeContextManager } from '../index.js';
-import { describe, it, expect, beforeEach } from 'vitest.js';
+import { describe, it, expect, beforeEach } from '@jest/globals';
 describe('CodeContextManager', () => {
     const defaultConfig = {
         workspaceRoot: '/test/workspace',
@@ -108,3 +108,4 @@ describe('CodeContextManager', () => {
         });
     });
 });
+//# sourceMappingURL=index.test.js.map

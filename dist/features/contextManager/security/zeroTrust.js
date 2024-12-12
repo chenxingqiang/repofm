@@ -1,16 +1,17 @@
-import { EventEmitter } from 'events.js';
+import { EventEmitter } from 'events';
 export class ZeroTrustManager extends EventEmitter {
-    constructor() {
-        super(...arguments);
+    constructor(userId) {
+        super(); // Important: call the parent constructor
+        this.userId = userId;
         this.securityContexts = new Map();
         this.trustDuration = 5 * 60 * 1000; // 5 minutes
         this.riskThreshold = 0.7;
     }
-    async verifyAccess(userId, resourceId, action, context) {
-        const securityContext = await this.getOrCreateSecurityContext(userId);
+    async verifyAccess(resourceId, action, p0, context) {
+        const securityContext = await this.getOrCreateSecurityContext(this.userId);
         // 验证会话是否需要重新认证
         if (this.requiresReauthorization(securityContext)) {
-            await this.reauthorize(userId);
+            await this.reauthorize(this.userId);
         }
         // 计算当前操作的风险分数
         const riskScore = await this.calculateRiskScore(securityContext, action, context);
@@ -19,10 +20,15 @@ export class ZeroTrustManager extends EventEmitter {
         securityContext.lastVerified = Date.now();
         // 高风险操作需要额外验证
         if (riskScore > this.riskThreshold) {
-            await this.requestAdditionalVerification(userId, action);
+            await this.requestAdditionalVerification(this.userId, action);
         }
         // 检查权限和风险级别
-        return this.evaluateAccess(securityContext, resourceId, action);
+        const isAuthorized = this.evaluateAccess(securityContext, resourceId, action);
+        if (!isAuthorized) {
+            // Emit an event when verification is required
+            this.emit('verification-required', { userId: this.userId, resource: resourceId, action, context });
+        }
+        return isAuthorized;
     }
     async calculateRiskScore(context, action, currentContext) {
         let riskScore = 0;
@@ -79,3 +85,27 @@ export class ZeroTrustManager extends EventEmitter {
         await this.requestAdditionalVerification(userId, 'reauthorize');
     }
 }
+export class ZeroTrustService extends EventEmitter {
+    constructor(userId) {
+        super();
+        this.manager = new ZeroTrustManager(userId);
+        this.setupEventHandlers();
+    }
+    setupEventHandlers() {
+        this.manager.on('verification-required', (data) => {
+            this.emit('verification-needed', data);
+        });
+    }
+    async verifyAccess(resourceId, action, context) {
+        // Ensure context is always a Partial<SecurityContext>
+        const securityContext = context ? {
+            deviceId: context.deviceId,
+            location: context.location
+        } : {};
+        return this.manager.verifyAccess(resourceId, action, securityContext);
+    }
+    async revokeAccess(userId, resourceId) {
+        this.emit('access-revoked', { userId, resourceId });
+    }
+}
+//# sourceMappingURL=zeroTrust.js.map

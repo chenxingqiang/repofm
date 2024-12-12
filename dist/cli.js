@@ -1,13 +1,15 @@
 #!/usr/bin/env node
 import { run } from './cli/cliRun.js';
-import { argv, exit } from 'node:process.js';
+import process from 'node:process';
+const pkg = { version: '2.1.1' };
 export { run };
-// Run the CLI
+// Handle errors
 run().catch(err => {
     console.error('Error:', err);
-    exit(1);
+    process.exit(1);
 });
-// 如果直接运行此文件
-if (import.meta.url === `file://${argv[1]}`) {
+// If running directly
+if (import.meta.url === `file://${process.argv[1]}`) {
     // empty block
 }
+//# sourceMappingURL=cli.js.map

@@ -1,4 +1,4 @@
-import pc from 'picocolors.js';
+import pc from 'picocolors';
 export class Logger {
     constructor() {
         this.level = 'info';
@@ -56,3 +56,4 @@ export class Logger {
 }
 Logger.instance = null;
 export const logger = Logger.getInstance();
+//# sourceMappingURL=logger.js.map

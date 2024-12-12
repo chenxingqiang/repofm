@@ -1,18 +1,17 @@
-import { createClient, SupabaseClient } from '@supabase/supabase-js.js';
+import { createClient } from '@supabase/supabase-js';
 
 export interface SupabaseConfig {
   url: string;
-  anonKey: string;
-  enableLogging?: boolean;
+  key: string;
 }
 
 export class SupabaseConfigManager {
-  private client: SupabaseClient | null = null;
+  private client: any | null = null;
   private config: SupabaseConfig | null = null;
 
   public initialize(config: SupabaseConfig): void {
     this.config = config;
-    this.client = createClient(config.url, config.anonKey, {
+    this.client = createClient(config.url, config.key, {
       auth: {
         persistSession: false
       }
@@ -23,7 +22,7 @@ export class SupabaseConfigManager {
     return this.client !== null && this.config !== null;
   }
 
-  public getClient(): SupabaseClient {
+  public getClient(): any {
     if (!this.client) {
       throw new Error('Supabase client not initialized');
     }

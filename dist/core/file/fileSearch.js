@@ -1,57 +1,102 @@
-import { globby } from 'globby.js';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import { globby } from 'globby';
+import { minimatch } from 'minimatch';
 import { logger } from '../../shared/logger.js';
-const DEFAULT_CONFIG = {
-    patterns: ['**/*'],
-    ignore: {
-        patterns: [],
-        useGitignore: true,
-        useDefaultPatterns: true,
-        customPatterns: [],
-    },
-    dot: false,
-    followSymlinks: false,
-};
-export const searchFiles = async (rootDir, config = {}) => {
+import { exists, isDirectory } from './fileUtils.js';
+function isIgnoreOptions(ignore) {
+    return typeof ignore === 'object' && !Array.isArray(ignore) && 'useGitignore' in ignore;
+}
+export async function searchFiles(searchPath, pattern, options = {}) {
     try {
-        const finalConfig = {
-            ...DEFAULT_CONFIG,
-            ...config,
-            ignore: {
-                ...DEFAULT_CONFIG.ignore,
-                ...(config.ignore || {}),
-            },
-        };
-        const options = {
-            cwd: rootDir,
-            absolute: false,
-            dot: finalConfig.dot,
-            followSymbolicLinks: finalConfig.followSymlinks,
-            ignore: finalConfig.ignore.patterns,
-            gitignore: finalConfig.ignore.useGitignore,
+        if (!(await exists(searchPath))) {
+            throw new Error(`Search path does not exist: ${searchPath}`);
+        }
+        if (!(await isDirectory(searchPath))) {
+            throw new Error(`Search path is not a directory: ${searchPath}`);
+        }
+        const globbyOptions = {
+            cwd: searchPath,
+            dot: options.dot,
+            followSymbolicLinks: options.followSymlinks,
+            gitignore: isIgnoreOptions(options.ignore) ? options.ignore.useGitignore : true,
+            ignore: Array.isArray(options.ignore)
+                ? options.ignore
+                : options.ignore?.patterns || [],
+            absolute: true,
             onlyFiles: true,
         };
-        const files = await globby(finalConfig.patterns, options);
-        return files.sort((a, b) => a.localeCompare(b));
+        const files = await globby(pattern, globbyOptions);
+        const results = [];
+        for (const file of files) {
+            try {
+                const stats = await fs.stat(file);
+                if (!stats.isFile())
+                    continue;
+                const content = await fs.readFile(file, 'utf-8');
+                const lines = content.split('\n');
+                const matches = [];
+                for (let i = 0; i < lines.length; i++) {
+                    const line = lines[i];
+                    const matchPattern = pattern;
+                    const searchLine = line;
+                    if (searchLine.includes(matchPattern)) {
+                        matches.push({
+                            line: i + 1,
+                            content: line.trim()
+                        });
+                    }
+                }
+                if (matches.length > 0) {
+                    results.push({
+                        path: path.relative(searchPath, file),
+                        matches
+                    });
+                }
+            }
+            catch (error) {
+                logger.error(`Error processing file ${file}:`, error);
+            }
+        }
+        return results;
     }
     catch (error) {
-        if (error instanceof Error) {
-            logger.error('Error searching files:', error.message);
-            if (error.message.includes('too many symbolic links')) {
-                logger.error('Cyclic symbolic links detected');
-            }
-            else if (error.message.includes('EAGAIN')) {
-                logger.error('Resource temporarily unavailable');
-            }
-            else if (error.message.includes('ENOMEM')) {
-                logger.error('Out of memory error');
-            }
-        }
-        else {
-            logger.error('Unknown error occurred while searching files');
-        }
+        logger.error(`Error searching files in ${searchPath}:`, error);
         throw error;
     }
-};
-export function sortFiles(files) {
-    return files.sort((a, b) => a.localeCompare(b));
 }
+export async function findFiles(searchPath, patterns, options = {}) {
+    try {
+        if (!(await exists(searchPath))) {
+            throw new Error(`Search path does not exist: ${searchPath}`);
+        }
+        const globbyOptions = {
+            cwd: searchPath,
+            dot: options.dot,
+            followSymbolicLinks: options.followSymlinks,
+            gitignore: isIgnoreOptions(options.ignore) ? options.ignore.useGitignore : true,
+            ignore: Array.isArray(options.ignore)
+                ? options.ignore
+                : options.ignore?.patterns || [],
+            absolute: true,
+            onlyFiles: true,
+        };
+        const files = await globby(patterns, globbyOptions);
+        return files.map(file => path.relative(searchPath, file));
+    }
+    catch (error) {
+        logger.error(`Error finding files in ${searchPath}:`, error);
+        throw error;
+    }
+}
+export function matchPattern(filePath, pattern, caseSensitive = true) {
+    try {
+        const options = { nocase: !caseSensitive };
+        return minimatch(filePath, pattern, options);
+    }
+    catch (error) {
+        logger.error(`Error matching pattern ${pattern} against ${filePath}:`, error);
+        throw error;
+    }
+}
+//# sourceMappingURL=fileSearch.js.map

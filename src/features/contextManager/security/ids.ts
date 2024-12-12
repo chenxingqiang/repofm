@@ -1,6 +1,7 @@
-import { EventEmitter } from 'events.js';
+import { EventEmitter } from 'events';
+import { IntrusionDetectionSystem as IIDSBase } from './types';
 
-export class IntrusionDetectionSystem extends EventEmitter {
+export class IntrusionDetectionSystem extends EventEmitter implements IIDSBase {
   private readonly patterns: Map<string, RegExp> = new Map();
   private suspiciousActivities: any[] = [];
   private readonly maxLogSize = 1000;
@@ -11,59 +12,66 @@ export class IntrusionDetectionSystem extends EventEmitter {
   }
 
   private initializePatterns(): void {
-    this.patterns.set(
-      'sql-injection',
-      /('|"|;|--|\/\*|\*\/|=|%|@@|char|union|select|delete|drop|update|insert)/i
-    );
-    this.patterns.set(
-      'xss',
-      /<script|javascript:|onerror=|onload=|eval\(|setTimeout\(|setInterval\(/i
-    );
-    this.patterns.set(
-      'path-traversal',
-      /\.\.\/|\.\.\\|~\/|~\\|\.\.%2f|\.\.%5c/i
-    );
+    // Add common security patterns
+    this.patterns.set('sql_injection', /(\b(SELECT|INSERT|UPDATE|DELETE|DROP)\b).*(\bFROM\b|\bWHERE\b)/i);
+    this.patterns.set('xss', /(<script>|javascript:|onerror=)/i);
+    this.patterns.set('path_traversal', /(\.\.|%2e%2e)/i);
   }
 
   async analyzeRequest(request: any): Promise<boolean> {
-    const suspicious = await this.detectThreats(request);
-    if (suspicious) {
-      await this.logSuspiciousActivity(request);
-      return true;
-    }
-    return false;
-  }
-
-  private async detectThreats(request: any): Promise<boolean> {
+    if (!request) return false;
+    
     const payload = JSON.stringify(request);
     
     for (const [type, pattern] of this.patterns) {
       if (pattern.test(payload)) {
-        this.emit('threat-detected', {
+        this.emit('intrusion-detected', {
           type,
           payload,
           timestamp: Date.now()
         });
-        return true;
+        this.logSuspiciousActivity({ type, payload });
+        return false;
       }
     }
-
-    return false;
+    
+    return true;
   }
 
-  private async logSuspiciousActivity(activity: any): Promise<void> {
+  private logSuspiciousActivity(activity: any): void {
     this.suspiciousActivities.push({
       ...activity,
       timestamp: Date.now()
     });
-
+    
     if (this.suspiciousActivities.length > this.maxLogSize) {
-      await this.archiveSuspiciousActivities();
+      const activitiesToArchive = this.suspiciousActivities.slice(0, -this.maxLogSize);
+      this.suspiciousActivities = this.suspiciousActivities.slice(-this.maxLogSize);
+      // Optional: implement archiving logic
     }
   }
+}
 
-  private async archiveSuspiciousActivities(): Promise<void> {
-    const activitiesToArchive = this.suspiciousActivities.slice(0, -this.maxLogSize);
-    this.suspiciousActivities = this.suspiciousActivities.slice(-this.maxLogSize);
+export class IDSService extends EventEmitter {
+  private ids: IntrusionDetectionSystem;
+
+  constructor() {
+    super();
+    this.ids = new IntrusionDetectionSystem();
+    this.setupEventHandlers();
   }
-} 
+
+  private setupEventHandlers(): void {
+    this.ids.on('intrusion-detected', (data: any) => {
+      this.emit('alert', {
+        type: 'intrusion',
+        severity: 'high',
+        ...data
+      });
+    });
+  }
+
+  async analyzeRequest(request: any): Promise<boolean> {
+    return this.ids.analyzeRequest(request);
+  }
+}

@@ -6,24 +6,18 @@
     "esModuleInterop": true,
     "strict": true,
     "skipLibCheck": true,
-    "outDir": "dist",
-    "rootDir": "src",
-    "declaration": true,
+    "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "allowJs": true,
-    "checkJs": false,
-    "noEmit": false,
-    "forceConsistentCasingInFileNames": true,
-    "isolatedModules": true,
-    "allowSyntheticDefaultImports": true,
-    "baseUrl": "src",
+    "outDir": "dist",
+    "declaration": true,
+    "sourceMap": true,
+    "rootDir": "src",
+    "baseUrl": ".",
     "paths": {
-      "*": ["*"]
-    },
-    "types": ["node"],
-    "noImplicitAny": false,
-    "strictNullChecks": false
+      "*": ["node_modules/*"]
+    }
   },
-  "include": ["src/**/*", "src/**/*.mts"],
+  "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
 }

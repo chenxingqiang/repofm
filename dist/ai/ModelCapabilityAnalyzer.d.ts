@@ -19,11 +19,11 @@ export declare const ModelCapabilitySchema: z.ZodObject<{
         contextWindowSize?: number | undefined;
         specializedTasks?: string[] | undefined;
     }, {
-        maxTokens?: number | undefined;
         imageInput?: boolean | undefined;
         objectGeneration?: boolean | undefined;
         toolUsage?: boolean | undefined;
         toolStreaming?: boolean | undefined;
+        maxTokens?: number | undefined;
         contextWindowSize?: number | undefined;
         specializedTasks?: string[] | undefined;
     }>;
@@ -65,11 +65,11 @@ export declare const ModelCapabilitySchema: z.ZodObject<{
     provider: string;
     modelName: string;
     capabilities: {
-        maxTokens?: number | undefined;
         imageInput?: boolean | undefined;
         objectGeneration?: boolean | undefined;
         toolUsage?: boolean | undefined;
         toolStreaming?: boolean | undefined;
+        maxTokens?: number | undefined;
         contextWindowSize?: number | undefined;
         specializedTasks?: string[] | undefined;
     };
@@ -105,8 +105,16 @@ interface ModelInfo {
     recommendedUseCases?: string[];
 }
 export declare class ModelCapabilityAnalyzer {
+    private static instance;
     private readonly models;
-    constructor();
+    private constructor();
+    static getInstance(): ModelCapabilityAnalyzer;
+    static recommendModelForUseCase(useCase: string): ModelInfo | null;
+    static generateCapabilityReport(modelName: string): string | null;
+    static compareModels(modelNames: string[]): ModelInfo[];
+    static getOllamaModels(): ModelInfo[];
+    static getOllamaDeploymentGuide(modelName: string): string | null;
+    static findModelsByCapabilities(capabilitiesMap: ModelCapabilities): ModelInfo[];
     private initializeModels;
     hasCapability(modelName: string, capability: keyof ModelCapabilities): boolean;
     getModelInfo(modelName: string): ModelInfo | undefined;

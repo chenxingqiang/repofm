@@ -46,3 +46,4 @@ export class ContextAnalyzer {
         return {};
     }
 }
+//# sourceMappingURL=analyzer.js.map

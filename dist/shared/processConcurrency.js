@@ -4,3 +4,4 @@ export const getProcessConcurrency = () => {
     // Use all available CPUs except one
     return Math.max(1, cpuCount - 1);
 };
+//# sourceMappingURL=processConcurrency.js.map

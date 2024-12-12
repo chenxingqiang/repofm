@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest.js';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { Logger } from '../logger.js';
 vi.mock('picocolors', async () => {
     return {
@@ -100,3 +100,4 @@ describe('Logger', () => {
         });
     });
 });
+//# sourceMappingURL=logger.test.js.map

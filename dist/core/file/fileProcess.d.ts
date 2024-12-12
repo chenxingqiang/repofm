@@ -1,8 +1,12 @@
-import type { repofmConfigMerged } from '../../config/configSchema.js';
-import type { ProcessedFile, RawFile, OutputConfig } from './fileTypes.js';
-interface ProcessConfig {
-    output?: OutputConfig;
+import { FileInfo } from './fileCollect.js';
+export interface ProcessedFile extends FileInfo {
+    processedContent: string;
+    metadata?: Record<string, unknown>;
 }
-export declare const processFiles: (rawFiles: RawFile[], config: repofmConfigMerged) => Promise<ProcessedFile[]>;
-export declare const processContent: (content: string | null, filePath: string, config?: ProcessConfig) => Promise<string>;
-export {};
+export interface FileProcessor {
+    process(file: FileInfo): Promise<ProcessedFile>;
+}
+export declare class DefaultFileProcessor implements FileProcessor {
+    process(file: FileInfo): Promise<ProcessedFile>;
+}
+export declare function processFiles(files: FileInfo[], processor?: FileProcessor, concurrency?: number): Promise<ProcessedFile[]>;

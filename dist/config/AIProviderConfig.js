@@ -158,8 +158,9 @@ export class AIProviderConfigManager {
         try {
             const { OllamaInteractionService } = await import('../services/OllamaInteractionService.js');
             const ollamaService = new OllamaInteractionService();
-            // Attempt a simple API call
-            return await ollamaService.listLocalModels();
+            // Extract model names from OllamaModel[]
+            const models = await ollamaService.listLocalModels();
+            return models.map(model => model.name);
         }
         catch {
             return [];
@@ -169,3 +170,4 @@ export class AIProviderConfigManager {
 AIProviderConfigManager.CONFIG_PATH = path.join(process.env.HOME || process.cwd(), '.repofm', 'ai-providers.json');
 // Singleton export for easy access
 export const aiProviderConfig = AIProviderConfigManager;
+//# sourceMappingURL=AIProviderConfig.js.map

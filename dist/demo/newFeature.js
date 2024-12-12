@@ -10,3 +10,4 @@ export class AICommitDemo {
         return 'This is a sample AI commit message generator';
     }
 }
+//# sourceMappingURL=newFeature.js.map

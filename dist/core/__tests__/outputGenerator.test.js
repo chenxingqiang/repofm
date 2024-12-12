@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest.js';
+import { describe, it, expect } from '@jest/globals';
 import { OutputGenerator } from '../outputGenerator.js';
 describe('OutputGenerator', () => {
     it('should generate JSON output', () => {
@@ -17,3 +17,4 @@ describe('OutputGenerator', () => {
         expect(generator.generate(data)).toContain('```json');
     });
 });
+//# sourceMappingURL=outputGenerator.test.js.map

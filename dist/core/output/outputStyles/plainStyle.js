@@ -72,3 +72,4 @@ ${PLAIN_LONG_SEPARATOR}
 
 `;
 };
+//# sourceMappingURL=plainStyle.js.map

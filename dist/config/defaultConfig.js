@@ -21,3 +21,4 @@ export const defaultConfig = {
         enableSecurityCheck: false
     }
 };
+//# sourceMappingURL=defaultConfig.js.map

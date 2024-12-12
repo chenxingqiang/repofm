@@ -41,7 +41,7 @@ async function testOllama() {
       model: modelName,
       input: prompt
     });
-    console.log('Embedding vector length:', embedding.embedding.length);
+    console.log('Embedding vector length:', embedding.embeddings.length);
 
   } catch (error) {
     console.error('Test failed:', error);

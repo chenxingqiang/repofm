@@ -1,4 +1,4 @@
-import * as tf from '@tensorflow/tfjs-node.js';
+import * as tf from '@tensorflow/tfjs-node';
 import { logger } from '../shared/logger.js';
 import path from 'node:path';
 export class CommitMessageLearner {
@@ -156,3 +156,4 @@ export class CommitMessageLearner {
 }
 // Singleton export for easy usage
 export const commitMessageLearner = new CommitMessageLearner();
+//# sourceMappingURL=CommitMessageLearner.js.map

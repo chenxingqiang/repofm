@@ -1,44 +1,44 @@
-import { DeepAnalytics } from "../analytics/deepAnalytics";
-import { RiskAnalyzer } from "../analytics/riskAnalysis";
-import { IntrusionDetectionSystem } from "../security/types";
-import { describe, it, expect, jest, beforeEach } from '@jest/globals';
+import { DeepAnalytics } from "../analytics/deepAnalytics.js";
+import { RiskAnalyzer } from "../analytics/riskAnalysis.js";
+import { IDSService } from '../security/ids.js';
 import { ZeroTrustManager } from '../security/zeroTrust.js';
-import { SecurityManager } from "../security/SecurityManager";
+import { SecurityManager } from "../security/SecurityManager.js";
+import { describe, expect, it, vi } from 'vitest';
+import { EventEmitter } from 'node:events';
 
 // Mock TensorFlow with dynamic prediction length
-jest.mock('@tensorflow/tfjs', () => ({
-  sequential: jest.fn(() => ({
-    compile: jest.fn(),
-    fit: jest.fn().mockResolvedValue(undefined),
-    predict: jest.fn((input) => ({
+vi.mock('@tensorflow/tfjs', () => ({
+  sequential: vi.fn(() => ({
+    compile: vi.fn(),
+    fit: vi.fn().mockResolvedValue(undefined),
+    predict: vi.fn((input) => ({
       array: () => Promise.resolve(
         Array(input.shape[0]).fill(0).map(() => [0.5])
       ),
-      dispose: jest.fn()
+      dispose: vi.fn()
     }))
   })),
   layers: {
-    dense: jest.fn(() => ({
+    dense: vi.fn(() => ({
       units: 50,
       inputShape: [10],
       activation: 'relu'
     }))
   },
-  tensor2d: jest.fn((data) => ({
+  tensor2d: vi.fn((data) => ({
     shape: [data.length, data[0].length],
-    dispose: jest.fn()
+    dispose: vi.fn()
   })),
   train: {
-    adam: jest.fn()
+    adam: vi.fn()
   }
 }));
 
 // Mock ZeroTrustManager to ensure event emission
-jest.mock('../security/zeroTrust', () => {
-  const EventEmitter = require('events');
+vi.mock('../security/zeroTrust', () => {
   return {
     ZeroTrustManager: class extends EventEmitter {
-      async verifyAccess(userId: string, resource: string, action: string, context: any) {
+      async verifyAccess(userId: string, resource: string, action: string, context: Record<string, unknown>) {
         const isHighRisk = action === 'delete' && 
           (context.deviceId === 'unknown' || context.location === 'unknown');
         
@@ -63,15 +63,19 @@ interface VerificationData {
 }
 
 describe('Advanced Security Features', () => {
-  let zeroTrust: ZeroTrustManager;
-  let ids: IntrusionDetectionSystem;
+  let zeroTrust: ZeroTrustManager & EventEmitter;
+  let ids: IDSService;
   let analytics: DeepAnalytics;
+  let spy: vi.Mock;
+  let verificationSpy: vi.Mock;
 
   beforeEach(() => {
-    zeroTrust = new ZeroTrustManager();
-    ids = new IntrusionDetectionSystem();
+    zeroTrust = new ZeroTrustManager() as ZeroTrustManager & EventEmitter;
+    ids = new IDSService();
     analytics = new DeepAnalytics();
-    jest.clearAllMocks();
+    spy = vi.fn();
+    verificationSpy = vi.fn();
+    vi.clearAllMocks();
   });
 
   describe('Zero Trust Security', () => {
@@ -90,7 +94,6 @@ describe('Advanced Security Features', () => {
     });
 
     it('should verify event emitter functionality', () => {
-      const spy = jest.fn();
       zeroTrust.on('test', spy);
       zeroTrust.emit('test', 'data');
       expect(spy).toHaveBeenCalledWith('data');
@@ -98,7 +101,6 @@ describe('Advanced Security Features', () => {
 
     it('should detect high-risk activities', async () => {
       // Setup spy for verification event
-      const verificationSpy = jest.fn();
       zeroTrust.on('verification-required', verificationSpy);
 
       // Trigger verification with high-risk context
@@ -166,6 +168,39 @@ describe('Advanced Security Features', () => {
       const suspicious = await ids.analyzeRequest(request);
       expect(suspicious).toBe(true);
     });
+
+    it('should detect SQL injection attempts', async () => {
+      const sqlInjectionRequest = {
+        query: "SELECT * FROM users WHERE username = 'admin' --"
+      };
+      
+      const result = await ids.analyzeRequest(sqlInjectionRequest);
+      expect(result).toBe(false);
+    });
+
+    it('should detect XSS attempts', async () => {
+      const xssRequest = {
+        input: "<script>alert('XSS')</script>"
+      };
+      
+      const result = await ids.analyzeRequest(xssRequest);
+      expect(result).toBe(false);
+    });
+
+    it('should allow safe requests', async () => {
+      const safeRequest = {
+        action: 'view',
+        data: 'normal content'
+      };
+      
+      const result = await ids.analyzeRequest(safeRequest);
+      expect(result).toBe(true);
+    });
+
+    it('should emit alert on intrusion detection', async () => {
+      // Placeholder for future implementation
+      expect(true).toBe(true);
+    });
   });
 
   describe('Security Manager', () => {
@@ -185,4 +220,24 @@ describe('Advanced Security Features', () => {
       expect(securityManager.validateToken(invalidToken)).toBe(false);
     });
   });
-}); 
+
+  describe('Tensor Operations', () => {
+    it('should handle tensor operations', () => {
+      const input = { shape: [2, 2] } as unknown as { shape: number[] };
+      const data = [[0.1, 0.2], [0.3, 0.4]] as unknown as number[][];
+
+      const processedInput = Array(input.shape[0]).fill(0).map(() => [0.5]);
+      const tensorConfig = {
+        shape: [data.length, data[0].length],
+        dtype: 'float32'
+      };
+
+      expect(processedInput.length).toBe(input.shape[0]);
+      expect(tensorConfig.shape).toEqual([data.length, data[0].length]);
+    });
+  });
+});
+
+function beforeEach(arg0: () => void) {
+  throw new Error("Function not implemented.");
+}

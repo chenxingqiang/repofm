@@ -2,17 +2,20 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { globby } from 'globby';
 import type { Options as GlobbyOptions } from 'globby';
+import { minimatch } from 'minimatch';
 import { logger } from '../../shared/logger.js';
 import { exists, isDirectory } from './fileUtils.js';
+
+export interface IgnoreOptions {
+  patterns: string[];
+  useGitignore: boolean;
+  useDefaultPatterns: boolean;
+}
 
 export interface SearchOptions {
   dot?: boolean;
   followSymlinks?: boolean;
-  ignore?: string[] | {
-    patterns: string[];
-    useGitignore: boolean;
-    useDefaultPatterns: boolean;
-  };
+  ignore?: string[] | IgnoreOptions;
 }
 
 export interface SearchResult {
@@ -21,6 +24,10 @@ export interface SearchResult {
     line: number;
     content: string;
   }[];
+}
+
+function isIgnoreOptions(ignore: string[] | IgnoreOptions | undefined): ignore is IgnoreOptions {
+  return typeof ignore === 'object' && !Array.isArray(ignore) && 'useGitignore' in ignore;
 }
 
 export async function searchFiles(
@@ -41,7 +48,7 @@ export async function searchFiles(
       cwd: searchPath,
       dot: options.dot,
       followSymbolicLinks: options.followSymlinks,
-      gitignore: typeof options.ignore === 'object' ? options.ignore.useGitignore : true,
+      gitignore: isIgnoreOptions(options.ignore) ? options.ignore.useGitignore : true,
       ignore: Array.isArray(options.ignore)
         ? options.ignore
         : options.ignore?.patterns || [],
@@ -107,7 +114,7 @@ export async function findFiles(
       cwd: searchPath,
       dot: options.dot,
       followSymbolicLinks: options.followSymlinks,
-      gitignore: typeof options.ignore === 'object' ? options.ignore.useGitignore : true,
+      gitignore: isIgnoreOptions(options.ignore) ? options.ignore.useGitignore : true,
       ignore: Array.isArray(options.ignore)
         ? options.ignore
         : options.ignore?.patterns || [],
@@ -126,10 +133,15 @@ export async function findFiles(
 
 export function matchPattern(filePath: string, pattern: string, caseSensitive = true): boolean {
   try {
+    // Check for invalid pattern characters
+    if (pattern.includes('[') && !pattern.includes(']')) {
+      throw new Error('Invalid pattern: unbalanced brackets');
+    }
+
     const options = { nocase: !caseSensitive };
     return minimatch(filePath, pattern, options);
   } catch (error) {
     logger.error(`Error matching pattern ${pattern} against ${filePath}:`, error);
-    throw error;
+    return false; // Return false for invalid patterns
   }
 }

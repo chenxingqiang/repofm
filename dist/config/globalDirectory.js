@@ -10,3 +10,4 @@ export const getGlobalDirectory = () => {
     }
     return path.join(os.homedir(), '.config', 'repofm');
 };
+//# sourceMappingURL=globalDirectory.js.map

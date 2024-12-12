@@ -10,3 +10,4 @@ export class GitHistoryTracker {
         };
     }
 }
+//# sourceMappingURL=GitHistoryTracker.js.map

@@ -8,18 +8,18 @@ declare const OllamaConfigSchema: z.ZodObject<{
     topP: z.ZodOptional<z.ZodNumber>;
     repeatPenalty: z.ZodOptional<z.ZodNumber>;
 }, "strip", z.ZodTypeAny, {
+    maxTokens: number;
     model: string;
     temperature: number;
-    maxTokens: number;
     systemPrompt?: string | undefined;
     topK?: number | undefined;
     topP?: number | undefined;
     repeatPenalty?: number | undefined;
 }, {
+    maxTokens?: number | undefined;
     model?: string | undefined;
     temperature?: number | undefined;
     systemPrompt?: string | undefined;
-    maxTokens?: number | undefined;
     topK?: number | undefined;
     topP?: number | undefined;
     repeatPenalty?: number | undefined;
@@ -55,6 +55,12 @@ export declare class OllamaInteractionService {
         maxTokens?: number;
         temperature?: number;
     }): Promise<string>;
+    streamText(prompt: string, options?: {
+        maxTokens?: number;
+        temperature?: number;
+    }): Promise<{
+        stream: AsyncIterable<string>;
+    }>;
     interactiveChat(): Promise<void>;
     validateConfig(config: z.ZodType): Promise<boolean>;
     getConfigOptions(): Record<string, any>;

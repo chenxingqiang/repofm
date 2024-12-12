@@ -67,3 +67,4 @@ export async function runAutocommitAction(targetDir, options = {}) {
         throw error;
     }
 }
+//# sourceMappingURL=autocommitAction.js.map

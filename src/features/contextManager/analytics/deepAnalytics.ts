@@ -1,4 +1,4 @@
-import * as tf from '@tensorflow/tfjs.js';
+import * as tf from '@tensorflow/tfjs';
 
 export class DeepAnalytics {
   private model: tf.LayersModel | undefined;

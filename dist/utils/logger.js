@@ -4,3 +4,4 @@ export const logger = {
     info: (message, ...args) => console.info(message, ...args),
     debug: (message, ...args) => console.debug(message, ...args),
 };
+//# sourceMappingURL=logger.js.map

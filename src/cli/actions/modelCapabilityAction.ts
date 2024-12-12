@@ -1,6 +1,31 @@
-import * as p from '@clack/prompts.js';
-import chalk from 'chalk.js';
+import * as p from '@clack/prompts';
+import chalk from 'chalk';
 import { modelAnalyzer } from '../../ai/ModelCapabilityAnalyzer.js';
+
+// Define types for improved type safety
+type ModelOption = { 
+  value: string; 
+  label: string 
+};
+
+type CapabilityOption = { 
+  value: string; 
+  label: string 
+};
+
+type ModelCapabilities = {
+  imageInput: boolean;
+  objectGeneration: boolean;
+  toolUsage: boolean;
+  toolStreaming: boolean;
+  [key: string]: boolean;
+};
+
+type ModelInfo = {
+  modelName: string;
+  provider: string;
+  recommendedUseCases?: string[];
+};
 
 export async function exploreModelCapabilities() {
   console.clear();
@@ -25,7 +50,7 @@ export async function exploreModelCapabilities() {
         value: 'ollama', 
         label: 'Explore Local Ollama Models' 
       }
-    ]
+    ] as ModelOption[]
   });
 
   if (p.isCancel(actionChoice)) {
@@ -86,7 +111,7 @@ async function compareModels() {
       { value: 'llama3.1', label: 'Ollama Llama 3.1' },
       { value: 'mistral', label: 'Ollama Mistral' },
       { value: 'phi3', label: 'Ollama Phi3' }
-    ]
+    ] as ModelOption[]
   });
 
   if (p.isCancel(modelSelection)) {
@@ -96,10 +121,14 @@ async function compareModels() {
 
   const comparedModels = modelAnalyzer.compareModels(modelSelection as string[]);
   
-  comparedModels.forEach(model => {
-    console.log(chalk.blue(`\n${model.modelName} (${model.provider}):`));
-    console.log(modelAnalyzer.generateCapabilityReport(model.modelName));
-  });
+  if (comparedModels && Array.isArray(comparedModels) && comparedModels.length > 0) {
+    comparedModels.forEach((model: ModelInfo) => {
+      console.log(chalk.blue(`\n${model.modelName} (${model.provider}):`));
+      console.log(modelAnalyzer.generateCapabilityReport(model.modelName));
+    });
+  } else {
+    p.note('No models found for comparison', 'Comparison Result');
+  }
 }
 
 async function getModelDetails() {
@@ -111,7 +140,7 @@ async function getModelDetails() {
       { value: 'mistral-large-latest', label: 'Mistral Large' },
       { value: 'gemini-1.5-pro', label: 'Google Gemini 1.5 Pro' },
       { value: 'llama-3.1-70b-versatile', label: 'Groq Llama 3.1 70B' }
-    ]
+    ] as ModelOption[]
   });
 
   if (p.isCancel(modelSelection)) {
@@ -119,17 +148,25 @@ async function getModelDetails() {
     return;
   }
 
-  console.log(
-    modelAnalyzer.generateCapabilityReport(modelSelection as string)
-  );
+  const modelReport = modelAnalyzer.generateCapabilityReport(modelSelection as string);
+  if (modelReport) {
+    console.log(modelReport);
+  } else {
+    p.note('No details found for the selected model', 'Model Details');
+  }
 }
 
 async function exploreOllamaModels() {
   const ollamaModels = modelAnalyzer.getOllamaModels();
   
+  if (!ollamaModels || !Array.isArray(ollamaModels) || ollamaModels.length === 0) {
+    p.note('No Ollama models found', 'Ollama Exploration');
+    return;
+  }
+
   const selectedModel = await p.select({
     message: 'Select an Ollama model to explore',
-    options: ollamaModels.map(model => ({
+    options: ollamaModels.map((model: ModelInfo) => ({
       value: model.modelName,
       label: `${model.modelName} - ${model.recommendedUseCases?.[0] || 'General Purpose'}`
     }))
@@ -140,42 +177,54 @@ async function exploreOllamaModels() {
     return;
   }
 
-  console.log(
-    modelAnalyzer.getOllamaDeploymentGuide(selectedModel as string)
-  );
+  const deploymentGuide = modelAnalyzer.getOllamaDeploymentGuide(selectedModel as string);
+  if (deploymentGuide) {
+    console.log(deploymentGuide);
+  } else {
+    p.note('No deployment guide found for the selected model', 'Deployment Guide');
+  }
 }
 
 // Capability search by specific attributes
 export async function searchModelCapabilities() {
+  console.clear();
+  p.intro(chalk.bgBlue(' Model Capability Search '));
+
   const capabilities = await p.multiselect({
-    message: 'Select required model capabilities',
+    message: 'Select capabilities to search for',
     options: [
       { value: 'imageInput', label: 'Image Input Support' },
       { value: 'objectGeneration', label: 'Object Generation' },
       { value: 'toolUsage', label: 'Tool Usage' },
-      { value: 'toolStreaming', label: 'Tool Streaming' },
-      { value: 'localDeployment', label: 'Local Deployment Support' }
-    ]
+      { value: 'toolStreaming', label: 'Tool Streaming' }
+    ],
   });
 
-  if (p.isCancel(capabilities)) {
-    p.cancel('Capability search cancelled.');
+  // Add type guard to ensure capabilities is an array
+  if (p.isCancel(capabilities) || !Array.isArray(capabilities) || capabilities.length === 0) {
+    console.log(chalk.yellow('\nNo capabilities selected.'));
     return;
   }
 
-  const capabilitiesMap = Object.fromEntries(
-    (capabilities as string[]).map(cap => [cap, true])
-  );
+  const capabilitiesMap: ModelCapabilities = {
+    imageInput: false,
+    objectGeneration: false,
+    toolUsage: false,
+    toolStreaming: false,
+    ...Object.fromEntries(capabilities.map(cap => [cap, true]))
+  };
 
   const matchedModels = modelAnalyzer.findModelsByCapabilities(capabilitiesMap);
 
-  if (matchedModels.length > 0) {
+  if (matchedModels && Array.isArray(matchedModels) && matchedModels.length > 0) {
     console.log(chalk.green('\nMatched Models:'));
-    matchedModels.forEach(model => {
+    matchedModels.forEach((model: ModelInfo) => {
       console.log(chalk.blue(`\n${model.modelName} (${model.provider}):`));
-      console.log(modelAnalyzer.generateCapabilityReport(model.modelName));
+      if (model.recommendedUseCases) {
+        console.log(chalk.gray('Recommended Use Cases:'), model.recommendedUseCases.join(', '));
+      }
     });
   } else {
-    p.note('No models found matching all selected capabilities', 'Search Result');
+    console.log(chalk.yellow('\nNo models found matching the selected capabilities.'));
   }
 }

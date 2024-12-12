@@ -49,10 +49,98 @@ interface ModelInfo {
 }
 
 export class ModelCapabilityAnalyzer {
+  private static instance: ModelCapabilityAnalyzer;
   private readonly models: Map<string, ModelInfo> = new Map();
 
-  constructor() {
+  private constructor() {
     this.initializeModels();
+  }
+
+  public static getInstance(): ModelCapabilityAnalyzer {
+    if (!ModelCapabilityAnalyzer.instance) {
+      ModelCapabilityAnalyzer.instance = new ModelCapabilityAnalyzer();
+    }
+    return ModelCapabilityAnalyzer.instance;
+  }
+
+  static recommendModelForUseCase(useCase: string): ModelInfo | null {
+    const instance = ModelCapabilityAnalyzer.getInstance();
+    const models = Array.from(instance.models.values());
+    
+    // Simple recommendation logic based on use case keywords
+    const recommendedModel = models.find(model => 
+      model.recommendedUseCases?.some(recommendedUseCase => 
+        useCase.toLowerCase().includes(recommendedUseCase.toLowerCase())
+      )
+    );
+
+    return recommendedModel || null;
+  }
+
+  static generateCapabilityReport(modelName: string): string | null {
+    const instance = ModelCapabilityAnalyzer.getInstance();
+    const model = instance.models.get(modelName);
+
+    if (!model) return null;
+
+    return `
+Model: ${model.modelName} (${model.provider})
+Capabilities:
+  - Image Input: ${model.capabilities.imageInput ? 'Yes' : 'No'}
+  - Object Generation: ${model.capabilities.objectGeneration ? 'Yes' : 'No'}
+  - Tool Usage: ${model.capabilities.toolUsage ? 'Yes' : 'No'}
+  - Tool Streaming: ${model.capabilities.toolStreaming ? 'Yes' : 'No'}
+  - Max Tokens: ${model.capabilities.maxTokens}
+  - Context Window: ${model.capabilities.contextWindowSize}
+
+Recommended Use Cases:
+${model.recommendedUseCases?.map(useCase => `  - ${useCase}`).join('\n') || 'None specified'}
+
+Local Deployment: ${model.localDeployment ? 'Supported' : 'Not Supported'}
+    `;
+  }
+
+  static compareModels(modelNames: string[]): ModelInfo[] {
+    const instance = ModelCapabilityAnalyzer.getInstance();
+    return modelNames
+      .map(name => instance.models.get(name))
+      .filter((model): model is ModelInfo => model !== undefined);
+  }
+
+  static getOllamaModels(): ModelInfo[] {
+    const instance = ModelCapabilityAnalyzer.getInstance();
+    return Array.from(instance.models.values())
+      .filter(model => model.localDeployment);
+  }
+
+  static getOllamaDeploymentGuide(modelName: string): string | null {
+    const instance = ModelCapabilityAnalyzer.getInstance();
+    const model = instance.models.get(modelName);
+
+    if (!model || !model.localDeployment) return null;
+
+    return `
+Deployment Guide for ${modelName}:
+1. Ensure Ollama is installed (https://ollama.com/download)
+2. Pull the model: \`ollama pull ${modelName}\`
+3. Verify installation: \`ollama list\`
+4. Start using the model in your applications
+
+Recommended System Requirements:
+  - CPU: x86_64 architecture
+  - RAM: At least 8GB (16GB recommended)
+  - Disk Space: Varies by model size
+    `;
+  }
+
+  static findModelsByCapabilities(capabilitiesMap: ModelCapabilities): ModelInfo[] {
+    const instance = ModelCapabilityAnalyzer.getInstance();
+    return Array.from(instance.models.values())
+      .filter(model => 
+        Object.entries(capabilitiesMap).every(([key, value]) => 
+          model.capabilities[key] === value
+        )
+      );
   }
 
   private initializeModels() {

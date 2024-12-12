@@ -22,3 +22,4 @@ export class ConfigManager {
 export function loadConfig() {
     return ConfigManager.getInstance().getConfig();
 }
+//# sourceMappingURL=ConfigManager.js.map

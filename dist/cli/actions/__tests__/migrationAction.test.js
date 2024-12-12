@@ -1,35 +1,36 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest.js';
+import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 import { runMigrationAction } from '../migrationAction.js';
 import { logger } from '../../../shared/logger.js';
 import * as fs from 'node:fs/promises';
-vi.mock('node:fs/promises');
-vi.mock('../../../shared/logger');
-vi.mock('path');
+jest.mock('node:fs/promises');
+jest.mock('../../../shared/logger');
+jest.mock('path');
 describe('Migration Action', () => {
     beforeEach(() => {
-        vi.clearAllMocks();
+        jest.clearAllMocks();
     });
     it('should handle successful migration', async () => {
-        vi.mocked(fs.access).mockResolvedValue(undefined);
-        vi.mocked(fs.readFile).mockResolvedValue('old config content');
-        vi.mocked(fs.writeFile).mockResolvedValue();
-        vi.mocked(fs.mkdir).mockResolvedValue(undefined);
+        jest.mocked(fs.access).mockResolvedValue(undefined);
+        jest.mocked(fs.readFile).mockResolvedValue('old config content');
+        jest.mocked(fs.writeFile).mockResolvedValue();
+        jest.mocked(fs.mkdir).mockResolvedValue(undefined);
         await runMigrationAction('test-path');
         expect(logger.success).toHaveBeenCalledWith('Migration completed successfully!');
     });
     it('should handle missing old config', async () => {
         const error = new Error('ENOENT');
-        vi.mocked(fs.access).mockRejectedValue(error);
+        jest.mocked(fs.access).mockRejectedValue(error);
         await expect(runMigrationAction('test-path')).rejects.toThrow();
         expect(logger.error).toHaveBeenCalled();
     });
     it('should create backup files when needed', async () => {
-        vi.mocked(fs.access).mockResolvedValue(undefined);
-        vi.mocked(fs.readFile).mockResolvedValue('existing content');
-        vi.mocked(fs.writeFile).mockResolvedValue();
-        vi.mocked(fs.mkdir).mockResolvedValue(undefined);
+        jest.mocked(fs.access).mockResolvedValue(undefined);
+        jest.mocked(fs.readFile).mockResolvedValue('existing content');
+        jest.mocked(fs.writeFile).mockResolvedValue();
+        jest.mocked(fs.mkdir).mockResolvedValue(undefined);
         await runMigrationAction('test-path');
         expect(fs.writeFile).toHaveBeenCalled();
         expect(logger.log).toHaveBeenCalledWith(expect.stringContaining('Backup files created'));
     });
 });
+//# sourceMappingURL=migrationAction.test.js.map

@@ -19,3 +19,4 @@ export async function collectFiles(files, directory) {
     }
     return results;
 }
+//# sourceMappingURL=fileCollector.js.map

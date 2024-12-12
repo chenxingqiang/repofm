@@ -93,3 +93,4 @@ export class CommitGeneratorTelemetry {
 }
 CommitGeneratorTelemetry.TELEMETRY_DIR = path.join(process.cwd(), '.repofm', 'telemetry');
 export const commitTelemetry = CommitGeneratorTelemetry;
+//# sourceMappingURL=CommitGeneratorTelemetry.js.map

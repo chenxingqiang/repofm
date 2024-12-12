@@ -117,7 +117,7 @@ export class ProjectContextAnalyzer {
           const { exec } = require('child_process');
           exec('git log --pretty=format:"%s" -n 10', 
             { cwd: projectRoot }, 
-            (err, stdout) => err ? reject(err) : resolve(stdout)
+            (err: any, stdout: string | PromiseLike<string>) => err ? reject(err) : resolve(stdout)
           );
         });
 

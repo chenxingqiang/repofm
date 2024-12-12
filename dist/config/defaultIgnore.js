@@ -102,3 +102,4 @@ export const defaultIgnoreList = [
     '**/Pipfile.lock',
     '**/poetry.lock',
 ];
+//# sourceMappingURL=defaultIgnore.js.map

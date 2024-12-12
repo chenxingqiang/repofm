@@ -1,4 +1,5 @@
 export declare class Cache {
     private memoryCache;
-    constructor();
+    private redisUrl;
+    constructor(redisUrl: string);
 }

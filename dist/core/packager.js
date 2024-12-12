@@ -1,5 +1,5 @@
 import { searchFiles } from './file/fileSearch.js';
-import { collectFiles } from './file/fileCollect.js';
+import { collectFilesInfo } from './file/fileCollect.js';
 import { processFiles } from './file/fileProcess.js';
 import { OutputGenerator } from './outputGenerator.js';
 import { runSecurityCheck } from './security/securityCheck.js';
@@ -10,7 +10,7 @@ export function generateOutput(options) {
 }
 export const defaultDeps = {
     searchFiles,
-    collectFiles,
+    collectFiles: collectFilesInfo,
     processFiles,
     runSecurityCheck,
     generateOutput,
@@ -56,3 +56,4 @@ export async function pack(directory, config, deps = defaultDeps) {
     }
 }
 export { processFiles, runSecurityCheck, };
+//# sourceMappingURL=packager.js.map

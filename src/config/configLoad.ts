@@ -1,6 +1,6 @@
 import * as fs from 'node:fs/promises';
 import path from 'node:path';
-import { z } from 'zod.js';
+import { z } from 'zod';
 import { repofmError, repofmConfigValidationError } from '../shared/errorHandle.js';
 import { logger } from '../shared/logger.js';
 import type { Config, CliOptions } from '../types/config.js';

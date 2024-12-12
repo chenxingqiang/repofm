@@ -23,3 +23,4 @@ export class FallbackSpinner {
         console.info(`ℹ️ ${text || this.text || 'Information'}`);
     }
 }
+//# sourceMappingURL=fallbackSpinner.js.map

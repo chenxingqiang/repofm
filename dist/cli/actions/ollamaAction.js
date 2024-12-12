@@ -110,3 +110,4 @@ async function listModelsWorkflow() {
     p.note('To add more models, use:\n' +
         '`ollama pull <model-name>`', 'Model Management');
 }
+//# sourceMappingURL=ollamaAction.js.map

@@ -1,4 +1,4 @@
-import * as tf from '@tensorflow/tfjs-node.js';
+import * as tf from '@tensorflow/tfjs-node';
 interface CommitTrainingData {
     fileChanges: string[];
     commitMessage: string;

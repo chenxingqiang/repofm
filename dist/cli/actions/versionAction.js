@@ -4,3 +4,4 @@ export const runVersionAction = async () => {
     const version = await getVersion();
     logger.log(version);
 };
+//# sourceMappingURL=versionAction.js.map

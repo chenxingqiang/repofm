@@ -211,8 +211,9 @@ export class AIProviderConfigManager {
       const { OllamaInteractionService } = await import('../services/OllamaInteractionService.js');
       const ollamaService = new OllamaInteractionService();
       
-      // Attempt a simple API call
-      return await ollamaService.listLocalModels();
+      // Extract model names from OllamaModel[]
+      const models = await ollamaService.listLocalModels();
+      return models.map(model => model.name);
     } catch {
       return [];
     }

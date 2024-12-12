@@ -1,35 +1,29 @@
-import pMap from 'p-map.js';
-import { getProcessConcurrency } from '../../shared/processConcurrency.js';
-import { getFileManipulator } from './fileManipulate.js';
-export const processFiles = async (rawFiles, config) => {
-    return pMap(rawFiles, async (rawFile) => ({
-        path: rawFile.path,
-        content: await processContent(rawFile.content, rawFile.path, config),
-    }), {
-        concurrency: getProcessConcurrency(),
-    });
-};
-export const processContent = async (content, filePath, config = {}) => {
-    if (!content) {
-        content = '';
+import pMap from 'p-map';
+import { logger } from '../../shared/logger.js';
+export class DefaultFileProcessor {
+    async process(file) {
+        return {
+            ...file,
+            processedContent: file.content
+        };
     }
-    let processedContent = content;
-    const manipulator = getFileManipulator(filePath);
-    if (manipulator && config.output?.removeComments) {
-        processedContent = manipulator.removeComments(processedContent);
+}
+export async function processFiles(files, processor = new DefaultFileProcessor(), concurrency = 4) {
+    try {
+        const results = await pMap(files, async (file) => {
+            try {
+                return await processor.process(file);
+            }
+            catch (error) {
+                logger.error(`Error processing file ${file.path}:`, error);
+                throw error;
+            }
+        }, { concurrency });
+        return results;
     }
-    if (manipulator && config.output?.removeEmptyLines) {
-        processedContent = manipulator.removeEmptyLines(processedContent);
+    catch (error) {
+        logger.error('Error during file processing:', error);
+        throw error;
     }
-    // Normalize line endings before any other processing
-    processedContent = processedContent.replace(/\r\n|\r|\n/g, '\n').trim();
-    if (config.output?.showLineNumbers) {
-        const lines = processedContent.split('\n');
-        const maxWidth = String(lines.length || 1).length;
-        processedContent = lines.map((line, index) => {
-            const lineNum = String(index + 1).padStart(maxWidth);
-            return `${lineNum}: ${line}`;
-        }).join('\n');
-    }
-    return processedContent;
-};
+}
+//# sourceMappingURL=fileProcess.js.map

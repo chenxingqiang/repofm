@@ -40,11 +40,8 @@ export async function run(argv: string[] = process.argv): Promise<void> {
           }
 
           const searchOptions: SearchOptions = {
-            caseSensitive: options.caseSensitive,
-            includeDotFiles: options.dotFiles,
-            maxDepth: options.maxDepth ? parseInt(options.maxDepth) : undefined,
-            exclude: options.exclude,
-            include: options.include
+            dot: options.dotFiles,
+            ignore: options.exclude ? { patterns: options.exclude } : undefined
           };
 
           const results = await searchFiles(searchPath, pattern, searchOptions);
@@ -64,7 +61,7 @@ export async function run(argv: string[] = process.argv): Promise<void> {
           }
         } catch (error) {
           logger.error('Search command failed:', error);
-          process.exit(1);
+          throw error;
         }
       });
 
@@ -85,9 +82,8 @@ export async function run(argv: string[] = process.argv): Promise<void> {
           }
 
           const searchOptions: SearchOptions = {
-            includeDotFiles: options.dotFiles,
-            maxDepth: options.maxDepth ? parseInt(options.maxDepth) : undefined,
-            exclude: options.exclude
+            dot: options.dotFiles,
+            ignore: options.exclude ? { patterns: options.exclude } : undefined
           };
 
           const files = await findFiles(searchPath, patterns, searchOptions);
@@ -103,13 +99,20 @@ export async function run(argv: string[] = process.argv): Promise<void> {
           }
         } catch (error) {
           logger.error('Find command failed:', error);
-          process.exit(1);
+          throw error;
         }
       });
 
     await program.parseAsync(argv);
   } catch (error) {
-    logger.error('CLI execution failed:', error);
+    logger.error('Unhandled error:', error);
+    
+    // In test environment, rethrow the error
+    if (process.env.NODE_ENV === 'test') {
+      throw error;
+    }
+    
+    // In non-test environment, exit with error code
     process.exit(1);
   }
 }
@@ -118,6 +121,11 @@ export async function run(argv: string[] = process.argv): Promise<void> {
 if (import.meta.url === `file://${__filename}`) {
   run().catch(error => {
     logger.error('Unhandled error:', error);
-    process.exit(1);
+    if (process.env.NODE_ENV === 'test') {
+      // Ensure the error is propagated in test environment
+      return Promise.reject(error);
+    } else {
+      process.exit(1);
+    }
   });
 }

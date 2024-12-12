@@ -1,5 +1,5 @@
-import { EventEmitter } from 'events.js';
-export declare class EncryptionManager {
+import { EventEmitter } from 'events';
+export declare class EncryptionManager extends EventEmitter {
     private key;
     constructor();
     private initKey;
@@ -10,14 +10,16 @@ export declare class EncryptionManager {
     decrypt(encrypted: ArrayBuffer, iv: Uint8Array): Promise<any>;
 }
 export declare class ZeroTrustManager extends EventEmitter {
-    verifyAccess(userId: string, resourceId: string, action: string, context?: {
+    deviceId?: string;
+    location?: string;
+    userId: string;
+    constructor(userId: string);
+    verifyAccess(resourceId: string, action: string, context?: {
         deviceId?: string;
         location?: string;
     }): Promise<boolean>;
-    once(event: 'verification-required', listener: (data: {
-        userId: string;
-    }) => void): this;
 }
-export declare class IntrusionDetectionSystem {
+export declare class IntrusionDetectionSystem extends EventEmitter {
+    constructor();
     analyzeRequest(request: any): Promise<boolean>;
 }

@@ -1,7 +1,7 @@
-import * as fs from 'node:fs/promises';
-import * as path from 'node:path';
-import { fileURLToPath } from 'node:url.js';
-import { logger } from '../../utils/logger.js';
+import * as fs from 'fs/promises';
+import * as path from 'path';
+import { fileURLToPath } from 'url';
+import { logger } from '../../shared/logger.js';
 let cachedVersion = null;
 export const getPackageVersion = async (pkgPath) => {
     if (cachedVersion !== null) {
@@ -46,7 +46,40 @@ export const getVersion = async () => {
 export const clearVersionCache = () => {
     cachedVersion = null;
 };
-export const parsePackageJson = (content) => {
+export async function findPackageJson(startDir) {
+    let currentDir = startDir;
+    while (currentDir !== path.parse(currentDir).root) {
+        const packageJsonPath = path.join(currentDir, 'package.json');
+        try {
+            await fs.access(packageJsonPath);
+            return packageJsonPath;
+        }
+        catch {
+            currentDir = path.dirname(currentDir);
+        }
+    }
+    return null;
+}
+export async function parsePackageJson(filePath) {
+    try {
+        const content = await fs.readFile(filePath, 'utf8');
+        return JSON.parse(content);
+    }
+    catch (error) {
+        logger.error(`Error parsing package.json at ${filePath}:`, error);
+        throw error;
+    }
+}
+export async function writePackageJson(filePath, data) {
+    try {
+        await fs.writeFile(filePath, JSON.stringify(data, null, 2));
+    }
+    catch (error) {
+        logger.error(`Error writing package.json at ${filePath}:`, error);
+        throw error;
+    }
+}
+export const parsePackageJsonContent = (content) => {
     try {
         return JSON.parse(content);
     }
@@ -55,3 +88,4 @@ export const parsePackageJson = (content) => {
         return {};
     }
 };
+//# sourceMappingURL=packageJsonParse.js.map

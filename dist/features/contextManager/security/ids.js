@@ -1,4 +1,4 @@
-import { EventEmitter } from 'events.js';
+import { EventEmitter } from 'events';
 export class IntrusionDetectionSystem extends EventEmitter {
     constructor() {
         super();
@@ -8,43 +8,57 @@ export class IntrusionDetectionSystem extends EventEmitter {
         this.initializePatterns();
     }
     initializePatterns() {
-        this.patterns.set('sql-injection', /('|"|;|--|\/\*|\*\/|=|%|@@|char|union|select|delete|drop|update|insert)/i);
-        this.patterns.set('xss', /<script|javascript:|onerror=|onload=|eval\(|setTimeout\(|setInterval\(/i);
-        this.patterns.set('path-traversal', /\.\.\/|\.\.\\|~\/|~\\|\.\.%2f|\.\.%5c/i);
+        // Add common security patterns
+        this.patterns.set('sql_injection', /(\b(SELECT|INSERT|UPDATE|DELETE|DROP)\b).*(\bFROM\b|\bWHERE\b)/i);
+        this.patterns.set('xss', /(<script>|javascript:|onerror=)/i);
+        this.patterns.set('path_traversal', /(\.\.|%2e%2e)/i);
     }
     async analyzeRequest(request) {
-        const suspicious = await this.detectThreats(request);
-        if (suspicious) {
-            await this.logSuspiciousActivity(request);
-            return true;
-        }
-        return false;
-    }
-    async detectThreats(request) {
+        if (!request)
+            return false;
         const payload = JSON.stringify(request);
         for (const [type, pattern] of this.patterns) {
             if (pattern.test(payload)) {
-                this.emit('threat-detected', {
+                this.emit('intrusion-detected', {
                     type,
                     payload,
                     timestamp: Date.now()
                 });
-                return true;
+                this.logSuspiciousActivity({ type, payload });
+                return false;
             }
         }
-        return false;
+        return true;
     }
-    async logSuspiciousActivity(activity) {
+    logSuspiciousActivity(activity) {
         this.suspiciousActivities.push({
             ...activity,
             timestamp: Date.now()
         });
         if (this.suspiciousActivities.length > this.maxLogSize) {
-            await this.archiveSuspiciousActivities();
+            const activitiesToArchive = this.suspiciousActivities.slice(0, -this.maxLogSize);
+            this.suspiciousActivities = this.suspiciousActivities.slice(-this.maxLogSize);
+            // Optional: implement archiving logic
         }
     }
-    async archiveSuspiciousActivities() {
-        const activitiesToArchive = this.suspiciousActivities.slice(0, -this.maxLogSize);
-        this.suspiciousActivities = this.suspiciousActivities.slice(-this.maxLogSize);
+}
+export class IDSService extends EventEmitter {
+    constructor() {
+        super();
+        this.ids = new IntrusionDetectionSystem();
+        this.setupEventHandlers();
+    }
+    setupEventHandlers() {
+        this.ids.on('intrusion-detected', (data) => {
+            this.emit('alert', {
+                type: 'intrusion',
+                severity: 'high',
+                ...data
+            });
+        });
+    }
+    async analyzeRequest(request) {
+        return this.ids.analyzeRequest(request);
     }
 }
+//# sourceMappingURL=ids.js.map

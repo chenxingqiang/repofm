@@ -59,3 +59,4 @@ async function runTests() {
 }
 console.log('🚀 Starting Ollama Model Tests');
 runTests();
+//# sourceMappingURL=test-ollama-models.mjs.map

@@ -1,17 +1,18 @@
+import { beforeEach, describe, expect, jest } from '@jest/globals';
 import { MLPredictor } from '../ml/types.js';
-import { ClusterManager } from '../cluster.js';
-import { EncryptionManager } from '../security.js';
-import { jest, describe, beforeEach, it, expect } from '@jest/globals';
+import { ClusterManager } from '../cluster/clusterManager.js';
+import { SecurityManager } from '../security/securityManager.js';
+import { it } from 'vitest';
 
 describe('ML Features', () => {
   let predictor: MLPredictor;
   let cluster: ClusterManager;
-  let encryption: EncryptionManager;
+  let encryption: SecurityManager;
 
   beforeEach(() => {
     predictor = new MLPredictor();
     cluster = new ClusterManager();
-    encryption = new EncryptionManager();
+    encryption = new SecurityManager();
   });
 
   describe('Access Prediction', () => {
@@ -55,10 +56,10 @@ describe('Distributed Features', () => {
 });
 
 describe('Security Features', () => {
-  let encryption: EncryptionManager;
+  let encryption: SecurityManager;
 
   beforeEach(() => {
-    encryption = new EncryptionManager();
+    encryption = new SecurityManager();
   });
 
   it('should encrypt and decrypt data', async () => {

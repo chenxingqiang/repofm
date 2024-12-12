@@ -1,4 +1,4 @@
-import { z } from 'zod.js';
+import { z } from 'zod';
 // Output style enum
 export const repofmOutputStyleSchema = z.enum(['plain', 'xml', 'markdown']);
 // Default values map
@@ -77,3 +77,4 @@ export const repofmConfigMergedSchema = repofmConfigDefaultSchema
     cwd: z.string(),
 }));
 export const defaultConfig = repofmConfigDefaultSchema.parse({});
+//# sourceMappingURL=configSchema.js.map

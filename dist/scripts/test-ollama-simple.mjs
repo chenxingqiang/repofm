@@ -33,3 +33,4 @@ async function testOllama() {
     }
 }
 testOllama();
+//# sourceMappingURL=test-ollama-simple.mjs.map

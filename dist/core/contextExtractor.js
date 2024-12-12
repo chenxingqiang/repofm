@@ -6,3 +6,4 @@ export function extractContext(filePath, content) {
         context: '',
     };
 }
+//# sourceMappingURL=contextExtractor.js.map

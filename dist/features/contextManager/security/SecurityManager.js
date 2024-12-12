@@ -1,5 +1,5 @@
-import { BehaviorAnalytics as BehaviorAnalyticsImpl } from "./BehaviorAnalytics";
-import { IntrusionDetectionSystem as IDS } from "./types";
+import { BehaviorAnalytics as BehaviorAnalyticsImpl } from "./BehaviorAnalytics.js";
+import { IntrusionDetectionSystem as IDS } from "./types.js";
 export class SecurityManager {
     constructor() {
         this.ids = new IDS();
@@ -14,3 +14,4 @@ export class SecurityManager {
         return riskScore > 0.7; // 70% threshold for high risk
     }
 }
+//# sourceMappingURL=securityManager.js.map

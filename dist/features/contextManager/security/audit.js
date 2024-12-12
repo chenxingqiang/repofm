@@ -42,3 +42,4 @@ export class AuditSystem {
         return this.logs.filter(log => Object.entries(filters).every(([key, value]) => log[key] === value));
     }
 }
+//# sourceMappingURL=audit.js.map

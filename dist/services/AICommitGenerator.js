@@ -53,3 +53,4 @@ export class AICommitGenerator {
         return cleanedMessage || 'Update project files';
     }
 }
+//# sourceMappingURL=AICommitGenerator.js.map

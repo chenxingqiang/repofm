@@ -1,5 +1,5 @@
-import { BehaviorAnalytics as BehaviorAnalyticsImpl } from "./BehaviorAnalytics";
-import { IntrusionDetectionSystem as IDS } from "./types";
+import { BehaviorAnalytics as BehaviorAnalyticsImpl } from "./BehaviorAnalytics.js";
+import { IntrusionDetectionSystem as IDS } from "./types.js";
 
 export class SecurityManager {
   private ids: IDS;

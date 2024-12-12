@@ -414,3 +414,4 @@ export function sortPaths(paths) {
     });
     return sorted.map(p => p.original.replace(/[\\/]+/g, '/'));
 }
+//# sourceMappingURL=filePathSort.js.map

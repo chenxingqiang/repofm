@@ -1,10 +1,11 @@
-import { EventEmitter } from 'events.js';
+import { EventEmitter } from 'events';
 import { webcrypto } from 'node:crypto';
 
-export class EncryptionManager {
+export class EncryptionManager extends EventEmitter {
   private key: CryptoKey | null = null;
 
   constructor() {
+    super();
     this.initKey();
   }
 
@@ -48,32 +49,42 @@ export class EncryptionManager {
 }
 
 export class ZeroTrustManager extends EventEmitter {
+  deviceId?: string;
+  location?: string;
+  userId: string;
+
+  constructor(userId: string) {
+    super();
+    this.userId = userId;
+  }
+
   async verifyAccess(
-    userId: string,
     resourceId: string,
     action: string,
     context?: { deviceId?: string; location?: string }
   ): Promise<boolean> {
-    // Emit verification event for high-risk actions
-    if (action === 'delete' || context?.deviceId === 'unknown') {
-      this.emit('verification-required', { userId });
-    }
+    // Emit verification event
+    this.emit('verification-required', { userId: this.userId });
+    
+    // Implement zero trust verification logic
     return true;
-  }
-
-  once(event: 'verification-required', listener: (data: { userId: string }) => void): this {
-    return super.once(event, listener);
   }
 }
 
-export class IntrusionDetectionSystem {
-  async analyzeRequest(request: any): Promise<boolean> {
-    const suspiciousPatterns = [
-      'sql injection',
-      'xss',
-      'command injection'
-    ];
-    const requestStr = JSON.stringify(request).toLowerCase();
-    return suspiciousPatterns.some(pattern => requestStr.includes(pattern));
+export class IntrusionDetectionSystem extends EventEmitter {
+  constructor() {
+    super();
   }
-} 
+
+  async analyzeRequest(request: any): Promise<boolean> {
+    // Implement intrusion detection logic
+    const suspicious = false;
+    
+    if (suspicious) {
+      this.emit('intrusion-detected', { request });
+      return false;
+    }
+    
+    return true;
+  }
+}

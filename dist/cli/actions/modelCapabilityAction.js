@@ -1,5 +1,5 @@
-import * as p from '@clack/prompts.js';
-import chalk from 'chalk.js';
+import * as p from '@clack/prompts';
+import chalk from 'chalk';
 import { modelAnalyzer } from '../../ai/ModelCapabilityAnalyzer.js';
 export async function exploreModelCapabilities() {
     console.clear();
@@ -85,10 +85,15 @@ async function compareModels() {
         return;
     }
     const comparedModels = modelAnalyzer.compareModels(modelSelection);
-    comparedModels.forEach(model => {
-        console.log(chalk.blue(`\n${model.modelName} (${model.provider}):`));
-        console.log(modelAnalyzer.generateCapabilityReport(model.modelName));
-    });
+    if (comparedModels && Array.isArray(comparedModels) && comparedModels.length > 0) {
+        comparedModels.forEach((model) => {
+            console.log(chalk.blue(`\n${model.modelName} (${model.provider}):`));
+            console.log(modelAnalyzer.generateCapabilityReport(model.modelName));
+        });
+    }
+    else {
+        p.note('No models found for comparison', 'Comparison Result');
+    }
 }
 async function getModelDetails() {
     const modelSelection = await p.select({
@@ -105,13 +110,23 @@ async function getModelDetails() {
         p.cancel('Details exploration cancelled.');
         return;
     }
-    console.log(modelAnalyzer.generateCapabilityReport(modelSelection));
+    const modelReport = modelAnalyzer.generateCapabilityReport(modelSelection);
+    if (modelReport) {
+        console.log(modelReport);
+    }
+    else {
+        p.note('No details found for the selected model', 'Model Details');
+    }
 }
 async function exploreOllamaModels() {
     const ollamaModels = modelAnalyzer.getOllamaModels();
+    if (!ollamaModels || !Array.isArray(ollamaModels) || ollamaModels.length === 0) {
+        p.note('No Ollama models found', 'Ollama Exploration');
+        return;
+    }
     const selectedModel = await p.select({
         message: 'Select an Ollama model to explore',
-        options: ollamaModels.map(model => ({
+        options: ollamaModels.map((model) => ({
             value: model.modelName,
             label: `${model.modelName} - ${model.recommendedUseCases?.[0] || 'General Purpose'}`
         }))
@@ -120,34 +135,51 @@ async function exploreOllamaModels() {
         p.cancel('Ollama model exploration cancelled.');
         return;
     }
-    console.log(modelAnalyzer.getOllamaDeploymentGuide(selectedModel));
+    const deploymentGuide = modelAnalyzer.getOllamaDeploymentGuide(selectedModel);
+    if (deploymentGuide) {
+        console.log(deploymentGuide);
+    }
+    else {
+        p.note('No deployment guide found for the selected model', 'Deployment Guide');
+    }
 }
 // Capability search by specific attributes
 export async function searchModelCapabilities() {
+    console.clear();
+    p.intro(chalk.bgBlue(' Model Capability Search '));
     const capabilities = await p.multiselect({
-        message: 'Select required model capabilities',
+        message: 'Select capabilities to search for',
         options: [
             { value: 'imageInput', label: 'Image Input Support' },
             { value: 'objectGeneration', label: 'Object Generation' },
             { value: 'toolUsage', label: 'Tool Usage' },
-            { value: 'toolStreaming', label: 'Tool Streaming' },
-            { value: 'localDeployment', label: 'Local Deployment Support' }
-        ]
+            { value: 'toolStreaming', label: 'Tool Streaming' }
+        ],
     });
-    if (p.isCancel(capabilities)) {
-        p.cancel('Capability search cancelled.');
+    // Add type guard to ensure capabilities is an array
+    if (p.isCancel(capabilities) || !Array.isArray(capabilities) || capabilities.length === 0) {
+        console.log(chalk.yellow('\nNo capabilities selected.'));
         return;
     }
-    const capabilitiesMap = Object.fromEntries(capabilities.map(cap => [cap, true]));
+    const capabilitiesMap = {
+        imageInput: false,
+        objectGeneration: false,
+        toolUsage: false,
+        toolStreaming: false,
+        ...Object.fromEntries(capabilities.map(cap => [cap, true]))
+    };
     const matchedModels = modelAnalyzer.findModelsByCapabilities(capabilitiesMap);
-    if (matchedModels.length > 0) {
+    if (matchedModels && Array.isArray(matchedModels) && matchedModels.length > 0) {
         console.log(chalk.green('\nMatched Models:'));
-        matchedModels.forEach(model => {
+        matchedModels.forEach((model) => {
             console.log(chalk.blue(`\n${model.modelName} (${model.provider}):`));
-            console.log(modelAnalyzer.generateCapabilityReport(model.modelName));
+            if (model.recommendedUseCases) {
+                console.log(chalk.gray('Recommended Use Cases:'), model.recommendedUseCases.join(', '));
+            }
         });
     }
     else {
-        p.note('No models found matching all selected capabilities', 'Search Result');
+        console.log(chalk.yellow('\nNo models found matching the selected capabilities.'));
     }
 }
+//# sourceMappingURL=modelCapabilityAction.js.map

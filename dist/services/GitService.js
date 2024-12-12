@@ -2,7 +2,7 @@ import { exec } from 'node:child_process';
 import path from 'node:path';
 import { promisify } from 'node:util';
 import { logger } from '../shared/logger.js';
-import { minimatch } from 'minimatch.js';
+import { minimatch } from 'minimatch';
 const execAsync = promisify(exec);
 export class GitService {
     constructor(cwd) {
@@ -166,3 +166,4 @@ export class GitService {
         }
     }
 }
+//# sourceMappingURL=GitService.js.map

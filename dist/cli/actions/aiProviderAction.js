@@ -1,8 +1,8 @@
-import * as p from '@clack/prompts.js';
-import chalk from 'chalk.js';
-import { aiProviderConfig } from '../../config/AIProviderConfig.js';
-import { logger } from '../../shared/logger.js';
-import { OllamaInteractionService } from '../../services/OllamaInteractionService.js';
+import * as p from '@clack/prompts';
+import chalk from 'chalk';
+import { aiProviderConfig } from '../../config/AIProviderConfig';
+import { logger } from '../../shared/logger';
+import { OllamaInteractionService } from '../../services/OllamaInteractionService';
 export async function configureAIProviders() {
     console.clear();
     p.intro(chalk.bgBlue(' AI Provider Configuration '));
@@ -139,3 +139,4 @@ export async function removeAIProvider() {
     aiProviderConfig.saveConfig(updatedConfig);
     p.outro(chalk.green(`${providerToRemove} provider removed successfully`));
 }
+//# sourceMappingURL=aiProviderAction.js.map

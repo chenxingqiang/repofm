@@ -1,4 +1,4 @@
-import { vi } from 'vitest.js';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import type { Logger } from '../types/logger.js';
 import type { Config } from '../types/config.js';
 

@@ -1,4 +1,4 @@
-import { vi } from 'vitest.js';
+import { vi } from 'vitest';
 export const createMockLogger = () => ({
     log: vi.fn(),
     error: vi.fn(),
@@ -50,3 +50,4 @@ export function createTestConfig(overrides = {}) {
         }
     };
 }
+//# sourceMappingURL=helpers.js.map

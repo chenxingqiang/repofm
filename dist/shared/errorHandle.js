@@ -1,4 +1,4 @@
-import { z } from 'zod.js';
+import { z } from 'zod';
 import { logger } from './logger.js';
 export class repofmError extends Error {
     constructor(message) {
@@ -44,3 +44,4 @@ export function handleError(error) {
         logger.info(`For more information, please visit: https://github.com/chenxingqiang/repofm/issues`);
     }
 }
+//# sourceMappingURL=errorHandle.js.map

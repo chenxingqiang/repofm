@@ -1,4 +1,4 @@
-import * as tf from '@tensorflow/tfjs-node.js';
+import * as tf from '@tensorflow/tfjs-node';
 import { logger } from '../shared/logger.js';
 import fs from 'node:fs/promises';
 import path from 'node:path';
