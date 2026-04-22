@@ -1,8 +1,8 @@
-import { jest, describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 
 // Mock picocolors module
 vi.mock('picocolors', async () => {
-  return {
+  const mockPc = {
     red: (text: string) => `red(${text})`,
     yellow: (text: string) => `yellow(${text})`,
     blue: (text: string) => `blue(${text})`,
@@ -11,6 +11,7 @@ vi.mock('picocolors', async () => {
     dim: (text: string) => `dim(${text})`,
     gray: (text: string) => `gray(${text})`
   };
+  return { default: mockPc, ...mockPc };
 });
 
 // Mock logger module

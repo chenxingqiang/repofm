@@ -3,7 +3,7 @@ import { RiskAnalyzer } from "../analytics/riskAnalysis.js";
 import { IDSService } from '../security/ids.js';
 import { ZeroTrustManager } from '../security/zeroTrust.js';
 import { SecurityManager } from "../security/SecurityManager.js";
-import { describe, expect, it, vi, type Mock } from 'vitest';
+import { describe, expect, it, vi, beforeEach, type Mock } from 'vitest';
 import { EventEmitter } from 'node:events';
 
 // Mock TensorFlow with dynamic prediction length
@@ -237,7 +237,3 @@ describe('Advanced Security Features', () => {
     });
   });
 });
-
-function beforeEach(arg0: () => void) {
-  throw new Error("Function not implemented.");
-}

@@ -317,7 +317,7 @@ describe('errorHandle', () => {
 
     describe('Error Handling', () => {
         it('Config validation error should have correct message', () => {
-            const validationError = new repofmConfigValidationError('Config validation', '[field]', 'Expected string, received number');
+            const validationError = new repofmConfigValidationError('Config validation\n[field]: Expected string, received number');
             
             expect(validationError.message).toContain('Config validation');
             expect(validationError.message).toContain('[field]');

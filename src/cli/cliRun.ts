@@ -20,8 +20,15 @@ export async function run(argv: string[] = process.argv): Promise<void> {
     program
       .name('repofm')
       .description('Repository File Manager - A CLI tool for managing repository files')
-      .version(packageJson.version);
+      .version(packageJson.version)
+      .option('--verbose', 'Enable verbose/debug logging', false);
 
+    await program.parseAsync(argv);
+
+    const opts = program.opts();
+    if (opts.verbose) {
+      logger.setLevel('debug');
+    }
     program
       .command('search')
       .description('Search for files in the repository')
@@ -105,16 +112,8 @@ export async function run(argv: string[] = process.argv): Promise<void> {
         }
       });
 
-    await program.parseAsync(argv);
   } catch (error) {
-    logger.error('Unhandled error:', error);
-    
-    // In test environment, rethrow the error
-    if (process.env.NODE_ENV === 'test') {
-      throw error;
-    }
-    
-    // In non-test environment, exit with error code
+    logger.error('Error:', error);
     process.exit(1);
   }
 }

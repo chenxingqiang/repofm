@@ -1,11 +1,11 @@
-import fs from 'node:fs';
+import * as fs from 'node:fs/promises';
 import path from 'node:path';
 import * as prompts from '@clack/prompts';
 import { vi, afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { createConfigFile, createIgnoreFile } from '../../../src/cli/actions/initAction.js';
 import { getGlobalDirectory } from '../../../src/config/globalDirectory.js';
 
-vi.mock('node:fs');
+vi.mock('node:fs/promises');
 vi.mock('@clack/prompts');
 vi.mock('../../../src/shared/folderUtils');
 vi.mock('../../../src/config/globalDirectory.js');

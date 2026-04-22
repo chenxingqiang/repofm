@@ -1,8 +1,8 @@
 import { vi, describe, test, expect, beforeEach, afterEach } from 'vitest';
-import { parsePackageJson } from '../../../src/core/file/packageJsonParse.js';
-import { logger } from '../../../src/utils/logger.js';
+import { parsePackageJsonContent } from '../../../src/core/file/packageJsonParse.js';
+import { logger } from '../../../src/shared/logger.js';
 
-vi.mock('../../../src/utils/logger.js', () => ({
+vi.mock('../../../src/shared/logger.js', () => ({
   logger: {
     error: vi.fn(),
     warn: vi.fn(),
@@ -21,7 +21,7 @@ describe('parsePackageJson', () => {
 
   test('should parse valid JSON', () => {
     const validJson = '{"name": "test", "version": "1.0.0"}';
-    const result = parsePackageJson(validJson);
+    const result = parsePackageJsonContent(validJson);
     expect(result).toEqual({ name: 'test', version: '1.0.0' });
     expect(logger.error).not.toHaveBeenCalled();
   });

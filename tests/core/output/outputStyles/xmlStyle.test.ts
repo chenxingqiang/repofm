@@ -1,4 +1,4 @@
-import { vi, describe, expect, test, beforeEach } from 'vitest';
+import { vi, describe, it, expect, test, beforeEach } from 'vitest';
 import { generateOutput } from '../../../../src/core/output/outputGenerate.js';
 import { createMockConfig } from '../../../testing/testUtils.js';
 import type { FileInfo } from '../../../../src/core/types.js';
@@ -36,7 +36,7 @@ describe('xmlStyle', () => {
         },
       ];
 
-      const output = await generateOutput(process.cwd(), mockConfig, files, ['file1.txt', 'file2.txt']);
+      const output = await generateOutput(process.cwd(), createMockConfig({ output: mockConfig }), files, ['file1.txt', 'file2.txt']);
 
       expect(output).toMatch(/<\?xml version="1.0" encoding="UTF-8"\?>/);
       expect(output).toContain('<file_summary>');
@@ -63,7 +63,7 @@ describe('xmlStyle', () => {
         instructionFilePath: '',
       };
 
-      const output = await generateOutput(process.cwd(), mockConfig, [], []);
+      const output = await generateOutput(process.cwd(), createMockConfig({ output: mockConfig }), [], []);
 
       expect(output).toContain(`<header>${headerText}</header>`);
     });
@@ -90,7 +90,7 @@ describe('xmlStyle', () => {
         },
       ];
 
-      const output = await generateOutput(process.cwd(), mockConfig, files, ['special.txt']);
+      const output = await generateOutput(process.cwd(), createMockConfig({ output: mockConfig }), files, ['special.txt']);
 
       expect(output).toContain('&lt; &gt; &amp; &quot;');
       expect(output).not.toContain('< > & "');
@@ -116,7 +116,7 @@ describe('xmlStyle', () => {
         },
       ];
 
-      const output = await generateOutput(process.cwd(), mockConfig, files, ['multiline.txt']);
+      const output = await generateOutput(process.cwd(), createMockConfig({ output: mockConfig }), files, ['multiline.txt']);
 
       expect(output).toContain('<line number="1">Line 1</line>');
       expect(output).toContain('<line number="2">Line 2</line>');
@@ -144,7 +144,7 @@ describe('xmlStyle', () => {
         },
       ];
 
-      const output = await generateOutput(process.cwd(), mockConfig, files, ['code.js']);
+      const output = await generateOutput(process.cwd(), createMockConfig({ output: mockConfig }), files, ['code.js']);
 
       expect(output).not.toContain('// Comment');
       expect(output).not.toContain('/* Block comment */');
@@ -172,7 +172,7 @@ describe('xmlStyle', () => {
         },
       ];
 
-      const output = await generateOutput(process.cwd(), mockConfig, files, ['text.txt']);
+      const output = await generateOutput(process.cwd(), createMockConfig({ output: mockConfig }), files, ['text.txt']);
 
       expect(output).toContain('<content>Line 1\nLine 2\nLine 3</content>');
     });
@@ -192,7 +192,7 @@ describe('xmlStyle', () => {
         instructionFilePath: '',
       };
 
-      const output = await generateOutput(process.cwd(), mockConfig, [], []);
+      const output = await generateOutput(process.cwd(), createMockConfig({ output: mockConfig }), [], []);
 
       expect(output).toContain('<file_summary>');
       expect(output).toContain('<repository_structure>');
@@ -219,7 +219,7 @@ describe('xmlStyle', () => {
         },
       ];
 
-      const output = await generateOutput(process.cwd(), mockConfig, files, ['path/with spaces & symbols.txt']);
+      const output = await generateOutput(process.cwd(), createMockConfig({ output: mockConfig }), files, ['path/with spaces & symbols.txt']);
 
       expect(output).toContain('<file path="path/with spaces &amp; symbols.txt">');
       expect(output).toContain('<content>Content</content>');
@@ -246,7 +246,7 @@ describe('xmlStyle', () => {
         },
       ];
 
-      const output = await generateOutput(process.cwd(), mockConfig, files, ['large.txt']);
+      const output = await generateOutput(process.cwd(), createMockConfig({ output: mockConfig }), files, ['large.txt']);
 
       expect(output).toContain('<file path="large.txt">');
       expect(output).toContain('<content>' + largeContent + '</content>');
@@ -285,7 +285,7 @@ describe('xmlStyle', () => {
         },
       ];
 
-      const output = await generateOutput(process.cwd(), mockConfig, files, ['file1.txt', 'file2.txt', 'file3.txt', 'file4.txt']);
+      const output = await generateOutput(process.cwd(), createMockConfig({ output: mockConfig }), files, ['file1.txt', 'file2.txt', 'file3.txt', 'file4.txt']);
 
       const fileMatches = output.match(/<file path="file\d\.txt">/g) || [];
       expect(fileMatches.length).toBe(2); // Should only show top 2 files

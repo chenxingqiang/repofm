@@ -30,7 +30,7 @@ export class Logger {
   private formatArgs(args: any[]): string {
     return args.map(arg => {
       if (arg instanceof Error) {
-        return arg.message;
+        return JSON.stringify(arg);
       }
       if (typeof arg === 'object' && arg !== null) {
         return JSON.stringify(arg);
@@ -41,29 +41,29 @@ export class Logger {
 
   error(...args: any[]): void {
     if (this.shouldLog('error')) {
-      console.error(pc.red('ERROR:'), this.formatArgs(args));
+      console.error(`${pc.red('ERROR:')} ${this.formatArgs(args)}`);
     }
   }
 
   success(...args: any[]): void {
-    console.log(pc.green('SUCCESS:'), this.formatArgs(args));
+    console.log(`${pc.green('SUCCESS:')} ${this.formatArgs(args)}`);
   }
 
   warn(...args: any[]): void {
     if (this.shouldLog('warn')) {
-      console.log(pc.yellow('WARN:'), this.formatArgs(args));
+      console.log(`${pc.yellow('WARN:')} ${this.formatArgs(args)}`);
     }
   }
 
   info(...args: any[]): void {
     if (this.shouldLog('info')) {
-      console.log(pc.cyan('INFO:'), this.formatArgs(args));
+      console.log(`${pc.cyan('INFO:')} ${this.formatArgs(args)}`);
     }
   }
 
   debug(...args: any[]): void {
     if (this.shouldLog('debug')) {
-      console.log(pc.gray('DEBUG:'), this.formatArgs(args));
+      console.log(`${pc.dim('DEBUG:')} ${this.formatArgs(args)}`);
     }
   }
 
@@ -73,7 +73,7 @@ export class Logger {
 
   trace(...args: any[]): void {
     if (this.shouldLog('debug')) {
-      console.trace(pc.gray('TRACE:'), this.formatArgs(args));
+      console.trace(`${pc.dim('TRACE:')} ${this.formatArgs(args)}`);
     }
   }
 }

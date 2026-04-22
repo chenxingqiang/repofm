@@ -46,6 +46,7 @@ describe('CLI Run', () => {
     
     // Create command mock
     commandMock = {
+      name: vi.fn().mockReturnThis(),
       version: vi.fn().mockReturnThis(),
       description: vi.fn().mockReturnThis(),
       option: vi.fn().mockReturnThis(),
@@ -56,12 +57,7 @@ describe('CLI Run', () => {
         return commandMock;
       }),
       parse: vi.fn().mockReturnThis(),
-      parseAsync: vi.fn().mockImplementation(async () => {
-        // Call the stored action handler with the mock options
-        if (commandMock._actionHandler) {
-          await commandMock._actionHandler(commandMock._opts || {});
-        }
-      }),
+      parseAsync: vi.fn().mockResolvedValue(undefined),
       opts: vi.fn().mockReturnValue({ verbose: false }),
       command: vi.fn()
     };
@@ -93,7 +89,7 @@ describe('CLI Run', () => {
 
   it('should handle verbose flag', async () => {
     process.argv = ['node', 'cli.js', '--verbose'];
-    commandMock._opts = { verbose: true };
+    commandMock.opts.mockReturnValue({ verbose: true });
     await run();
     expect(logger.setLevel).toHaveBeenCalledWith('debug');
   });

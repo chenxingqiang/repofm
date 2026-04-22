@@ -1,16 +1,18 @@
 import { describe, expect, test, beforeEach, vi } from 'vitest';
-import * as fs from 'fs/promises';
+import * as fs from 'node:fs/promises';
 import * as path from 'path';
 import { searchFiles, findFiles, matchPattern, SearchOptions } from '../../../src/core/file/fileSearch.js';
 import { logger } from '../../../src/shared/logger.js';
 import { exists, isDirectory } from '../../../src/core/file/fileUtils.js';
 
-// Shared mock function used by both the test and the source
-const mockGlobbyFn = vi.fn();
+// Use vi.hoisted so mockGlobbyFn is available when the vi.mock factory runs
+const { mockGlobbyFn } = vi.hoisted(() => ({
+  mockGlobbyFn: vi.fn()
+}));
 
 // Mock dependencies
-vi.mock('fs/promises', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('fs/promises')>();
+vi.mock('node:fs/promises', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('node:fs/promises')>();
   return {
     ...actual,
     stat: vi.fn(),
