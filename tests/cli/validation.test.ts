@@ -239,8 +239,8 @@ describe('validation', () => {
       expect(validateContextDepth('')).not.toBeNull();
     });
 
-    it('should return error for float', () => {
-      // parseInt('1.5') === 1, which is valid
+    it('should accept float strings by truncating to integer (parseInt behavior)', () => {
+      // parseInt('1.5') === 1, which is >= 1 and valid
       expect(validateContextDepth('1.5')).toBeNull();
     });
   });
