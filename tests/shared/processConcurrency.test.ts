@@ -20,8 +20,9 @@ describe('processConcurrency', () => {
 
     it('should return a number less than or equal to CPU count', () => {
       const concurrency = getProcessConcurrency();
-      // It uses all CPUs minus 1, so result should be a reasonable number
-      expect(concurrency).toBeLessThanOrEqual(256);
+      // Practical upper bound: no consumer hardware has more than 256 cores
+      const MAX_REASONABLE_CPU_COUNT = 256;
+      expect(concurrency).toBeLessThanOrEqual(MAX_REASONABLE_CPU_COUNT);
     });
   });
 });

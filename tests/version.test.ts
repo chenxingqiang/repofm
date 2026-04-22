@@ -11,7 +11,8 @@ describe('version', () => {
       expect(PACKAGE_VERSION.length).toBeGreaterThan(0);
     });
 
-    it('should follow semver format (major.minor.patch)', () => {
+    it('should follow semver format (major.minor.patch) without pre-release or build metadata', () => {
+      // This package uses a simple major.minor.patch version without pre-release tags
       const semverRegex = /^\d+\.\d+\.\d+$/;
       expect(semverRegex.test(PACKAGE_VERSION)).toBe(true);
     });
