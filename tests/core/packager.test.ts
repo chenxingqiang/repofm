@@ -1,4 +1,4 @@
-import { jest, beforeEach, describe, expect, test } from '@jest/globals';
+import { vi, beforeEach, describe, expect, test } from 'vitest';
 import { pack, generateOutput } from '../../src/core/packager.js';
 import { createTestConfig } from '../../src/test/helpers.js';
 

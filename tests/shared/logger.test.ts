@@ -1,7 +1,7 @@
 import { jest, describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 
 // Mock picocolors module
-jest.mock('picocolors', async () => {
+vi.mock('picocolors', async () => {
   return {
     red: (text: string) => `red(${text})`,
     yellow: (text: string) => `yellow(${text})`,
@@ -14,8 +14,8 @@ jest.mock('picocolors', async () => {
 });
 
 // Mock logger module
-jest.mock('../../src/shared/logger', async () => {
-  const actual = await jest.importActual('../../src/shared/logger');
+vi.mock('../../src/shared/logger', async () => {
+  const actual = await vi.importActual('../../src/shared/logger');
   return actual;
 });
 
@@ -30,12 +30,12 @@ describe('Logger', () => {
   beforeEach(() => {
     Logger.resetInstance();
     logger = Logger.getInstance();
-    consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
-    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('should handle error messages', () => {
@@ -96,7 +96,7 @@ describe('Logger', () => {
   });
 
   it('should handle trace messages', () => {
-    const consoletraceSpy = jest.spyOn(console, 'trace').mockImplementation(() => {});
+    const consoletraceSpy = vi.spyOn(console, 'trace').mockImplementation(() => {});
     logger.setLevel('debug');
     logger.trace('trace message');
     expect(consoletraceSpy).toHaveBeenCalledWith('dim(TRACE:) trace message');

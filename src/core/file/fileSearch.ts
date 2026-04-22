@@ -14,9 +14,12 @@ export interface IgnoreOptions {
 
 export interface SearchOptions {
   dot?: boolean;
+  includeDotFiles?: boolean;
   followSymlinks?: boolean;
   ignore?: string[] | IgnoreOptions;
+  exclude?: string[];
   caseSensitive?: boolean;
+  maxDepth?: number;
 }
 
 export interface SearchResult {
@@ -47,7 +50,7 @@ export async function searchFiles(
 
     const globbyOptions: GlobbyOptions = {
       cwd: searchPath,
-      dot: options.dot,
+      dot: options.dot ?? options.includeDotFiles,
       followSymbolicLinks: options.followSymlinks,
       gitignore: isIgnoreOptions(options.ignore) ? options.ignore.useGitignore : true,
       ignore: Array.isArray(options.ignore)
@@ -55,6 +58,7 @@ export async function searchFiles(
         : options.ignore?.patterns || [],
       absolute: true,
       onlyFiles: true,
+      ...(options.maxDepth !== undefined ? { deep: options.maxDepth } : {}),
     };
 
     // Use '**/*' to enumerate all files, then search their contents for the pattern
@@ -115,14 +119,15 @@ export async function findFiles(
 
     const globbyOptions: GlobbyOptions = {
       cwd: searchPath,
-      dot: options.dot,
+      dot: options.dot ?? options.includeDotFiles,
       followSymbolicLinks: options.followSymlinks,
       gitignore: isIgnoreOptions(options.ignore) ? options.ignore.useGitignore : true,
-      ignore: Array.isArray(options.ignore)
+      ignore: options.exclude ?? (Array.isArray(options.ignore)
         ? options.ignore
-        : options.ignore?.patterns || [],
+        : options.ignore?.patterns || []),
       absolute: true,
       onlyFiles: true,
+      ...(options.maxDepth !== undefined ? { deep: options.maxDepth } : {}),
     };
 
     const files = await globby(patterns, globbyOptions);

@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import * as prompts from '@clack/prompts';
-import { jest, afterEach, beforeEach, describe, expect, it } from '@jest/globals';
+import { vi, afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { createConfigFile, createIgnoreFile } from '../../../src/cli/actions/initAction.js';
 import { getGlobalDirectory } from '../../../src/config/globalDirectory.js';
 

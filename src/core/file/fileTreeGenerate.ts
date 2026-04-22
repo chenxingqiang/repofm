@@ -207,17 +207,21 @@ export function treeToString(node: TreeNode, prefix = '', isRoot = true): string
 export function generateTreeString(files: string[]): string {
   // Handle single file or directory case
   if (files.length === 1) {
-    const file = files[0];
-    return file.endsWith(path.sep) ? file : file + (file.includes(path.sep) ? '' : '/');
+    return files[0];
   }
 
   // First, separate special root files
-  const specialFiles = files.filter(file => 
+  const specialFiles = files.filter(file =>
     specialRootOrder.includes(path.basename(file))
   );
-  
+
+  // Sort special files by their defined order
+  specialFiles.sort((a, b) => {
+    return specialRootOrder.indexOf(path.basename(a)) - specialRootOrder.indexOf(path.basename(b));
+  });
+
   // Remove special files from the main list
-  const otherFiles = files.filter(file => 
+  const otherFiles = files.filter(file =>
     !specialRootOrder.includes(path.basename(file))
   );
 

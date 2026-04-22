@@ -1,7 +1,7 @@
 // tests/shared/errorHandle.test.ts
 
 import { z } from 'zod';
-import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { handleError, repofmConfigValidationError, repofmError, rethrowValidationErrorIfZodError } from '../../src/shared/errorHandle.js';
 import { logger } from '../../src/shared/logger.js';
 

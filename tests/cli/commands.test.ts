@@ -38,7 +38,8 @@ vi.mock('fs/promises', () => ({
   appendFile: vi.fn(),
   mkdir: vi.fn(),
   access: vi.fn(),
-  stat: vi.fn()
+  stat: vi.fn(),
+  unlink: vi.fn()
 }));
 
 vi.mock('path', async (importOriginal) => {

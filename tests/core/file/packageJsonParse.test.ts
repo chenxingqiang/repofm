@@ -1,4 +1,4 @@
-import { jest, describe, test, expect, beforeEach, afterEach } from '@jest/globals';
+import { vi, describe, test, expect, beforeEach, afterEach } from 'vitest';
 import { parsePackageJson } from '../../../src/core/file/packageJsonParse.js';
 import { logger } from '../../../src/utils/logger.js';
 

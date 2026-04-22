@@ -1,4 +1,4 @@
-import { describe, it, expect, jest, beforeEach } from '@jest/globals';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { runMigrationAction } from '../migrationAction.js';
 import { logger } from '../../../shared/logger.js';
 import * as fs from 'node:fs/promises';

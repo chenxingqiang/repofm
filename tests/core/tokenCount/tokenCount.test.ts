@@ -1,4 +1,4 @@
-import { jest, beforeEach, describe, expect, test } from '@jest/globals';
+import { vi, beforeEach, describe, expect, test } from 'vitest';
 
 // Mock tiktoken module with more realistic behavior
 vi.mock('tiktoken', () => ({

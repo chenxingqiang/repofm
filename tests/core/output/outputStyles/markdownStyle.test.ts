@@ -1,5 +1,5 @@
 import process from 'node:process';
-import { jest, describe, expect, test, beforeEach } from '@jest/globals';
+import { vi, describe, expect, test, beforeEach } from 'vitest';
 import { generateOutput } from '../../../../src/core/output/outputGenerate.js';
 import { createMockConfig } from '../../../testing/testUtils.js';
 import type { FileInfo } from '../../../../src/core/types.js';

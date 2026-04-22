@@ -35,7 +35,8 @@ vi.mock('@tensorflow/tfjs', () => ({
 }));
 
 // Mock ZeroTrustManager to ensure event emission
-vi.mock('../security/zeroTrust', () => {
+vi.mock('../security/zeroTrust', async () => {
+  const { EventEmitter } = await import('node:events');
   return {
     ZeroTrustManager: class extends EventEmitter {
       async verifyAccess(userId: string, resource: string, action: string, context: Record<string, unknown>) {

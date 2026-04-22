@@ -1,6 +1,6 @@
 // tests/cli/cliRun.test.ts
 
-import { jest, describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { run } from '../../src/cli/cliRun';
 import { PACKAGE_VERSION } from '../../src/version';
 import { logger } from '../../src/shared/logger';

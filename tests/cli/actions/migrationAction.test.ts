@@ -1,6 +1,6 @@
 import * as fs from 'node:fs/promises';
 import path from 'node:path';
-import { jest, describe, test, expect, beforeEach } from '@jest/globals';
+import { vi, describe, test, expect, beforeEach } from 'vitest';
 import { runMigrationAction, updateGitignore } from '../../../src/cli/actions/migrationAction.js';
 import { logger } from '../../../src/shared/logger.js';
 

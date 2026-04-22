@@ -1,4 +1,4 @@
-import { jest, describe, expect, test, beforeEach } from '@jest/globals';
+import { vi, describe, expect, test, beforeEach } from 'vitest';
 import path from 'node:path';
 import { searchFiles } from '../../../src/core/file/fileSearch.js';
 import { createTempDir, removeTempDir } from '../../testing/testUtils.js';

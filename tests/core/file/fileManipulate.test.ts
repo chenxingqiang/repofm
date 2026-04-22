@@ -1,4 +1,4 @@
-import { jest, describe, expect, test } from '@jest/globals';
+import { vi, describe, expect, test } from 'vitest';
 import { getFileManipulator } from '../../../src/core/file/fileManipulate.js';
 
 // Helper function to normalize whitespace and line endings

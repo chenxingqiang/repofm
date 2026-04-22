@@ -1,5 +1,5 @@
 import path from 'node:path';
-import { jest, describe, expect, test } from '@jest/globals';
+import { vi, describe, expect, test } from 'vitest';
 import { sortPaths } from '../../../src/core/file/filePathSort.js';
 
 describe('filePathSort', () => {

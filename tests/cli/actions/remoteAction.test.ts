@@ -1,4 +1,4 @@
-import { jest, afterEach, beforeEach, describe, expect, test } from '@jest/globals';
+import { vi, afterEach, beforeEach, describe, expect, test } from 'vitest';
 import { formatGitUrl } from '../../../src/cli/actions/remoteAction.js';
 
 vi.mock('node:fs/promises');

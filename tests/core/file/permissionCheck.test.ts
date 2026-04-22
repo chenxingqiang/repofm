@@ -2,7 +2,7 @@
 
 import { Stats } from 'node:fs';
 import * as fs from 'node:fs/promises';
-import { jest, describe, expect, test, beforeEach } from '@jest/globals';
+import { vi, describe, expect, test, beforeEach } from 'vitest';
 import { checkFilePermissions } from '../../../src/core/file/permissionCheck.js';
 
 vi.mock('fs/promises');

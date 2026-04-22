@@ -3,7 +3,7 @@ import * as fs from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
 import { z } from 'zod';
-import { jest, describe, expect, test, beforeEach } from '@jest/globals';
+import { vi, describe, expect, test, beforeEach } from 'vitest';
 import { loadFileConfig, mergeConfigs, createDefaultConfig } from '../../src/config/configLoad.js';
 import type { Config, CliOptions } from '../../src/types/config.js';
 import { getGlobalDirectory } from '../../src/config/globalDirectory.js';
