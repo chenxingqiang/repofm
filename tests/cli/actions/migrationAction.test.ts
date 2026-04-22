@@ -4,19 +4,19 @@ import { jest, describe, test, expect, beforeEach } from '@jest/globals';
 import { runMigrationAction, updateGitignore } from '../../../src/cli/actions/migrationAction.js';
 import { logger } from '../../../src/shared/logger.js';
 
-jest.mock('node:fs/promises');
-jest.mock('../../../src/shared/logger.js');
+vi.mock('node:fs/promises');
+vi.mock('../../../src/shared/logger.js');
 
 describe('Migration Action', () => {
   const mockDir = '/test/dir';
   const mockConfigPath = path.join(mockDir, 'repofm.config.json');
 
   beforeEach(() => {
-    jest.resetAllMocks();
-    jest.mocked(fs.access).mockResolvedValue(undefined);
-    jest.mocked(fs.readFile).mockResolvedValue('{}');
-    jest.mocked(fs.mkdir).mockResolvedValue(undefined);
-    jest.mocked(fs.writeFile).mockResolvedValue(undefined);
+    vi.resetAllMocks();
+    vi.mocked(fs.access).mockResolvedValue(undefined);
+    vi.mocked(fs.readFile).mockResolvedValue('{}');
+    vi.mocked(fs.mkdir).mockResolvedValue(undefined);
+    vi.mocked(fs.writeFile).mockResolvedValue(undefined);
   });
 
   test('should handle successful migration', async () => {
@@ -26,7 +26,7 @@ describe('Migration Action', () => {
   });
 
   test('should handle missing old config', async () => {
-    jest.mocked(fs.access).mockRejectedValue(new Error('File not found'));
+    vi.mocked(fs.access).mockRejectedValue(new Error('File not found'));
     await expect(runMigrationAction(mockConfigPath)).rejects.toThrow();
     expect(logger.error).toHaveBeenCalled();
   });

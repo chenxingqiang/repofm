@@ -5,27 +5,27 @@ import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import { handleError, repofmConfigValidationError, repofmError, rethrowValidationErrorIfZodError } from '../../src/shared/errorHandle.js';
 import { logger } from '../../src/shared/logger.js';
 
-jest.mock('../../src/shared/logger.js', () => {
+vi.mock('../../src/shared/logger.js', () => {
   return {
     logger: {
-      error: jest.fn(),
-      debug: jest.fn(),
-      info: jest.fn()
+      error: vi.fn(),
+      debug: vi.fn(),
+      info: vi.fn()
     }
   };
 });
 
 describe('errorHandle', () => {
-    let consoleErrorSpy: jest.SpyInstance;
+    let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
 
     beforeEach(() => {
-        consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-        jest.clearAllMocks();
+        consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+        vi.clearAllMocks();
     });
 
     afterEach(() => {
         consoleErrorSpy.mockRestore();
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     describe('handleError', () => {

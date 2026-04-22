@@ -7,26 +7,26 @@ import { logger } from '../../src/shared/logger';
 import { Command } from 'commander';
 
 // Mock logger
-jest.mock('../../src/shared/logger', () => ({
+vi.mock('../../src/shared/logger', () => ({
   logger: {
-    error: jest.fn(),
-    info: jest.fn(),
-    debug: jest.fn(),
-    setLevel: jest.fn()
+    error: vi.fn(),
+    info: vi.fn(),
+    debug: vi.fn(),
+    setLevel: vi.fn()
   }
 }));
 
 // Mock Commander
-jest.mock('commander', () => {
+vi.mock('commander', () => {
   return {
-    Command: jest.fn()
+    Command: vi.fn()
   };
 });
 
 // Mock process.exit
-const mockExit = jest.spyOn(process, 'exit').mockImplementation(() => undefined as never);
+const mockExit = vi.spyOn(process, 'exit').mockImplementation(() => undefined as never);
 
-jest.mock('../../src/config/configLoad', () => ({
+vi.mock('../../src/config/configLoad', () => ({
   createDefaultConfig: () => ({
     output: {
       filePath: 'output.txt'
@@ -42,28 +42,28 @@ describe('CLI Run', () => {
   let commandMock: any;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     
     // Create command mock
     commandMock = {
-      version: jest.fn().mockReturnThis(),
-      description: jest.fn().mockReturnThis(),
-      option: jest.fn().mockReturnThis(),
-      argument: jest.fn().mockReturnThis(),
-      action: jest.fn().mockImplementation((handler) => {
+      version: vi.fn().mockReturnThis(),
+      description: vi.fn().mockReturnThis(),
+      option: vi.fn().mockReturnThis(),
+      argument: vi.fn().mockReturnThis(),
+      action: vi.fn().mockImplementation((handler) => {
         // Store the handler for later use
         commandMock._actionHandler = handler;
         return commandMock;
       }),
-      parse: jest.fn().mockReturnThis(),
-      parseAsync: jest.fn().mockImplementation(async () => {
+      parse: vi.fn().mockReturnThis(),
+      parseAsync: vi.fn().mockImplementation(async () => {
         // Call the stored action handler with the mock options
         if (commandMock._actionHandler) {
           await commandMock._actionHandler(commandMock._opts || {});
         }
       }),
-      opts: jest.fn().mockReturnValue({ verbose: false }),
-      command: jest.fn()
+      opts: vi.fn().mockReturnValue({ verbose: false }),
+      command: vi.fn()
     };
 
     // Store reference to opts for parseAsync
@@ -77,11 +77,11 @@ describe('CLI Run', () => {
     });
 
     // Setup Command constructor mock
-    jest.mocked(Command).mockImplementation(() => commandMock);
+    vi.mocked(Command).mockImplementation(() => commandMock);
   });
 
   afterEach(() => {
-    jest.resetAllMocks();
+    vi.resetAllMocks();
   });
 
   it('should set up CLI with version and commands', async () => {

@@ -4,11 +4,11 @@ import { createMockConfig } from '../../../testing/testUtils.js';
 import type { FileInfo } from '../../../../src/core/types.js';
 import { OutputConfig } from '../../../../src/types/config.js';
 
-jest.mock('fs/promises');
+vi.mock('fs/promises');
 
 describe('xmlStyle', () => {
   beforeEach(() => {
-    jest.resetAllMocks();
+    vi.resetAllMocks();
   });
 
   describe('Basic functionality', () => {

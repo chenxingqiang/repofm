@@ -4,11 +4,11 @@ import { generateOutput } from '../../../../src/core/output/outputGenerate.js';
 import { createMockConfig } from '../../../testing/testUtils.js';
 import type { FileInfo } from '../../../../src/core/types.js';
 
-jest.mock('fs/promises');
+vi.mock('fs/promises');
 
 describe('markdownStyle', () => {
   beforeEach(() => {
-    jest.resetAllMocks();
+    vi.resetAllMocks();
   });
 
   describe('Basic functionality', () => {

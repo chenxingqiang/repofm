@@ -5,8 +5,8 @@ import { loadConfig, createDefaultConfig } from '../../../src/config/configLoad.
 import { createTestConfig } from '../../../src/test/helpers.js';
 
 // Mock the packager module
-jest.mock('../../../src/core/packager.js', () => ({
-  pack: jest.fn().mockImplementation((cwd, config) => Promise.resolve({
+vi.mock('../../../src/core/packager.js', () => ({
+  pack: vi.fn().mockImplementation((cwd, config) => Promise.resolve({
     totalFiles: 5,
     fileCharCounts: { 'src/index.ts': 100, 'src/utils.ts': 200 },
     output: 'Mock output content'
@@ -14,9 +14,9 @@ jest.mock('../../../src/core/packager.js', () => ({
 }));
 
 // Mock the config module
-jest.mock('../../../src/config/configLoad.js', () => ({
-  loadConfig: jest.fn(),
-  createDefaultConfig: jest.fn().mockImplementation((cwd) => ({
+vi.mock('../../../src/config/configLoad.js', () => ({
+  loadConfig: vi.fn(),
+  createDefaultConfig: vi.fn().mockImplementation((cwd) => ({
     output: {
       filePath: 'output.txt',
       style: 'plain',
@@ -41,7 +41,7 @@ jest.mock('../../../src/config/configLoad.js', () => ({
 
 describe('Default Action', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   test('runs default action successfully', async () => {
@@ -68,7 +68,7 @@ describe('Default Action', () => {
       security: { enableSecurityCheck: true }
     });
 
-    jest.mocked(loadConfig).mockResolvedValue(mockLoadedConfig);
+    vi.mocked(loadConfig).mockResolvedValue(mockLoadedConfig);
 
     const result = await runDefaultAction(mockCwd, { copy: true, security: true });
 
@@ -115,8 +115,8 @@ describe('Default Action', () => {
       security: { enableSecurityCheck: false }
     });
 
-    jest.mocked(loadConfig).mockResolvedValue(mockLoadedConfig);
-    jest.mocked(packager.pack).mockResolvedValueOnce({
+    vi.mocked(loadConfig).mockResolvedValue(mockLoadedConfig);
+    vi.mocked(packager.pack).mockResolvedValueOnce({
       totalFiles: 0,
       fileCharCounts: {},
       output: ''

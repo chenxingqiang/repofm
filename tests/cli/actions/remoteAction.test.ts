@@ -1,18 +1,18 @@
 import { jest, afterEach, beforeEach, describe, expect, test } from '@jest/globals';
 import { formatGitUrl } from '../../../src/cli/actions/remoteAction.js';
 
-jest.mock('node:fs/promises');
-jest.mock('node:child_process');
-jest.mock('../../../src/cli/actions/defaultAction.js');
-jest.mock('../../../src/shared/logger.js');
+vi.mock('node:fs/promises');
+vi.mock('node:child_process');
+vi.mock('../../../src/cli/actions/defaultAction.js');
+vi.mock('../../../src/shared/logger.js');
 
 describe('remoteAction', () => {
   beforeEach(() => {
-    jest.resetAllMocks();
+    vi.resetAllMocks();
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   describe('formatGitUrl', () => {

@@ -4,7 +4,7 @@ import type { FileInfo } from '../../../src/core/types.js';
 
 describe('securityCheck', () => {
   beforeEach(() => {
-    jest.resetAllMocks();
+    vi.resetAllMocks();
   });
 
   describe('Basic functionality', () => {

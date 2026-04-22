@@ -5,28 +5,28 @@ import { jest, afterEach, beforeEach, describe, expect, it } from '@jest/globals
 import { createConfigFile, createIgnoreFile } from '../../../src/cli/actions/initAction.js';
 import { getGlobalDirectory } from '../../../src/config/globalDirectory.js';
 
-jest.mock('node:fs');
-jest.mock('@clack/prompts');
-jest.mock('../../../src/shared/folderUtils');
-jest.mock('../../../src/config/globalDirectory.js');
+vi.mock('node:fs');
+vi.mock('@clack/prompts');
+vi.mock('../../../src/shared/folderUtils');
+vi.mock('../../../src/config/globalDirectory.js');
 
 describe('initAction', () => {
   beforeEach(() => {
-    jest.resetAllMocks();
+    vi.resetAllMocks();
   });
 
   afterEach(() => {
-    jest.resetAllMocks();
+    vi.resetAllMocks();
   });
 
   describe('createConfigFile', () => {
     it('should create a new local config file when one does not exist', async () => {
-      jest.mocked(fs.access).mockRejectedValue(new Error('File does not exist'));
-      jest.mocked(prompts.group).mockResolvedValue({
+      vi.mocked(fs.access).mockRejectedValue(new Error('File does not exist'));
+      vi.mocked(prompts.group).mockResolvedValue({
         outputFilePath: 'custom-output.txt',
         outputStyle: 'xml',
       });
-      jest.mocked(prompts.confirm).mockResolvedValue(true);
+      vi.mocked(prompts.confirm).mockResolvedValue(true);
 
       await createConfigFile('/test/dir', false);
 
@@ -39,13 +39,13 @@ describe('initAction', () => {
     });
 
     it('should create a new global config file when one does not exist', async () => {
-      jest.mocked(fs.access).mockRejectedValue(new Error('File does not exist'));
-      jest.mocked(prompts.group).mockResolvedValue({
+      vi.mocked(fs.access).mockRejectedValue(new Error('File does not exist'));
+      vi.mocked(prompts.group).mockResolvedValue({
         outputFilePath: 'global-output.txt',
         outputStyle: 'plain',
       });
-      jest.mocked(prompts.confirm).mockResolvedValue(true);
-      jest.mocked(getGlobalDirectory).mockImplementation(() => '/global/repofm');
+      vi.mocked(prompts.confirm).mockResolvedValue(true);
+      vi.mocked(getGlobalDirectory).mockImplementation(() => '/global/repofm');
 
       await createConfigFile('/test/dir', true);
 
@@ -57,9 +57,9 @@ describe('initAction', () => {
     });
 
     it('should prompt to overwrite when config file already exists', async () => {
-      jest.mocked(fs.access).mockResolvedValue(undefined);
-      jest.mocked(prompts.confirm).mockResolvedValue(true);
-      jest.mocked(prompts.group).mockResolvedValue({
+      vi.mocked(fs.access).mockResolvedValue(undefined);
+      vi.mocked(prompts.confirm).mockResolvedValue(true);
+      vi.mocked(prompts.group).mockResolvedValue({
         outputFilePath: 'new-output.txt',
         outputStyle: 'xml',
       });
@@ -71,8 +71,8 @@ describe('initAction', () => {
     });
 
     it('should not overwrite when user chooses not to', async () => {
-      jest.mocked(fs.access).mockResolvedValue(undefined);
-      jest.mocked(prompts.confirm).mockResolvedValue(false);
+      vi.mocked(fs.access).mockResolvedValue(undefined);
+      vi.mocked(prompts.confirm).mockResolvedValue(false);
 
       await createConfigFile('/test/dir', false);
 
@@ -81,8 +81,8 @@ describe('initAction', () => {
     });
 
     it('should handle user cancellation', async () => {
-      jest.mocked(fs.access).mockRejectedValue(new Error('File does not exist'));
-      jest.mocked(prompts.group).mockImplementation(() => {
+      vi.mocked(fs.access).mockRejectedValue(new Error('File does not exist'));
+      vi.mocked(prompts.group).mockImplementation(() => {
         throw new Error('User cancelled');
       });
 
@@ -101,8 +101,8 @@ describe('initAction', () => {
     });
 
     it('should create a new .repofmignore file when one does not exist', async () => {
-      jest.mocked(fs.access).mockRejectedValue(new Error('File does not exist'));
-      jest.mocked(prompts.confirm).mockResolvedValue(true);
+      vi.mocked(fs.access).mockRejectedValue(new Error('File does not exist'));
+      vi.mocked(prompts.confirm).mockResolvedValue(true);
 
       await createIgnoreFile('/test/dir', false);
 
@@ -115,8 +115,8 @@ describe('initAction', () => {
     });
 
     it('should prompt to overwrite when .repofmignore file already exists', async () => {
-      jest.mocked(fs.access).mockResolvedValue(undefined);
-      jest.mocked(prompts.confirm)
+      vi.mocked(fs.access).mockResolvedValue(undefined);
+      vi.mocked(prompts.confirm)
         .mockResolvedValueOnce(true) // First call for creating the file
         .mockResolvedValueOnce(true); // Second call for overwriting
 
@@ -127,8 +127,8 @@ describe('initAction', () => {
     });
 
     it('should not overwrite when user chooses not to', async () => {
-      jest.mocked(fs.access).mockResolvedValue(undefined);
-      jest.mocked(prompts.confirm)
+      vi.mocked(fs.access).mockResolvedValue(undefined);
+      vi.mocked(prompts.confirm)
         .mockResolvedValueOnce(true) // First call for creating the file
         .mockResolvedValueOnce(false); // Second call for overwriting
 
@@ -139,7 +139,7 @@ describe('initAction', () => {
     });
 
     it('should return false when user chooses not to create .repofmignore', async () => {
-      jest.mocked(prompts.confirm).mockResolvedValue(false);
+      vi.mocked(prompts.confirm).mockResolvedValue(false);
 
       const result = await createIgnoreFile('/test/dir', false);
 
@@ -148,7 +148,7 @@ describe('initAction', () => {
     });
 
     it('should handle user cancellation', async () => {
-      jest.mocked(prompts.confirm).mockResolvedValue(false);
+      vi.mocked(prompts.confirm).mockResolvedValue(false);
 
       await createIgnoreFile('/test/dir', false);
 

@@ -2,21 +2,21 @@ import { jest, describe, test, expect, beforeEach, afterEach } from '@jest/globa
 import { parsePackageJson } from '../../../src/core/file/packageJsonParse.js';
 import { logger } from '../../../src/utils/logger.js';
 
-jest.mock('../../../src/utils/logger.js', () => ({
+vi.mock('../../../src/utils/logger.js', () => ({
   logger: {
-    error: jest.fn(),
-    warn: jest.fn(),
-    info: jest.fn()
+    error: vi.fn(),
+    warn: vi.fn(),
+    info: vi.fn()
   }
 }));
 
 describe('parsePackageJson', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   afterEach(() => {
-    jest.resetAllMocks();
+    vi.resetAllMocks();
   });
 
   test('should parse valid JSON', () => {
