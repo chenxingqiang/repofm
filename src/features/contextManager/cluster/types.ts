@@ -1,4 +1,4 @@
-import { EventEmitter } from 'events.js';
+import { EventEmitter } from 'events';
 
 export class ClusterManager extends EventEmitter {
   [x: string]: any;

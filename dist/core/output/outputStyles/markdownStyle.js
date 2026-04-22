@@ -1,4 +1,4 @@
-import Handlebars from 'handlebars.js';
+import Handlebars from 'handlebars';
 Handlebars.registerHelper('getFileExtension', (filePath) => {
     const extension = filePath.split('.').pop()?.toLowerCase();
     switch (extension) {

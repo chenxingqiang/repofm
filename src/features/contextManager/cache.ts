@@ -1,4 +1,4 @@
-import { LRUCache } from 'lru-cache.js';
+import { LRUCache } from 'lru-cache';
 import type { ContextConfig } from './types.js';
 
 export class Cache {

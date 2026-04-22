@@ -2,7 +2,8 @@ import { Command } from 'commander';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
 import { logger } from '../shared/logger.js';
-import { searchFiles, findFiles, SearchOptions } from '../core/file/fileSearch.js';
+import { searchFiles, findFiles } from '../core/file/fileSearch.js';
+import type { SearchOptions, IgnoreOptions } from '../core/file/fileSearch.js';
 import { parsePackageJson } from '../core/file/packageJsonParse.js';
 import { exists } from '../core/file/fileUtils.js';
 
@@ -41,7 +42,7 @@ export async function run(argv: string[] = process.argv): Promise<void> {
 
           const searchOptions: SearchOptions = {
             dot: options.dotFiles,
-            ignore: options.exclude ? { patterns: options.exclude } : undefined
+            ignore: options.exclude as string[] | undefined
           };
 
           const results = await searchFiles(searchPath, pattern, searchOptions);
@@ -83,7 +84,7 @@ export async function run(argv: string[] = process.argv): Promise<void> {
 
           const searchOptions: SearchOptions = {
             dot: options.dotFiles,
-            ignore: options.exclude ? { patterns: options.exclude } : undefined
+            ignore: options.exclude as string[] | undefined
           };
 
           const files = await findFiles(searchPath, patterns, searchOptions);
@@ -115,17 +116,4 @@ export async function run(argv: string[] = process.argv): Promise<void> {
     // In non-test environment, exit with error code
     process.exit(1);
   }
-}
-
-// Run CLI if this file is being executed directly
-if (import.meta.url === `file://${__filename}`) {
-  run().catch(error => {
-    logger.error('Unhandled error:', error);
-    if (process.env.NODE_ENV === 'test') {
-      // Ensure the error is propagated in test environment
-      return Promise.reject(error);
-    } else {
-      process.exit(1);
-    }
-  });
 }

@@ -65,7 +65,7 @@ describe('Advanced Security Features', () => {
     });
     describe('Zero Trust Security', () => {
         it('should verify access based on context', async () => {
-            const access = await zeroTrust.verifyAccess('user1', 'resource1', 'read', {
+            const access = await zeroTrust.verifyAccess('resource1', 'read', {
                 deviceId: 'device1',
                 location: 'office'
             });
@@ -80,7 +80,7 @@ describe('Advanced Security Features', () => {
             // Setup spy for verification event
             zeroTrust.on('verification-required', verificationSpy);
             // Trigger verification with high-risk context
-            const access = await zeroTrust.verifyAccess('user1', 'resource1', 'delete', {
+            const access = await zeroTrust.verifyAccess('resource1', 'delete', {
                 deviceId: 'unknown',
                 location: 'unknown'
             });

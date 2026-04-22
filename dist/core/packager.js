@@ -1,4 +1,5 @@
-import { searchFiles } from './file/fileSearch.js';
+import path from 'path';
+import { findFiles } from './file/fileSearch.js';
 import { collectFilesInfo } from './file/fileCollect.js';
 import { processFiles } from './file/fileProcess.js';
 import { OutputGenerator } from './outputGenerator.js';
@@ -9,7 +10,7 @@ export function generateOutput(options) {
     return generator.generate(data);
 }
 export const defaultDeps = {
-    searchFiles,
+    searchFiles: findFiles,
     collectFiles: collectFilesInfo,
     processFiles,
     runSecurityCheck,
@@ -17,14 +18,15 @@ export const defaultDeps = {
 };
 export async function pack(directory, config, deps = defaultDeps) {
     try {
-        const searchConfig = {
-            patterns: config.ignore.excludePatterns,
-            useGitignore: config.ignore.useGitignore,
-            useDefaultPatterns: config.ignore.useDefaultPatterns
-        };
-        const files = await deps.searchFiles(directory, searchConfig);
-        const collected = await deps.collectFiles(files, { ignoreErrors: true });
-        const processed = await deps.processFiles(collected, config);
+        const files = await deps.searchFiles(directory, ['**/*'], {
+            ignore: {
+                patterns: config.ignore.excludePatterns || [],
+                useGitignore: config.ignore.useGitignore,
+                useDefaultPatterns: config.ignore.useDefaultPatterns,
+            }
+        });
+        const collected = await deps.collectFiles(files.map(f => path.join(directory, f)));
+        const processed = await deps.processFiles(collected);
         // Optional security check
         const securityChecked = config.security.enableSecurityCheck
             ? await deps.runSecurityCheck(processed.map(file => ({

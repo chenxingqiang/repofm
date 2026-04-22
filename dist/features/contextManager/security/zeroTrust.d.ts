@@ -12,8 +12,8 @@ export declare class ZeroTrustManager extends EventEmitter {
     private securityContexts;
     private readonly trustDuration;
     private readonly riskThreshold;
-    constructor(userId: string);
-    verifyAccess(resourceId: string, action: string, p0: string, context: Partial<SecurityContext>): Promise<boolean>;
+    constructor(userId?: string);
+    verifyAccess(resourceId: string, action: string, context: Partial<SecurityContext>): Promise<boolean>;
     private calculateRiskScore;
     private detectAnomalousBehavior;
     private requestAdditionalVerification;

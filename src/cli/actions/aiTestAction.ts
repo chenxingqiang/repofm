@@ -1,6 +1,6 @@
-import * as p from '@clack/prompts.js';
-import chalk from 'chalk.js';
-import { OllamaInteractionService } from '../../services/OllamaInteractionService.js';
+import * as p from '@clack/prompts';
+import chalk from 'chalk';
+import { OllamaInteractionService, OllamaModel } from '../../services/OllamaInteractionService.js';
 import { aiProviderConfig } from '../../config/AIProviderConfig.js';
 import { logger } from '../../shared/logger.js';
 

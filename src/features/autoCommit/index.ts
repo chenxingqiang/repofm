@@ -1,4 +1,4 @@
-import simpleGit from 'simple-git';
+import simpleGit, { type SimpleGit } from 'simple-git';
 import inquirer from 'inquirer';
 import { logger } from '../../shared/logger.js';
 
@@ -8,7 +8,7 @@ export interface AutoCommitOptions {
 }
 
 export async function autoCommit(workingDir: string, options: AutoCommitOptions = {}): Promise<void> {
-  const git = simpleGit(workingDir);
+  const git = (simpleGit as unknown as (dir: string) => SimpleGit)(workingDir);
   const status = await git.status();
 
   if (status.modified.length === 0) {

@@ -1,6 +1,6 @@
-import type { Config } from '../config/configSchema.js';
+import type { Config } from '../types/config.js';
 import type { FileInfo, SuspiciousFileResult } from './types.js';
-import { searchFiles } from './file/fileSearch.js';
+import { findFiles } from './file/fileSearch.js';
 import { collectFilesInfo } from './file/fileCollect.js';
 import { processFiles } from './file/fileProcess.js';
 import { OutputGeneratorOptions } from './outputGenerator.js';
@@ -10,9 +10,9 @@ export interface GenerateOutputOptions extends OutputGeneratorOptions {
 }
 export declare function generateOutput(options: GenerateOutputOptions): string;
 export interface Dependencies {
-    searchFiles: typeof searchFiles;
+    searchFiles: typeof findFiles;
     collectFiles: typeof collectFilesInfo;
-    processFiles: typeof processFiles;
+    processFiles: (files: import('./file/fileCollect.js').FileInfo[]) => Promise<import('./file/fileProcess.js').ProcessedFile[]>;
     runSecurityCheck: (files: FileInfo[]) => Promise<SuspiciousFileResult[]>;
     generateOutput: typeof generateOutput;
 }

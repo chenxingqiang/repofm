@@ -1,1 +1,9 @@
-export declare function loadConfig(): any;
+export declare function loadConfig(): {
+    github: {
+        token?: string | undefined;
+    };
+    supabase: {
+        key?: string | undefined;
+        url?: string | undefined;
+    };
+};

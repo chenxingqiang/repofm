@@ -47,3 +47,17 @@ export declare class ModelProviderFactory {
     getAllProviders(): AIModelProvider[];
     createProvider(providerName: string, apiKey?: string): Promise<AIModelProvider>;
 }
+export interface CommitMessageMetadata {
+    provider: string;
+    length: number;
+    fileTypes: string[];
+}
+export interface StructuredCommitResult {
+    message: string;
+    metadata: CommitMessageMetadata;
+}
+export declare function generateStructuredCommitMessage(stagedFiles: string[], options?: {
+    provider?: string;
+    maxLength?: number;
+    temperature?: number;
+}): Promise<StructuredCommitResult>;

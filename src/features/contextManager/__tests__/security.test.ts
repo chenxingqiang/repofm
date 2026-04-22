@@ -3,7 +3,7 @@ import { RiskAnalyzer } from "../analytics/riskAnalysis.js";
 import { IDSService } from '../security/ids.js';
 import { ZeroTrustManager } from '../security/zeroTrust.js';
 import { SecurityManager } from "../security/SecurityManager.js";
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi, type Mock } from 'vitest';
 import { EventEmitter } from 'node:events';
 
 // Mock TensorFlow with dynamic prediction length
@@ -66,8 +66,8 @@ describe('Advanced Security Features', () => {
   let zeroTrust: ZeroTrustManager & EventEmitter;
   let ids: IDSService;
   let analytics: DeepAnalytics;
-  let spy: vi.Mock;
-  let verificationSpy: vi.Mock;
+  let spy: Mock;
+  let verificationSpy: Mock;
 
   beforeEach(() => {
     zeroTrust = new ZeroTrustManager() as ZeroTrustManager & EventEmitter;
@@ -81,7 +81,6 @@ describe('Advanced Security Features', () => {
   describe('Zero Trust Security', () => {
     it('should verify access based on context', async () => {
       const access = await zeroTrust.verifyAccess(
-        'user1',
         'resource1',
         'read',
         {
@@ -104,7 +103,7 @@ describe('Advanced Security Features', () => {
       zeroTrust.on('verification-required', verificationSpy);
 
       // Trigger verification with high-risk context
-      const access = await zeroTrust.verifyAccess('user1', 'resource1', 'delete', {
+      const access = await zeroTrust.verifyAccess('resource1', 'delete', {
         deviceId: 'unknown',
         location: 'unknown'
       });

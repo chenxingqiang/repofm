@@ -34,7 +34,7 @@ export async function run(argv = process.argv) {
                 }
                 const searchOptions = {
                     dot: options.dotFiles,
-                    ignore: options.exclude ? { patterns: options.exclude } : undefined
+                    ignore: options.exclude
                 };
                 const results = await searchFiles(searchPath, pattern, searchOptions);
                 if (results.length === 0) {
@@ -71,7 +71,7 @@ export async function run(argv = process.argv) {
                 }
                 const searchOptions = {
                     dot: options.dotFiles,
-                    ignore: options.exclude ? { patterns: options.exclude } : undefined
+                    ignore: options.exclude
                 };
                 const files = await findFiles(searchPath, patterns, searchOptions);
                 if (files.length === 0) {
@@ -99,18 +99,5 @@ export async function run(argv = process.argv) {
         // In non-test environment, exit with error code
         process.exit(1);
     }
-}
-// Run CLI if this file is being executed directly
-if (import.meta.url === `file://${__filename}`) {
-    run().catch(error => {
-        logger.error('Unhandled error:', error);
-        if (process.env.NODE_ENV === 'test') {
-            // Ensure the error is propagated in test environment
-            return Promise.reject(error);
-        }
-        else {
-            process.exit(1);
-        }
-    });
 }
 //# sourceMappingURL=cliRun.js.map

@@ -1,4 +1,4 @@
-import { LRUCache } from 'lru-cache.js';
+import { LRUCache } from 'lru-cache';
 import { FilePersistentCache } from './persistentCache.js';
 export class MultilevelCache {
     constructor() {

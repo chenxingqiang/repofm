@@ -26,8 +26,11 @@ export async function searchFiles(searchPath, pattern, options = {}) {
             absolute: true,
             onlyFiles: true,
         };
-        const files = await globby(pattern, globbyOptions);
+        // Use '**/*' to enumerate all files, then search their contents for the pattern
+        const files = await globby('**/*', globbyOptions);
         const results = [];
+        const caseSensitive = options.caseSensitive !== false;
+        const searchPattern = caseSensitive ? pattern : pattern.toLowerCase();
         for (const file of files) {
             try {
                 const stats = await fs.stat(file);
@@ -38,9 +41,8 @@ export async function searchFiles(searchPath, pattern, options = {}) {
                 const matches = [];
                 for (let i = 0; i < lines.length; i++) {
                     const line = lines[i];
-                    const matchPattern = pattern;
-                    const searchLine = line;
-                    if (searchLine.includes(matchPattern)) {
+                    const searchLine = caseSensitive ? line : line.toLowerCase();
+                    if (searchLine.includes(searchPattern)) {
                         matches.push({
                             line: i + 1,
                             content: line.trim()

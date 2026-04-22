@@ -1,4 +1,4 @@
-import ora from 'ora.js';
+import ora from 'ora';
 export class CLISpinner {
     static start(text) {
         const spinnerText = text || 'Processing...';

@@ -16,6 +16,7 @@ export interface SearchOptions {
   dot?: boolean;
   followSymlinks?: boolean;
   ignore?: string[] | IgnoreOptions;
+  caseSensitive?: boolean;
 }
 
 export interface SearchResult {
@@ -56,9 +57,12 @@ export async function searchFiles(
       onlyFiles: true,
     };
 
-    const files = await globby(pattern, globbyOptions);
+    // Use '**/*' to enumerate all files, then search their contents for the pattern
+    const files = await globby('**/*', globbyOptions);
 
     const results: SearchResult[] = [];
+    const caseSensitive = options.caseSensitive !== false;
+    const searchPattern = caseSensitive ? pattern : pattern.toLowerCase();
 
     for (const file of files) {
       try {
@@ -71,10 +75,9 @@ export async function searchFiles(
 
         for (let i = 0; i < lines.length; i++) {
           const line = lines[i];
-          const matchPattern = pattern;
-          const searchLine = line;
+          const searchLine = caseSensitive ? line : line.toLowerCase();
 
-          if (searchLine.includes(matchPattern)) {
+          if (searchLine.includes(searchPattern)) {
             matches.push({
               line: i + 1,
               content: line.trim()

@@ -1,8 +1,11 @@
-import * as dotenv from 'dotenv.js';
-import { z } from 'zod.js';
+import * as dotenv from 'dotenv';
+import { z } from 'zod';
+import { createRequire } from 'module';
 
 // Load environment variables
 dotenv.config();
+
+const _require = createRequire(import.meta.url);
 
 const configSchema = z.object({
   github: z.object({
@@ -16,7 +19,7 @@ const configSchema = z.object({
 
 export function loadConfig() {
   // Load base config
-  const config = require('../repofm.config.json');
+  const config = _require('../repofm.config.json');
 
   // Inject environment variables
   const fullConfig = {

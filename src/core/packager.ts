@@ -1,9 +1,9 @@
 import fs from 'node:fs/promises';
 import path from 'path';
 import { minimatch } from 'minimatch';
-import type { Config } from '../config/configSchema.js';
+import type { Config } from '../types/config.js';
 import type { ProcessedFile, FileInfo, SuspiciousFileResult } from './types.js';
-import { searchFiles } from './file/fileSearch.js';
+import { findFiles } from './file/fileSearch.js';
 import { collectFilesInfo } from './file/fileCollect.js';
 import { processFiles } from './file/fileProcess.js';
 import { OutputGenerator, OutputGeneratorOptions } from './outputGenerator.js';
@@ -20,9 +20,9 @@ export function generateOutput(options: GenerateOutputOptions): string {
 }
 
 export interface Dependencies {
-  searchFiles: typeof searchFiles;
+  searchFiles: typeof findFiles;
   collectFiles: typeof collectFilesInfo;
-  processFiles: typeof processFiles;
+  processFiles: (files: import('./file/fileCollect.js').FileInfo[]) => Promise<import('./file/fileProcess.js').ProcessedFile[]>;
   runSecurityCheck: (files: FileInfo[]) => Promise<SuspiciousFileResult[]>;
   generateOutput: typeof generateOutput;
 }
@@ -34,7 +34,7 @@ export interface PackResult {
 }
 
 export const defaultDeps: Dependencies = {
-  searchFiles,
+  searchFiles: findFiles,
   collectFiles: collectFilesInfo,
   processFiles,
   runSecurityCheck,
@@ -47,15 +47,15 @@ export async function pack(
   deps: Dependencies = defaultDeps
 ): Promise<PackResult> {
   try {
-    const searchConfig = {
-      patterns: config.ignore.excludePatterns,
-      useGitignore: config.ignore.useGitignore,
-      useDefaultPatterns: config.ignore.useDefaultPatterns
-    };
-
-    const files = await deps.searchFiles(directory, searchConfig);
-    const collected = await deps.collectFiles(files, { ignoreErrors: true });
-    const processed = await deps.processFiles(collected, config);
+    const files = await deps.searchFiles(directory, ['**/*'], {
+      ignore: {
+        patterns: config.ignore.excludePatterns || [],
+        useGitignore: config.ignore.useGitignore,
+        useDefaultPatterns: config.ignore.useDefaultPatterns,
+      }
+    });
+    const collected = await deps.collectFiles(files.map(f => path.join(directory, f)));
+    const processed = await deps.processFiles(collected);
 
     // Optional security check
     const securityChecked = config.security.enableSecurityCheck 

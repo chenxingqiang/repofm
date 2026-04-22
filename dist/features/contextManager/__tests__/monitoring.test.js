@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect } from '@jest/globals';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { MonitoringSystem } from '../monitoring.js';
 describe('Monitoring System', () => {
     let monitoring;

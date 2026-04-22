@@ -1,8 +1,8 @@
 import * as p from '@clack/prompts';
 import chalk from 'chalk';
-import { aiProviderConfig } from '../../config/AIProviderConfig';
-import { logger } from '../../shared/logger';
-import { OllamaInteractionService, OllamaModel } from '../../services/OllamaInteractionService';
+import { aiProviderConfig, type AIProviderCredentials } from '../../config/AIProviderConfig.js';
+import { logger } from '../../shared/logger.js';
+import { OllamaInteractionService, OllamaModel } from '../../services/OllamaInteractionService.js';
 
 export async function configureAIProviders() {
   console.clear();
@@ -69,7 +69,7 @@ export async function configureAIProviders() {
       return;
     }
 
-    apiKey = modelChoice.value as string;
+    apiKey = (modelChoice as { value: OllamaModel }).value.name;
   } else {
     // For other providers, request API key
     const apiKeyInput = await p.text({
@@ -92,15 +92,16 @@ export async function configureAIProviders() {
   spinner.start('Validating configuration');
 
   try {
+    const provider = providerChoice as keyof AIProviderCredentials;
     const isValid = await aiProviderConfig.validateCredentials(
-      providerChoice as string, 
+      provider,
       apiKey
     );
 
     if (isValid) {
       // Save credentials
       aiProviderConfig.setProviderCredentials(
-        providerChoice as string, 
+        provider,
         apiKey
       );
 
