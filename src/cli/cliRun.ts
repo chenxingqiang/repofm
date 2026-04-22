@@ -42,7 +42,8 @@ export async function run(argv: string[] = process.argv): Promise<void> {
 
           const searchOptions: SearchOptions = {
             dot: options.dotFiles,
-            ignore: options.exclude as string[] | undefined
+            ignore: options.exclude as string[] | undefined,
+            caseSensitive: options.caseSensitive as boolean
           };
 
           const results = await searchFiles(searchPath, pattern, searchOptions);

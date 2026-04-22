@@ -34,7 +34,8 @@ export async function run(argv = process.argv) {
                 }
                 const searchOptions = {
                     dot: options.dotFiles,
-                    ignore: options.exclude
+                    ignore: options.exclude,
+                    caseSensitive: options.caseSensitive
                 };
                 const results = await searchFiles(searchPath, pattern, searchOptions);
                 if (results.length === 0) {

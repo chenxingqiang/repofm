@@ -28,9 +28,15 @@ export class Logger {
   }
 
   private formatArgs(args: any[]): string {
-    return args.map(arg => 
-      typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
-    ).join(' ');
+    return args.map(arg => {
+      if (arg instanceof Error) {
+        return arg.message;
+      }
+      if (typeof arg === 'object' && arg !== null) {
+        return JSON.stringify(arg);
+      }
+      return String(arg);
+    }).join(' ');
   }
 
   error(...args: any[]): void {
