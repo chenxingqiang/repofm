@@ -1,11 +1,14 @@
 import * as dotenv from 'dotenv';
 import { z } from 'zod';
-import { createRequire } from 'module';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 // Load environment variables
 dotenv.config();
 
-const _require = createRequire(import.meta.url);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const configSchema = z.object({
   github: z.object({
@@ -19,11 +22,14 @@ const configSchema = z.object({
 
 export function loadConfig() {
   // Load base config
-  const config = _require('../repofm.config.json');
+  const configPath = path.join(__dirname, '../repofm.config.json');
+  const rawConfig = fs.existsSync(configPath)
+    ? JSON.parse(fs.readFileSync(configPath, 'utf-8'))
+    : {};
 
   // Inject environment variables
   const fullConfig = {
-    ...config,
+    ...rawConfig,
     github: {
       token: process.env.GITHUB_TOKEN || '',
     },
