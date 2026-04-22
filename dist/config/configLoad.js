@@ -1,6 +1,6 @@
 import * as fs from 'node:fs/promises';
 import path from 'node:path';
-import { z } from 'zod.js';
+import { z } from 'zod';
 import { logger } from '../shared/logger.js';
 import { getGlobalDirectory } from './globalDirectory.js';
 const defaultFilePathMap = {

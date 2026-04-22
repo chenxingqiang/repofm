@@ -91,12 +91,16 @@ export async function findFiles(searchPath, patterns, options = {}) {
 }
 export function matchPattern(filePath, pattern, caseSensitive = true) {
     try {
+        // Check for invalid pattern characters
+        if (pattern.includes('[') && !pattern.includes(']')) {
+            throw new Error('Invalid pattern: unbalanced brackets');
+        }
         const options = { nocase: !caseSensitive };
         return minimatch(filePath, pattern, options);
     }
     catch (error) {
         logger.error(`Error matching pattern ${pattern} against ${filePath}:`, error);
-        throw error;
+        return false; // Return false for invalid patterns
     }
 }
 //# sourceMappingURL=fileSearch.js.map

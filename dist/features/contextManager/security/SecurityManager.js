@@ -14,4 +14,4 @@ export class SecurityManager {
         return riskScore > 0.7; // 70% threshold for high risk
     }
 }
-//# sourceMappingURL=securityManager.js.map
+//# sourceMappingURL=SecurityManager.js.map
