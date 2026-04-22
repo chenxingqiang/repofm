@@ -70,9 +70,6 @@ export async function searchFiles(
 
     for (const file of files) {
       try {
-        const stats = await fs.stat(file);
-        if (!stats.isFile()) continue;
-
         const content = await fs.readFile(file, 'utf-8');
         const lines = content.split('\n');
         const matches = [];
