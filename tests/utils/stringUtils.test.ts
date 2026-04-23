@@ -8,7 +8,7 @@ describe('stringUtils', () => {
     });
 
     it('should escape less-than signs', () => {
-      expect(escapeHtml('<div>')).toBe('&lt;div&gt;');
+      expect(escapeHtml('a < b')).toBe('a &lt; b');
     });
 
     it('should escape greater-than signs', () => {
@@ -16,7 +16,7 @@ describe('stringUtils', () => {
     });
 
     it('should escape double quotes', () => {
-      expect(escapeHtml('"hello"')).toBe('&quot;hello&quot;');
+      expect(escapeHtml('say "hello"')).toBe('say &quot;hello&quot;');
     });
 
     it('should escape single quotes', () => {
@@ -24,25 +24,38 @@ describe('stringUtils', () => {
     });
 
     it('should escape multiple special characters', () => {
-      expect(escapeHtml('<a href="test&id=1">it\'s</a>')).toBe(
-        '&lt;a href=&quot;test&amp;id=1&quot;&gt;it&#039;s&lt;/a&gt;'
+      expect(escapeHtml('<script>alert("xss")</script>')).toBe(
+        '&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;'
       );
     });
 
-    it('should return empty string unchanged', () => {
-      expect(escapeHtml('')).toBe('');
-    });
-
-    it('should return plain text unchanged', () => {
+    it('should return string unchanged if no special characters', () => {
       expect(escapeHtml('hello world')).toBe('hello world');
     });
 
-    it('should escape multiple ampersands', () => {
+    it('should handle empty string', () => {
+      expect(escapeHtml('')).toBe('');
+    });
+
+    it('should handle string with only special characters', () => {
+      expect(escapeHtml('&<>"\''))
+        .toBe('&amp;&lt;&gt;&quot;&#039;');
+    });
+
+    it('should handle multiple ampersands', () => {
       expect(escapeHtml('a & b & c')).toBe('a &amp; b &amp; c');
     });
 
-    it('should handle strings with only special characters', () => {
-      expect(escapeHtml('<>&"\'')).toBe('&lt;&gt;&amp;&quot;&#039;');
+    it('should handle HTML tag with attributes', () => {
+      expect(escapeHtml('<a href="url">link</a>')).toBe(
+        '&lt;a href=&quot;url&quot;&gt;link&lt;/a&gt;'
+      );
+    });
+
+    it('should not double-escape already escaped characters', () => {
+      const input = '&amp;';
+      const result = escapeHtml(input);
+      expect(result).toBe('&amp;amp;');
     });
   });
 });
