@@ -1,5 +1,5 @@
-import * as p from '@clack/prompts.js';
-import chalk from 'chalk.js';
+import * as p from '@clack/prompts';
+import chalk from 'chalk';
 import { ollamaService } from '../../services/OllamaInteractionService.js';
 
 export async function ollamaInteract() {
@@ -72,11 +72,12 @@ export async function ollamaInteract() {
 }
 
 async function textGenerationWorkflow() {
+  const models = await ollamaService.listLocalModels();
   const model = await p.select({
     message: 'Select a model for text generation',
-    options: (await ollamaService.listLocalModels()).map(model => ({
-      value: model,
-      label: model
+    options: models.map(m => ({
+      value: m.name,
+      label: m.name
     }))
   });
 
@@ -109,12 +110,10 @@ async function textGenerationWorkflow() {
   });
 
   try {
+    await ollamaService.setModel(model as string);
     const generatedText = await ollamaService.generateText(
-      prompt as string, 
-      model as string, 
-      { 
-        temperature: temperature ? Number(temperature) : 0.7 
-      }
+      prompt as string,
+      { temperature: temperature ? Number(temperature) : 0.7 }
     );
 
     console.log(chalk.green('\nGenerated Text:'));
@@ -129,7 +128,7 @@ async function listModelsWorkflow() {
   
   console.log(chalk.blue('\nLocal Ollama Models:'));
   localModels.forEach((model, index) => {
-    console.log(`${index + 1}. ${model}`);
+    console.log(`${index + 1}. ${model.name}`);
   });
 
   p.note(

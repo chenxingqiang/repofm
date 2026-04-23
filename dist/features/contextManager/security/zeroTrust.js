@@ -1,13 +1,13 @@
 import { EventEmitter } from 'events';
 export class ZeroTrustManager extends EventEmitter {
-    constructor(userId) {
+    constructor(userId = '') {
         super(); // Important: call the parent constructor
         this.userId = userId;
         this.securityContexts = new Map();
         this.trustDuration = 5 * 60 * 1000; // 5 minutes
         this.riskThreshold = 0.7;
     }
-    async verifyAccess(resourceId, action, p0, context) {
+    async verifyAccess(resourceId, action, context) {
         const securityContext = await this.getOrCreateSecurityContext(this.userId);
         // 验证会话是否需要重新认证
         if (this.requiresReauthorization(securityContext)) {

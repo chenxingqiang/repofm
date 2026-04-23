@@ -1,10 +1,11 @@
 import { searchFiles } from './file/fileSearch.js';
-import { collectFiles } from './file/fileCollect.js';
+import type { SearchOptions, SearchResult } from './file/fileSearch.js';
+import { collectFilesInfo } from './file/fileCollect.js';
+import type { FileInfo } from './file/fileCollect.js';
 import { processFiles } from './file/fileProcess.js';
 import { generateOutput } from './packager.js';
 import { runSecurityCheck } from './security/securityCheck.js';
-import type { FileInfo, SuspiciousFileResult } from './types.js';
-import type { SearchConfig } from './file/fileSearch.js';
+import type { SuspiciousFileResult } from './types.js';
 
 export interface GenerateOutputOptions {
   data: any;
@@ -13,8 +14,8 @@ export interface GenerateOutputOptions {
 }
 
 export interface Dependencies {
-  searchFiles: (rootDir: string, config?: Partial<SearchConfig>) => Promise<string[]>;
-  collectFiles: (filePaths: string[], options?: { ignoreErrors?: boolean }) => Promise<FileInfo[]>;
+  searchFiles: (rootDir: string, pattern: string, options?: SearchOptions) => Promise<SearchResult[]>;
+  collectFiles: (filePaths: string[]) => Promise<FileInfo[]>;
   processFiles: (collected: FileInfo[], config: any) => Promise<FileInfo[]>;
   generateOutput: (options: GenerateOutputOptions) => string;
   runSecurityCheck: (files: FileInfo[]) => Promise<SuspiciousFileResult[]>;
@@ -22,7 +23,7 @@ export interface Dependencies {
 
 export const defaultDeps: Dependencies = {
   searchFiles,
-  collectFiles,
+  collectFiles: collectFilesInfo,
   processFiles: async (files, config) => {
     const processed = await processFiles(files, config);
     return processed.map(file => ({

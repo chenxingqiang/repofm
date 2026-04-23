@@ -1,6 +1,6 @@
-import { jest, describe, expect, test, beforeEach } from '@jest/globals';
+import { vi, describe, expect, test, beforeEach, afterEach } from 'vitest';
 import path from 'node:path';
-import { searchFiles } from '../../../src/core/file/fileSearch.js';
+import { findFiles } from '../../../src/core/file/fileSearch.js';
 import { createTempDir, removeTempDir } from '../../testing/testUtils.js';
 import fs from 'fs/promises';
 
@@ -17,7 +17,7 @@ describe('fileSearch edge cases', () => {
 
   describe('empty directory', () => {
     test('should return empty array for empty directory', async () => {
-      const files = await searchFiles(tempDir, '**/*');
+      const files = await findFiles(tempDir, ['**/*']);
       expect(files).toEqual([]);
     });
   });
@@ -29,7 +29,7 @@ describe('fileSearch edge cases', () => {
     });
 
     test('should include dot files when specified', async () => {
-      const files = await searchFiles(tempDir, '**/*', { dot: true });
+      const files = await findFiles(tempDir, ['**/*'], { dot: true });
       expect(files).toContain('.hidden');
       expect(files).toContain('visible');
     });
@@ -46,7 +46,7 @@ describe('fileSearch edge cases', () => {
     });
 
     test('should follow symlinks by default', async () => {
-      const files = await searchFiles(tempDir, '**/*');
+      const files = await findFiles(tempDir, ['**/*']);
       expect(files).toContain('target');
       expect(files).toContain('link');
     });
@@ -60,7 +60,7 @@ describe('fileSearch edge cases', () => {
 
     test('should match files based on patterns', async () => {
       const patterns = ['*.txt'];
-      const files = await searchFiles(tempDir, patterns[0]);
+      const files = await findFiles(tempDir, [patterns[0]]);
       expect(files).toContain('test.txt');
       expect(files).not.toContain('test.js');
     });
@@ -74,7 +74,7 @@ describe('fileSearch edge cases', () => {
     });
 
     test('should respect ignore patterns', async () => {
-      const files = await searchFiles(tempDir, '**/*', { ignore: ['ignore.txt'] });
+      const files = await findFiles(tempDir, ['**/*'], { ignore: ['ignore.txt'] });
       expect(files).toContain('keep.txt');
       expect(files).not.toContain('ignore.txt');
     });
@@ -84,7 +84,7 @@ describe('fileSearch edge cases', () => {
     test('should handle permission errors gracefully', async () => {
       const inaccessibleDir = path.join(tempDir, 'no-access');
       await fs.mkdir(inaccessibleDir, { mode: 0 });
-      const files = await searchFiles(tempDir, '**/*');
+      const files = await findFiles(tempDir, ['**/*']);
       expect(files).not.toContain('no-access');
     });
   });
@@ -100,7 +100,7 @@ describe('fileSearch edge cases', () => {
         await fs.writeFile(path.join(currentPath, 'file.txt'), 'content');
       }
 
-      const files = await searchFiles(tempDir, '**/*');
+      const files = await findFiles(tempDir, ['**/*']);
       expect(files).toHaveLength(depth);
       expect(files[depth - 1]).toContain(`level${depth - 1}/file.txt`);
     });
@@ -125,7 +125,7 @@ describe('fileSearch edge cases', () => {
         await fs.writeFile(path.join(tempDir, file), 'content');
       }
 
-      const files = await searchFiles(tempDir, '**/*', { dot: true });
+      const files = await findFiles(tempDir, ['**/*'], { dot: true });
       expect(files).toHaveLength(specialFiles.length);
       expect(files.sort()).toEqual(specialFiles.sort());
     });
@@ -133,7 +133,7 @@ describe('fileSearch edge cases', () => {
 
   describe('empty directories', () => {
     test('should handle empty directories', async () => {
-      const files = await searchFiles(tempDir, '**/*');
+      const files = await findFiles(tempDir, ['**/*']);
       expect(files).toHaveLength(0);
     });
   });
@@ -144,7 +144,7 @@ describe('fileSearch edge cases', () => {
       await fs.mkdir(path.join(tempDir, 'empty2'));
       await fs.mkdir(path.join(tempDir, 'empty1', 'empty1.1'));
 
-      const files = await searchFiles(tempDir, '**/*');
+      const files = await findFiles(tempDir, ['**/*']);
       expect(files).toHaveLength(0);
     });
   });
@@ -158,7 +158,7 @@ describe('fileSearch edge cases', () => {
       }
       await Promise.all(promises);
 
-      const files = await searchFiles(tempDir, '**/*');
+      const files = await findFiles(tempDir, ['**/*']);
       expect(files).toHaveLength(fileCount);
       expect(files[0]).toBe('file0.txt');
       expect(files[fileCount - 1]).toBe(`file${fileCount - 1}.txt`);
@@ -172,7 +172,7 @@ describe('fileSearch edge cases', () => {
       await fs.writeFile(path.join(subDir, 'file.txt'), 'content');
       await fs.symlink(subDir, path.join(subDir, 'cycle'));
 
-      const files = await searchFiles(tempDir, '**/*', { followSymlinks: false });
+      const files = await findFiles(tempDir, ['**/*'], { followSymlinks: false });
       expect(files).toHaveLength(1);
       expect(files[0]).toBe('subdir/file.txt');
     });
@@ -186,7 +186,7 @@ describe('fileSearch edge cases', () => {
         await fs.writeFile(path.join(tempDir, dir, 'file.txt'), 'content');
       }
 
-      const files = await searchFiles(tempDir, '**/*');
+      const files = await findFiles(tempDir, ['**/*']);
       expect(files).toHaveLength(4);
       expect(files).toContain('dir1/file.txt');
       expect(files).toContain('dir2/file.txt');
@@ -200,7 +200,7 @@ describe('fileSearch edge cases', () => {
       await fs.writeFile(path.join(tempDir, 'empty.txt'), '');
       await fs.writeFile(path.join(tempDir, 'notempty.txt'), 'content');
 
-      const files = await searchFiles(tempDir, '**/*');
+      const files = await findFiles(tempDir, ['**/*']);
       expect(files).toHaveLength(2);
       expect(files).toContain('empty.txt');
       expect(files).toContain('notempty.txt');
@@ -234,7 +234,7 @@ describe('fileSearch edge cases', () => {
       ];
 
       for (const { patterns, expected } of testCases) {
-        const result = await searchFiles(tempDir, patterns[0]);
+        const result = await findFiles(tempDir, [patterns[0]]);
         expect(result.sort()).toEqual(expected.sort());
       }
     });
@@ -259,7 +259,7 @@ describe('fileSearch edge cases', () => {
         await fs.writeFile(filePath, 'content');
       }
 
-      const result = await searchFiles(tempDir, '**/*', {
+      const result = await findFiles(tempDir, ['**/*'], {
         ignore: {
           patterns: ['**/test/**', '**/build/**', '**/*.js'],
           useGitignore: false,
@@ -279,7 +279,7 @@ describe('fileSearch edge cases', () => {
       const maxFileName = 'x'.repeat(255); // max file name length in most filesystems
       await fs.writeFile(path.join(tempDir, maxFileName), 'content');
 
-      const files = await searchFiles(tempDir, '**/*');
+      const files = await findFiles(tempDir, ['**/*']);
       expect(files).toHaveLength(1);
       expect(files[0]).toBe(maxFileName);
     });

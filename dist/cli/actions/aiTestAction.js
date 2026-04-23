@@ -1,5 +1,5 @@
-import * as p from '@clack/prompts.js';
-import chalk from 'chalk.js';
+import * as p from '@clack/prompts';
+import chalk from 'chalk';
 import { OllamaInteractionService } from '../../services/OllamaInteractionService.js';
 import { aiProviderConfig } from '../../config/AIProviderConfig.js';
 export async function testAIProvider() {

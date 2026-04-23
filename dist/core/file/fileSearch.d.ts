@@ -7,6 +7,7 @@ export interface SearchOptions {
     dot?: boolean;
     followSymlinks?: boolean;
     ignore?: string[] | IgnoreOptions;
+    caseSensitive?: boolean;
 }
 export interface SearchResult {
     path: string;

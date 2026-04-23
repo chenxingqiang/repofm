@@ -2,6 +2,10 @@ import simpleGit from 'simple-git';
 import inquirer from 'inquirer';
 import { logger } from '../../shared/logger.js';
 export async function autoCommit(workingDir, options = {}) {
+    // simple-git's default export is callable under CJS interop; TypeScript NodeNext
+    // resolves the type incorrectly so we suppress the error here.
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-expect-error: simpleGit is callable at runtime
     const git = simpleGit(workingDir);
     const status = await git.status();
     if (status.modified.length === 0) {

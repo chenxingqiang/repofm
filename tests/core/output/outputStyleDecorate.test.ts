@@ -31,7 +31,7 @@ function makeConfig(overrides: Partial<repofmConfigMerged['output']> = {}): repo
     security: {
       enableSecurityCheck: true,
     },
-  };
+  } as repofmConfigMerged;
 }
 
 describe('outputStyleDecorate', () => {

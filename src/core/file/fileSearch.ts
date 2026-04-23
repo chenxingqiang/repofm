@@ -14,8 +14,12 @@ export interface IgnoreOptions {
 
 export interface SearchOptions {
   dot?: boolean;
+  includeDotFiles?: boolean;
   followSymlinks?: boolean;
   ignore?: string[] | IgnoreOptions;
+  exclude?: string[];
+  caseSensitive?: boolean;
+  maxDepth?: number;
 }
 
 export interface SearchResult {
@@ -46,7 +50,7 @@ export async function searchFiles(
 
     const globbyOptions: GlobbyOptions = {
       cwd: searchPath,
-      dot: options.dot,
+      dot: options.dot ?? options.includeDotFiles,
       followSymbolicLinks: options.followSymlinks,
       gitignore: isIgnoreOptions(options.ignore) ? options.ignore.useGitignore : true,
       ignore: Array.isArray(options.ignore)
@@ -54,27 +58,27 @@ export async function searchFiles(
         : options.ignore?.patterns || [],
       absolute: true,
       onlyFiles: true,
+      ...(options.maxDepth !== undefined ? { deep: options.maxDepth } : {}),
     };
 
-    const files = await globby(pattern, globbyOptions);
+    // Use '**/*' to enumerate all files, then search their contents for the pattern
+    const files = await globby('**/*', globbyOptions);
 
     const results: SearchResult[] = [];
+    const caseSensitive = options.caseSensitive !== false;
+    const searchPattern = caseSensitive ? pattern : pattern.toLowerCase();
 
     for (const file of files) {
       try {
-        const stats = await fs.stat(file);
-        if (!stats.isFile()) continue;
-
         const content = await fs.readFile(file, 'utf-8');
         const lines = content.split('\n');
         const matches = [];
 
         for (let i = 0; i < lines.length; i++) {
           const line = lines[i];
-          const matchPattern = pattern;
-          const searchLine = line;
+          const searchLine = caseSensitive ? line : line.toLowerCase();
 
-          if (searchLine.includes(matchPattern)) {
+          if (searchLine.includes(searchPattern)) {
             matches.push({
               line: i + 1,
               content: line.trim()
@@ -112,14 +116,15 @@ export async function findFiles(
 
     const globbyOptions: GlobbyOptions = {
       cwd: searchPath,
-      dot: options.dot,
+      dot: options.dot ?? options.includeDotFiles,
       followSymbolicLinks: options.followSymlinks,
       gitignore: isIgnoreOptions(options.ignore) ? options.ignore.useGitignore : true,
-      ignore: Array.isArray(options.ignore)
+      ignore: options.exclude ?? (Array.isArray(options.ignore)
         ? options.ignore
-        : options.ignore?.patterns || [],
+        : options.ignore?.patterns || []),
       absolute: true,
       onlyFiles: true,
+      ...(options.maxDepth !== undefined ? { deep: options.maxDepth } : {}),
     };
 
     const files = await globby(patterns, globbyOptions);

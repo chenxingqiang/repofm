@@ -1,4 +1,4 @@
-import ora, { Ora } from 'ora.js';
+import ora, { Ora } from 'ora';
 
 export class CLISpinner {
   private static spinner: Ora | null = null;

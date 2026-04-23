@@ -47,7 +47,7 @@ describe('Logger', () => {
     it('should handle Error objects', () => {
       const error = new Error('test error');
       logger.error(error);
-      expect(consoleSpy.error).toHaveBeenCalledWith('\u001b[31mERROR:\u001b[39m', '{}');
+      expect(consoleSpy.error).toHaveBeenCalledWith('\u001b[31mERROR:\u001b[39m', 'test error');
     });
 
     it('should log success messages', () => {

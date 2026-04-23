@@ -1,8 +1,8 @@
 import * as p from '@clack/prompts';
 import chalk from 'chalk';
-import { aiProviderConfig } from '../../config/AIProviderConfig';
-import { logger } from '../../shared/logger';
-import { OllamaInteractionService } from '../../services/OllamaInteractionService';
+import { aiProviderConfig } from '../../config/AIProviderConfig.js';
+import { logger } from '../../shared/logger.js';
+import { OllamaInteractionService } from '../../services/OllamaInteractionService.js';
 export async function configureAIProviders() {
     console.clear();
     p.intro(chalk.bgBlue(' AI Provider Configuration '));
@@ -54,7 +54,7 @@ export async function configureAIProviders() {
             p.cancel('Configuration cancelled.');
             return;
         }
-        apiKey = modelChoice.value;
+        apiKey = modelChoice.value.name;
     }
     else {
         // For other providers, request API key
@@ -75,10 +75,11 @@ export async function configureAIProviders() {
     const spinner = p.spinner();
     spinner.start('Validating configuration');
     try {
-        const isValid = await aiProviderConfig.validateCredentials(providerChoice, apiKey);
+        const provider = providerChoice;
+        const isValid = await aiProviderConfig.validateCredentials(provider, apiKey);
         if (isValid) {
             // Save credentials
-            aiProviderConfig.setProviderCredentials(providerChoice, apiKey);
+            aiProviderConfig.setProviderCredentials(provider, apiKey);
             spinner.stop(chalk.green('Configuration validated and saved successfully!'));
             // Ask to set as default provider
             const setDefault = await p.confirm({

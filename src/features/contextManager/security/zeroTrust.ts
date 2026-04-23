@@ -15,12 +15,12 @@ export class ZeroTrustManager extends EventEmitter {
   private readonly trustDuration = 5 * 60 * 1000; // 5 minutes
   private readonly riskThreshold = 0.7;
 
-  constructor(private userId: string) {
+  constructor(private userId: string = '') {
     super(); // Important: call the parent constructor
   }
 
   async verifyAccess(
-resourceId: string, action: string, p0: string, context: Partial<SecurityContext>  ): Promise<boolean> {
+resourceId: string, action: string, context: Partial<SecurityContext>  ): Promise<boolean> {
     const securityContext = await this.getOrCreateSecurityContext(this.userId);
     
     // 验证会话是否需要重新认证

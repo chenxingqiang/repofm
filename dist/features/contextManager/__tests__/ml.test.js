@@ -1,8 +1,7 @@
-import { beforeEach, describe, expect } from '@jest/globals';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { MLPredictor } from '../ml/types.js';
-import { ClusterManager } from '../cluster/clusterManager.js';
-import { SecurityManager } from '../security/securityManager.js';
-import { it } from 'vitest';
+import { ClusterManager } from '../cluster/types.js';
+import { EncryptionManager } from '../security/encryption.js';
 describe('ML Features', () => {
     let predictor;
     let cluster;
@@ -10,7 +9,7 @@ describe('ML Features', () => {
     beforeEach(() => {
         predictor = new MLPredictor();
         cluster = new ClusterManager();
-        encryption = new SecurityManager();
+        encryption = new EncryptionManager();
     });
     describe('Access Prediction', () => {
         it('should predict next access based on patterns', async () => {
@@ -47,13 +46,13 @@ describe('Distributed Features', () => {
 describe('Security Features', () => {
     let encryption;
     beforeEach(() => {
-        encryption = new SecurityManager();
+        encryption = new EncryptionManager();
     });
     it('should encrypt and decrypt data', async () => {
         const data = { test: 'secret' };
         await new Promise(resolve => setTimeout(resolve, 100));
-        const { encrypted, iv } = await encryption.encrypt(data);
-        const decrypted = await encryption.decrypt(encrypted, iv);
+        const { encrypted, iv, tag } = await encryption.encrypt(data);
+        const decrypted = await encryption.decrypt(encrypted, iv, tag);
         expect(decrypted).toEqual(data);
     });
 });

@@ -1,14 +1,18 @@
 import { describe, expect, test, beforeEach, vi } from 'vitest';
-import * as fs from 'fs/promises';
+import * as fs from 'node:fs/promises';
 import * as path from 'path';
 import { searchFiles, findFiles, matchPattern, SearchOptions } from '../../../src/core/file/fileSearch.js';
 import { logger } from '../../../src/shared/logger.js';
-import globby from 'globby';
 import { exists, isDirectory } from '../../../src/core/file/fileUtils.js';
 
+// Use vi.hoisted so mockGlobbyFn is available when the vi.mock factory runs
+const { mockGlobbyFn } = vi.hoisted(() => ({
+  mockGlobbyFn: vi.fn()
+}));
+
 // Mock dependencies
-vi.mock('fs/promises', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('fs/promises')>();
+vi.mock('node:fs/promises', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('node:fs/promises')>();
   return {
     ...actual,
     stat: vi.fn(),
@@ -17,8 +21,8 @@ vi.mock('fs/promises', async (importOriginal) => {
 });
 
 vi.mock('globby', () => ({
-  default: vi.fn(),
-  globby: vi.fn()
+  default: mockGlobbyFn,
+  globby: mockGlobbyFn
 }));
 
 vi.mock('../../../src/shared/logger.js', () => ({
@@ -39,7 +43,7 @@ describe('fileSearch', () => {
     // Setup default mocks
     vi.mocked(exists).mockResolvedValue(true);
     vi.mocked(isDirectory).mockResolvedValue(true);
-    vi.mocked(globby.default || globby).mockResolvedValue([]);
+    vi.mocked(mockGlobbyFn).mockResolvedValue([]);
     
     // Use vi.mocked with the imported fs module
     vi.mocked(fs.stat).mockResolvedValue({ isFile: () => true } as any);
@@ -49,7 +53,7 @@ describe('fileSearch', () => {
   describe('searchFiles', () => {
     test('finds files with matching content', async () => {
       const mockFiles = ['/test/dir/file1.txt', '/test/dir/file2.txt'];
-      vi.mocked(globby.default || globby).mockResolvedValue(mockFiles);
+      vi.mocked(mockGlobbyFn).mockResolvedValue(mockFiles);
       vi.mocked(fs.readFile).mockImplementation((file) => {
         const content = {
           '/test/dir/file1.txt': 'test content here\nmore content',
@@ -71,7 +75,7 @@ describe('fileSearch', () => {
 
     test('handles case-insensitive search', async () => {
       const mockFiles = ['/test/dir/file1.txt'];
-      vi.mocked(globby.default || globby).mockResolvedValue(mockFiles);
+      vi.mocked(mockGlobbyFn).mockResolvedValue(mockFiles);
       vi.mocked(fs.readFile).mockResolvedValue('TEST content here');
 
       const results = await searchFiles('/test/dir', 'test', {
@@ -85,7 +89,7 @@ describe('fileSearch', () => {
     test('respects maxDepth option', async () => {
       await searchFiles('/test/dir', 'test', { maxDepth: 2 });
 
-      expect(globby.default || globby).toHaveBeenCalledWith(
+      expect(mockGlobbyFn).toHaveBeenCalledWith(
         expect.anything(),
         expect.objectContaining({ deep: 2 })
       );
@@ -93,7 +97,7 @@ describe('fileSearch', () => {
 
     test('handles file read errors gracefully', async () => {
       const mockFiles = ['/test/dir/file1.txt'];
-      vi.mocked(globby.default || globby).mockResolvedValue(mockFiles);
+      vi.mocked(mockGlobbyFn).mockResolvedValue(mockFiles);
       vi.mocked(fs.readFile).mockRejectedValue(new Error('Read error'));
 
       const results = await searchFiles('/test/dir', 'test');
@@ -108,7 +112,7 @@ describe('fileSearch', () => {
         '/test/dir/file1.txt',
         '/test/dir/subdir/file2.txt'
       ];
-      vi.mocked(globby.default || globby).mockResolvedValue(mockFiles);
+      vi.mocked(mockGlobbyFn).mockResolvedValue(mockFiles);
 
       const results = await findFiles('/test/dir', ['**/*.txt']);
 
@@ -122,7 +126,7 @@ describe('fileSearch', () => {
         exclude: ['**/node_modules/**']
       });
 
-      expect(globby.default || globby).toHaveBeenCalledWith(
+      expect(mockGlobbyFn).toHaveBeenCalledWith(
         expect.anything(),
         expect.objectContaining({
           ignore: ['**/node_modules/**']
@@ -132,7 +136,7 @@ describe('fileSearch', () => {
 
     test('handles globby errors', async () => {
       // Explicitly mock globby to throw an error
-      vi.mocked(globby.default || globby).mockRejectedValue(new Error('Glob error'));
+      vi.mocked(mockGlobbyFn).mockRejectedValue(new Error('Glob error'));
 
       // Spy on logger.error
       const errorSpy = vi.spyOn(logger, 'error');

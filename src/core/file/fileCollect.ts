@@ -9,6 +9,54 @@ export interface FileInfo {
   lastModified: Date;
 }
 
+export interface CollectOptions {
+  ignoreErrors?: boolean;
+}
+
+export interface CollectedFile {
+  path: string;
+  content: string;
+  size: number;
+}
+
+function isBinaryContent(buffer: Buffer): boolean {
+  for (let i = 0; i < Math.min(buffer.length, 8192); i++) {
+    if (buffer[i] === 0) return true;
+  }
+  return false;
+}
+
+export async function collectFiles(
+  filePaths: string[],
+  options: CollectOptions = {}
+): Promise<CollectedFile[]> {
+  const results: CollectedFile[] = [];
+
+  for (const filePath of filePaths) {
+    try {
+      const buffer = await fs.readFile(filePath);
+      if (isBinaryContent(buffer)) {
+        logger.debug(`Skipping binary file`, filePath);
+        continue;
+      }
+      const stats = await fs.stat(filePath);
+      results.push({
+        path: filePath,
+        content: buffer.toString('utf8'),
+        size: stats.size
+      });
+    } catch (error) {
+      if (options.ignoreErrors) {
+        logger.error(`Error reading file ${filePath}:`, String(error));
+      } else {
+        throw error;
+      }
+    }
+  }
+
+  return results;
+}
+
 export async function collectFileInfo(filePath: string): Promise<FileInfo> {
   try {
     const stats = await fs.stat(filePath);

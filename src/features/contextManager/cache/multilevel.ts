@@ -1,4 +1,4 @@
-import { LRUCache } from 'lru-cache.js';
+import { LRUCache } from 'lru-cache';
 import { PersistentCache } from '../types.js';
 import { FilePersistentCache } from './persistentCache.js';
 

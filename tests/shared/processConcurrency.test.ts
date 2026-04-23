@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { getProcessConcurrency } from '../../src/shared/processConcurrency.js';
 import os from 'node:os';
 

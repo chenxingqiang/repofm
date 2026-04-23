@@ -20,7 +20,15 @@ export class Logger {
         return levels.indexOf(currentLevel) <= levels.indexOf(this.level);
     }
     formatArgs(args) {
-        return args.map(arg => typeof arg === 'object' ? JSON.stringify(arg) : String(arg)).join(' ');
+        return args.map(arg => {
+            if (arg instanceof Error) {
+                return arg.message;
+            }
+            if (typeof arg === 'object' && arg !== null) {
+                return JSON.stringify(arg);
+            }
+            return String(arg);
+        }).join(' ');
     }
     error(...args) {
         if (this.shouldLog('error')) {

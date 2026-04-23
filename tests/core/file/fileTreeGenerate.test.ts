@@ -71,9 +71,9 @@ describe('fileTreeGenerate', () => {
 
             const expected = [
                 'src/',
-                '  index.js',
                 '  utils/',
                 '    helper.js',
+                '  index.js',
                 'tests/',
                 '  test.js',
             ].join('\n');
@@ -128,9 +128,9 @@ describe('fileTreeGenerate', () => {
                 'src/',
                 '  components/',
                 '    Button.jsx',
-                '  index.js',
                 '  utils/',
                 '    helper.js',
+                '  index.js',
                 'tests/',
                 '  integration/',
                 '    test.js',

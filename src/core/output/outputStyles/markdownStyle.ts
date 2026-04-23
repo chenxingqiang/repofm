@@ -1,4 +1,4 @@
-import Handlebars from 'handlebars.js';
+import Handlebars from 'handlebars';
 import type { FileInfo } from '../../types.js';
 
 interface TreeNode {

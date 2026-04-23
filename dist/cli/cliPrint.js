@@ -1,5 +1,5 @@
 import path from 'node:path';
-import pc from 'picocolors.js';
+import pc from 'picocolors';
 import { logger } from '../shared/logger.js';
 export const printSummary = (totalFiles, totalCharacters, totalTokens, outputPath, suspiciousFilesResults, config) => {
     let securityCheckMessage = '';

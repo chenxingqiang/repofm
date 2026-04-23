@@ -205,3 +205,53 @@ export class ModelProviderFactory {
     }
   }
 }
+
+export interface CommitMessageMetadata {
+  provider: string;
+  length: number;
+  fileTypes: string[];
+}
+
+export interface StructuredCommitResult {
+  message: string;
+  metadata: CommitMessageMetadata;
+}
+
+export async function generateStructuredCommitMessage(
+  stagedFiles: string[],
+  options: { provider?: string; maxLength?: number; temperature?: number } = {}
+): Promise<StructuredCommitResult> {
+  const { provider: providerName = 'ollama', maxLength = 72, temperature = 0.7 } = options;
+
+  // Derive file types from staged files
+  const fileTypes = [...new Set(
+    stagedFiles.map(f => f.split('.').pop() || 'unknown')
+  )];
+
+  const factory = ModelProviderFactory.getInstance();
+  const provider = await factory.createProvider(providerName);
+
+  const prompt = [
+    'Generate a concise, meaningful git commit message (imperative mood, max ' + maxLength + ' chars).',
+    'Staged files: ' + stagedFiles.join(', '),
+    'Reply with only the commit message text, nothing else.',
+  ].join('\n');
+
+  let message: string;
+  try {
+    message = await provider.generateText(prompt, { maxLength, temperature });
+    // Trim to maxLength
+    message = message.trim().split('\n')[0].substring(0, maxLength);
+  } catch {
+    message = `Update ${stagedFiles.length} file(s)`;
+  }
+
+  return {
+    message,
+    metadata: {
+      provider: providerName,
+      length: message.length,
+      fileTypes,
+    },
+  };
+}

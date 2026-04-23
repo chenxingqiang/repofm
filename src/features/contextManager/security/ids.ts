@@ -1,5 +1,5 @@
 import { EventEmitter } from 'events';
-import { IntrusionDetectionSystem as IIDSBase } from './types';
+import { IntrusionDetectionSystem as IIDSBase } from './types.js';
 
 export class IntrusionDetectionSystem extends EventEmitter implements IIDSBase {
   private readonly patterns: Map<string, RegExp> = new Map();

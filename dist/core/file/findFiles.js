@@ -1,38 +1,37 @@
 import path from 'node:path';
 import * as fs from 'node:fs/promises';
-import { searchFiles } from './fileSearch.js';
+import { findFiles as globFindFiles } from './fileSearch.js';
 export async function findFiles(rootDir, config) {
     const { pattern, type, maxDepth, ignoreCase, excludePatterns, followSymlinks } = config;
     // Convert find pattern to glob pattern
-    const globPattern = pattern.replace(/\*\*/g, '**/*');
-    const depthPattern = maxDepth > 0 ? `{${Array(maxDepth).fill('*').join('/')}}` : '**';
-    const patterns = [`${depthPattern}/${globPattern}`];
-    // Create search config
-    const searchConfig = {
-        patterns,
-        ignore: {
-            patterns: excludePatterns,
-            useGitignore: true,
-            useDefaultPatterns: true,
-            customPatterns: [],
-        },
+    let globPattern = pattern === '*' ? '**/*' : `**/${pattern}`;
+    // Apply case-insensitive matching by expanding characters
+    if (ignoreCase) {
+        globPattern = globPattern.replace(/[a-zA-Z]/g, c => `[${c.toLowerCase()}${c.toUpperCase()}]`);
+    }
+    const searchOptions = {
         dot: true,
         followSymlinks,
+        ignore: { patterns: excludePatterns, useGitignore: true, useDefaultPatterns: true },
     };
-    // Add case sensitivity
-    if (ignoreCase) {
-        searchConfig.patterns = patterns.map(p => p.replace(/[a-zA-Z]/g, c => `[${c.toLowerCase()}${c.toUpperCase()}]`));
-    }
-    // Search for files
-    const results = await searchFiles(rootDir, searchConfig);
+    const files = await globFindFiles(rootDir, [globPattern], searchOptions);
     // Filter by type if needed
     if (type !== 'both') {
-        return results.filter(async (file) => {
+        const filtered = [];
+        for (const file of files) {
             const fullPath = path.join(rootDir, file);
-            const stat = await fs.stat(fullPath);
-            return type === 'file' ? stat.isFile() : stat.isDirectory();
-        });
+            try {
+                const stat = await fs.stat(fullPath);
+                if (type === 'file' ? stat.isFile() : stat.isDirectory()) {
+                    filtered.push(file);
+                }
+            }
+            catch {
+                // Skip files that can't be stat-ed
+            }
+        }
+        return filtered;
     }
-    return results;
+    return files;
 }
 //# sourceMappingURL=findFiles.js.map

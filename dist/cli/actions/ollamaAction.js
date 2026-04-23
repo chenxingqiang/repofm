@@ -1,5 +1,5 @@
-import * as p from '@clack/prompts.js';
-import chalk from 'chalk.js';
+import * as p from '@clack/prompts';
+import chalk from 'chalk';
 import { ollamaService } from '../../services/OllamaInteractionService.js';
 export async function ollamaInteract() {
     console.clear();
@@ -58,11 +58,12 @@ export async function ollamaInteract() {
     p.outro(chalk.green('Ollama Interaction Complete'));
 }
 async function textGenerationWorkflow() {
+    const models = await ollamaService.listLocalModels();
     const model = await p.select({
         message: 'Select a model for text generation',
-        options: (await ollamaService.listLocalModels()).map(model => ({
-            value: model,
-            label: model
+        options: models.map(m => ({
+            value: m.name,
+            label: m.name
         }))
     });
     if (p.isCancel(model)) {
@@ -91,9 +92,8 @@ async function textGenerationWorkflow() {
         }
     });
     try {
-        const generatedText = await ollamaService.generateText(prompt, model, {
-            temperature: temperature ? Number(temperature) : 0.7
-        });
+        await ollamaService.setModel(model);
+        const generatedText = await ollamaService.generateText(prompt, { temperature: temperature ? Number(temperature) : 0.7 });
         console.log(chalk.green('\nGenerated Text:'));
         console.log(generatedText);
     }
@@ -105,7 +105,7 @@ async function listModelsWorkflow() {
     const localModels = await ollamaService.listLocalModels();
     console.log(chalk.blue('\nLocal Ollama Models:'));
     localModels.forEach((model, index) => {
-        console.log(`${index + 1}. ${model}`);
+        console.log(`${index + 1}. ${model.name}`);
     });
     p.note('To add more models, use:\n' +
         '`ollama pull <model-name>`', 'Model Management');

@@ -33,11 +33,9 @@ export async function run(argv = process.argv) {
                     throw new Error(`Search path does not exist: ${searchPath}`);
                 }
                 const searchOptions = {
-                    caseSensitive: options.caseSensitive,
-                    includeDotFiles: options.dotFiles,
-                    maxDepth: options.maxDepth ? parseInt(options.maxDepth) : undefined,
-                    exclude: options.exclude,
-                    include: options.include
+                    dot: options.dotFiles,
+                    ignore: options.exclude,
+                    caseSensitive: options.caseSensitive
                 };
                 const results = await searchFiles(searchPath, pattern, searchOptions);
                 if (results.length === 0) {
@@ -55,7 +53,7 @@ export async function run(argv = process.argv) {
             }
             catch (error) {
                 logger.error('Search command failed:', error);
-                process.exit(1);
+                throw error;
             }
         });
         program
@@ -73,9 +71,8 @@ export async function run(argv = process.argv) {
                     throw new Error(`Search path does not exist: ${searchPath}`);
                 }
                 const searchOptions = {
-                    includeDotFiles: options.dotFiles,
-                    maxDepth: options.maxDepth ? parseInt(options.maxDepth) : undefined,
-                    exclude: options.exclude
+                    dot: options.dotFiles,
+                    ignore: options.exclude
                 };
                 const files = await findFiles(searchPath, patterns, searchOptions);
                 if (files.length === 0) {
@@ -89,21 +86,19 @@ export async function run(argv = process.argv) {
             }
             catch (error) {
                 logger.error('Find command failed:', error);
-                process.exit(1);
+                throw error;
             }
         });
         await program.parseAsync(argv);
     }
     catch (error) {
-        logger.error('CLI execution failed:', error);
+        logger.error('Unhandled error:', error);
+        // In test environment, rethrow the error
+        if (process.env.NODE_ENV === 'test') {
+            throw error;
+        }
+        // In non-test environment, exit with error code
         process.exit(1);
     }
-}
-// Run CLI if this file is being executed directly
-if (import.meta.url === `file://${__filename}`) {
-    run().catch(error => {
-        logger.error('Unhandled error:', error);
-        process.exit(1);
-    });
 }
 //# sourceMappingURL=cliRun.js.map

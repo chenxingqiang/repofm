@@ -65,7 +65,6 @@ export declare const repofmConfigBaseSchema: z.ZodObject<{
         useDefaultPatterns?: boolean | undefined;
         customPatterns?: string[] | undefined;
     } | undefined;
-    include?: string[] | undefined;
     patterns?: string[] | undefined;
     followSymlinks?: boolean | undefined;
     output?: {
@@ -79,6 +78,7 @@ export declare const repofmConfigBaseSchema: z.ZodObject<{
         showLineNumbers?: boolean | undefined;
         copyToClipboard?: boolean | undefined;
     } | undefined;
+    include?: string[] | undefined;
     security?: {
         enableSecurityCheck?: boolean | undefined;
     } | undefined;
@@ -89,7 +89,6 @@ export declare const repofmConfigBaseSchema: z.ZodObject<{
         useDefaultPatterns?: boolean | undefined;
         customPatterns?: string[] | undefined;
     } | undefined;
-    include?: string[] | undefined;
     patterns?: string[] | undefined;
     followSymlinks?: boolean | undefined;
     output?: {
@@ -103,6 +102,7 @@ export declare const repofmConfigBaseSchema: z.ZodObject<{
         showLineNumbers?: boolean | undefined;
         copyToClipboard?: boolean | undefined;
     } | undefined;
+    include?: string[] | undefined;
     security?: {
         enableSecurityCheck?: boolean | undefined;
     } | undefined;
@@ -166,7 +166,6 @@ export declare const repofmConfigDefaultSchema: z.ZodObject<{
         useDefaultPatterns: boolean;
         customPatterns: string[];
     };
-    include: string[];
     output: {
         filePath: string;
         style: "plain" | "xml" | "markdown";
@@ -178,6 +177,7 @@ export declare const repofmConfigDefaultSchema: z.ZodObject<{
         headerText?: string | undefined;
         instructionFilePath?: string | undefined;
     };
+    include: string[];
     security: {
         enableSecurityCheck: boolean;
     };
@@ -187,7 +187,6 @@ export declare const repofmConfigDefaultSchema: z.ZodObject<{
         useDefaultPatterns?: boolean | undefined;
         customPatterns?: string[] | undefined;
     } | undefined;
-    include?: string[] | undefined;
     output?: {
         filePath?: string | undefined;
         style?: "plain" | "xml" | "markdown" | undefined;
@@ -199,6 +198,7 @@ export declare const repofmConfigDefaultSchema: z.ZodObject<{
         showLineNumbers?: boolean | undefined;
         copyToClipboard?: boolean | undefined;
     } | undefined;
+    include?: string[] | undefined;
     security?: {
         enableSecurityCheck?: boolean | undefined;
     } | undefined;
@@ -266,7 +266,6 @@ export declare const repofmConfigFileSchema: z.ZodObject<{
         useDefaultPatterns?: boolean | undefined;
         customPatterns?: string[] | undefined;
     } | undefined;
-    include?: string[] | undefined;
     patterns?: string[] | undefined;
     followSymlinks?: boolean | undefined;
     output?: {
@@ -280,6 +279,7 @@ export declare const repofmConfigFileSchema: z.ZodObject<{
         showLineNumbers?: boolean | undefined;
         copyToClipboard?: boolean | undefined;
     } | undefined;
+    include?: string[] | undefined;
     security?: {
         enableSecurityCheck?: boolean | undefined;
     } | undefined;
@@ -290,7 +290,6 @@ export declare const repofmConfigFileSchema: z.ZodObject<{
         useDefaultPatterns?: boolean | undefined;
         customPatterns?: string[] | undefined;
     } | undefined;
-    include?: string[] | undefined;
     patterns?: string[] | undefined;
     followSymlinks?: boolean | undefined;
     output?: {
@@ -304,6 +303,7 @@ export declare const repofmConfigFileSchema: z.ZodObject<{
         showLineNumbers?: boolean | undefined;
         copyToClipboard?: boolean | undefined;
     } | undefined;
+    include?: string[] | undefined;
     security?: {
         enableSecurityCheck?: boolean | undefined;
     } | undefined;
@@ -371,7 +371,6 @@ export declare const repofmConfigCliSchema: z.ZodObject<{
         useDefaultPatterns?: boolean | undefined;
         customPatterns?: string[] | undefined;
     } | undefined;
-    include?: string[] | undefined;
     patterns?: string[] | undefined;
     followSymlinks?: boolean | undefined;
     output?: {
@@ -385,6 +384,7 @@ export declare const repofmConfigCliSchema: z.ZodObject<{
         showLineNumbers?: boolean | undefined;
         copyToClipboard?: boolean | undefined;
     } | undefined;
+    include?: string[] | undefined;
     security?: {
         enableSecurityCheck?: boolean | undefined;
     } | undefined;
@@ -395,7 +395,6 @@ export declare const repofmConfigCliSchema: z.ZodObject<{
         useDefaultPatterns?: boolean | undefined;
         customPatterns?: string[] | undefined;
     } | undefined;
-    include?: string[] | undefined;
     patterns?: string[] | undefined;
     followSymlinks?: boolean | undefined;
     output?: {
@@ -409,6 +408,7 @@ export declare const repofmConfigCliSchema: z.ZodObject<{
         showLineNumbers?: boolean | undefined;
         copyToClipboard?: boolean | undefined;
     } | undefined;
+    include?: string[] | undefined;
     security?: {
         enableSecurityCheck?: boolean | undefined;
     } | undefined;
@@ -472,7 +472,6 @@ export declare const repofmConfigMergedSchema: z.ZodIntersection<z.ZodIntersecti
         useDefaultPatterns: boolean;
         customPatterns: string[];
     };
-    include: string[];
     output: {
         filePath: string;
         style: "plain" | "xml" | "markdown";
@@ -484,6 +483,7 @@ export declare const repofmConfigMergedSchema: z.ZodIntersection<z.ZodIntersecti
         headerText?: string | undefined;
         instructionFilePath?: string | undefined;
     };
+    include: string[];
     security: {
         enableSecurityCheck: boolean;
     };
@@ -493,7 +493,6 @@ export declare const repofmConfigMergedSchema: z.ZodIntersection<z.ZodIntersecti
         useDefaultPatterns?: boolean | undefined;
         customPatterns?: string[] | undefined;
     } | undefined;
-    include?: string[] | undefined;
     output?: {
         filePath?: string | undefined;
         style?: "plain" | "xml" | "markdown" | undefined;
@@ -505,6 +504,7 @@ export declare const repofmConfigMergedSchema: z.ZodIntersection<z.ZodIntersecti
         showLineNumbers?: boolean | undefined;
         copyToClipboard?: boolean | undefined;
     } | undefined;
+    include?: string[] | undefined;
     security?: {
         enableSecurityCheck?: boolean | undefined;
     } | undefined;
@@ -571,7 +571,6 @@ export declare const repofmConfigMergedSchema: z.ZodIntersection<z.ZodIntersecti
         useDefaultPatterns?: boolean | undefined;
         customPatterns?: string[] | undefined;
     } | undefined;
-    include?: string[] | undefined;
     patterns?: string[] | undefined;
     followSymlinks?: boolean | undefined;
     output?: {
@@ -585,6 +584,7 @@ export declare const repofmConfigMergedSchema: z.ZodIntersection<z.ZodIntersecti
         showLineNumbers?: boolean | undefined;
         copyToClipboard?: boolean | undefined;
     } | undefined;
+    include?: string[] | undefined;
     security?: {
         enableSecurityCheck?: boolean | undefined;
     } | undefined;
@@ -595,7 +595,6 @@ export declare const repofmConfigMergedSchema: z.ZodIntersection<z.ZodIntersecti
         useDefaultPatterns?: boolean | undefined;
         customPatterns?: string[] | undefined;
     } | undefined;
-    include?: string[] | undefined;
     patterns?: string[] | undefined;
     followSymlinks?: boolean | undefined;
     output?: {
@@ -609,6 +608,7 @@ export declare const repofmConfigMergedSchema: z.ZodIntersection<z.ZodIntersecti
         showLineNumbers?: boolean | undefined;
         copyToClipboard?: boolean | undefined;
     } | undefined;
+    include?: string[] | undefined;
     security?: {
         enableSecurityCheck?: boolean | undefined;
     } | undefined;
@@ -675,7 +675,6 @@ export declare const repofmConfigMergedSchema: z.ZodIntersection<z.ZodIntersecti
         useDefaultPatterns?: boolean | undefined;
         customPatterns?: string[] | undefined;
     } | undefined;
-    include?: string[] | undefined;
     patterns?: string[] | undefined;
     followSymlinks?: boolean | undefined;
     output?: {
@@ -689,6 +688,7 @@ export declare const repofmConfigMergedSchema: z.ZodIntersection<z.ZodIntersecti
         showLineNumbers?: boolean | undefined;
         copyToClipboard?: boolean | undefined;
     } | undefined;
+    include?: string[] | undefined;
     security?: {
         enableSecurityCheck?: boolean | undefined;
     } | undefined;
@@ -699,7 +699,6 @@ export declare const repofmConfigMergedSchema: z.ZodIntersection<z.ZodIntersecti
         useDefaultPatterns?: boolean | undefined;
         customPatterns?: string[] | undefined;
     } | undefined;
-    include?: string[] | undefined;
     patterns?: string[] | undefined;
     followSymlinks?: boolean | undefined;
     output?: {
@@ -713,6 +712,7 @@ export declare const repofmConfigMergedSchema: z.ZodIntersection<z.ZodIntersecti
         showLineNumbers?: boolean | undefined;
         copyToClipboard?: boolean | undefined;
     } | undefined;
+    include?: string[] | undefined;
     security?: {
         enableSecurityCheck?: boolean | undefined;
     } | undefined;
@@ -733,7 +733,6 @@ export declare const defaultConfig: {
         useDefaultPatterns: boolean;
         customPatterns: string[];
     };
-    include: string[];
     output: {
         filePath: string;
         style: "plain" | "xml" | "markdown";
@@ -745,6 +744,7 @@ export declare const defaultConfig: {
         headerText?: string | undefined;
         instructionFilePath?: string | undefined;
     };
+    include: string[];
     security: {
         enableSecurityCheck: boolean;
     };

@@ -72,7 +72,7 @@ export const buildOutputGeneratorContext = async (
 function processContent(content: string, config: Config): string {
   let processedContent = content;
 
-  if (config.output.removeComments) {
+  if (config.output?.removeComments) {
     // Remove single-line and multi-line comments
     processedContent = processedContent
       .replace(/\/\/[^\n]*/g, '')  // Remove single-line comments
@@ -80,7 +80,7 @@ function processContent(content: string, config: Config): string {
       .replace(/^\s*[\r\n]/gm, ''); // Remove empty lines created by comment removal
   }
 
-  if (config.output.removeEmptyLines) {
+  if (config.output?.removeEmptyLines) {
     processedContent = processedContent
       .split('\n')
       .filter(line => line.trim().length > 0)
